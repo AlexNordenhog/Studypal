@@ -8,3 +8,11 @@ def home():
     return render_template("home.html")
 
 
+@views.route("/search")
+def search():
+    return render_template("search.html")
+
+
+@views.route("/upload")
+def upload():
+    return render_template("upload.html")
