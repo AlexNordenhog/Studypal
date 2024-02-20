@@ -1,0 +1,32 @@
+{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
+%}
+
+<!-- {{ text }} {% if boolean == True %} Yes it is True {% else %} No its not true {%
+endif %} -->
+<form method="post">
+  <h3 align="center">Login</h3>
+  <div class="form-group">
+    <label for="email">Email Adress</label>
+    <input
+      type="email"
+      class="form-control"
+      id="email"
+      name="email"
+      placeholder="Enter Email"
+    />
+  </div>
+  <div class="form-group">
+    <label for="password1">Password</label>
+    <input
+      type="password"
+      class="form-control"
+      id="password"
+      name="password"
+      placeholder="Enter Password"
+    />
+  </div>
+  <br />
+  <button type="submit" class="btn btn_primary">Login</button>
+</form>
+
+{% endblock %}
