@@ -5,18 +5,19 @@
 <header class="text-center my-5">
   <h1 class="display-3">StudyPal</h1>
   <small>
-    <h2>The easiest way to better grades</h2>
+    <h2>The easiest way to better grades!</h2>
   </small>
-  <div class="input-group my-3">
+  <form action="/search" method="get" class="input-group my-3">
     <input
       type="text"
       class="form-control"
       placeholder="Search for documents, courses, exams..."
+      name="query"
     />
     <div class="input-group-append">
-      <button class="btn btn-outline-secondary" type="button">Search</button>
+      <button class="btn btn-outline-secondary" type="submit">Search</button>
     </div>
-  </div>
+  </form>
 </header>
 
 <section class="text-center my-5">

@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, request, render_template
+from .search import search
 
 views = Blueprint("views", __name__)
 
@@ -7,10 +8,14 @@ views = Blueprint("views", __name__)
 def home():
     return render_template("home.html")
 
+#Temporär lista för att prova sökfunktionen, ta bort senare.
+dummy_list = ['Analys 1', 'Analys 2', 'Matematisk Problemlösning', 'Mikroekonomi', 'Flervariabelanalys', 'Datorstöd för Ingenjörer', 'Programvaruintensiv Produktutveckling', 'Objektorienterad Design', 'Grunderna i Industriell Ekonomi']
 
 @views.route("/search")
-def search():
-    return render_template("search.html")
+def search_results():
+    query = request.args.get('query', '')
+    results = search(dummy_list, query)  
+    return render_template('search_results.html', query=query, results=results)
 
 
 @views.route("/upload")
