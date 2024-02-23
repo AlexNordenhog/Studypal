@@ -1,5 +1,70 @@
-{% extends "base.html" %} {% block title %}Change{% endblock %} {% block content
+{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
 %}
 
-<h1 align="center">StudyPal</h1>
+<!-- Header Section -->
+<header class="text-center my-5">
+  <h1 class="display-3">StudyPal</h1>
+  <small>
+    <h2>The easiest way to better grades</h2>
+  </small>
+  <div class="input-group my-3">
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Search for documents, courses, exams..."
+    />
+    <div class="input-group-append">
+      <button class="btn btn-outline-secondary" type="button">Search</button>
+    </div>
+  </div>
+</header>
+
+<section class="text-center my-5">
+  <div class="container">
+    <div class="row">
+      <!-- Stats Item -->
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">50+</h5>
+            <p class="card-text">University</p>
+            <p class="card-text">
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit
+              delectus dignissimos.
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- Stats Item -->
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">450K+</h5>
+            <p class="card-text">Students</p>
+            <p class="card-text">
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit
+              delectus dignissimos.
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- Add more stats items as necessary -->
+    </div>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="my-5">
+  <div class="container">
+    <h2 class="text-center">ABOUT STUDYPAL</h2>
+    <p>
+      Lorem, ipsum dolor sit amet consectetur adipisicing elit. Commodi neque
+      illum dolore quidem architecto ratione quod perferendis minima cupiditate
+      facere a suscipit numquam eligendi molestiae eos esse dolores,
+      voluptatibus officiis!
+    </p>
+    <!-- Add more content about STUDYPAL here -->
+  </div>
+</section>
+
 {% endblock %}

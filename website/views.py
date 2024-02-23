@@ -16,3 +16,8 @@ def search():
 @views.route("/upload")
 def upload():
     return render_template("upload.html")
+
+
+@views.route("/profile")
+def profile():
+    return render_template("profile.html")
