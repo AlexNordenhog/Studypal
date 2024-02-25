@@ -7,7 +7,29 @@
   <small>
     <h2>The easiest way to better grades!</h2>
   </small>
+  <!-- Combined Search Form -->
   <form action="/search" method="get" class="input-group my-3">
+    <!-- University Dropdown -->
+    <select class="custom-select" id="university" name="university" onchange="updateSubjects()">
+      <option selected>Choose a university...</option>
+      {% for university in universities %}
+      <option value="{{ university }}">{{ university }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Subject Dropdown, initially disabled -->
+    <select class="custom-select" id="subject" name="subject" onchange="updateCourses()" disabled>
+      <option selected>Choose a subject...</option>
+      <!-- Subject options will be populated based on the selected university -->
+    </select>
+
+    <!-- Courses Dropdown, initially disabled -->
+    <select class="custom-select" id="course" name="course" disabled>
+      <option selected>Choose a course...</option>
+      <!-- Course options will be populated based on the selected university and subject -->
+    </select>
+
+    <!-- Search Input -->
     <input
       type="text"
       class="form-control"
@@ -19,6 +41,60 @@
     </div>
   </form>
 </header>
+
+<script>
+  var universityData = JSON.parse('{{ university_data|safe }}');
+
+  function updateSubjects() {
+    var universitySelect = document.getElementById('university');
+    var subjectSelect = document.getElementById('subject');
+    var selectedUniversity = universitySelect.value;
+
+    // Reset and disable course dropdown
+    var courseSelect = document.getElementById('course');
+    courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+    courseSelect.disabled = true;
+
+    // Enable and populate subject dropdown
+    subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';
+    subjectSelect.disabled = false;
+
+    // Attempt to find a matching key in universityData, ignoring case and spaces
+    var selectedUniversityKey = Object.keys(universityData).find(key => key.toLowerCase() === selectedUniversity.toLowerCase().trim());
+
+    if (selectedUniversityKey && universityData[selectedUniversityKey]) {
+    var subjects = universityData[selectedUniversityKey];
+    for (var subject in subjects) {
+      var option = document.createElement('option');
+      option.value = subject;
+      option.textContent = subject;
+      subjectSelect.appendChild(option);
+      }
+    }
+  }
+
+  function updateCourses() {
+    var universitySelect = document.getElementById('university');
+    var subjectSelect = document.getElementById('subject');
+    var courseSelect = document.getElementById('course');
+    var selectedUniversity = universitySelect.value;
+    var selectedSubject = subjectSelect.value;
+
+    // Enable and populate course dropdown
+    courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+    courseSelect.disabled = false;
+
+    var courses = universityData[selectedUniversity][selectedSubject];
+    if (courses) {
+      courses.forEach(function(course) {
+        var option = document.createElement('option');
+        option.value = course;
+        option.textContent = course;
+        courseSelect.appendChild(option);
+      });
+    }
+  }
+</script>
 
 <section class="text-center my-5">
   <div class="container">
