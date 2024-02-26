@@ -7,11 +7,8 @@ class Database:
         db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
         db_url = {'databaseURL':'https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/'}
         firebase_admin.initialize_app(db_cert, db_url)
-
-    def __str__(self):        
-        return str(db.reference('/').get())
     
-    def add_documet(self, pdf, course: str, school: str, upload_comment: str, subject: str, tags: list) -> bool:
+    def add_documet(self, pdf, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, tags: list) -> bool:
         '''
         Save a document to the database.
         
@@ -23,7 +20,9 @@ class Database:
         upload_datetime = datetime.datetime.utcnow()
         doc_content = { 
                 'upload':{
-                        'pdf': pdf
+                        'pdf': pdf,
+                        'author':username,
+                        'header':header
                 },
 
                 'timestamp':{
@@ -99,6 +98,9 @@ class Database:
 
         return doc['categorization']
     
+    def get_full(self):
+        return db.reference('').get()
+
     def _new_id(self):
         '''
         Generates the next document id.
@@ -142,3 +144,7 @@ class Database:
         keys = list(db.reference(ref_path).get(shallow=True).keys())
 
         return keys
+
+#d = Database()
+#print(d.get_full()['documents']['BTH'].keys())
+#d.add_documet('','MA1444', 'BTH', 'comment', 'math', 'simon', 'mattetenta', ['math', 'exam'])
