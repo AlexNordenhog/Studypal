@@ -45,3 +45,8 @@ def upload():
 @views.route("/profile")
 def profile():
     return render_template("profile.html")
+
+
+@views.route("/document")
+def document():
+    return render_template("document.html")
