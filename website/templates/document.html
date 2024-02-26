@@ -3,22 +3,25 @@ content%}
 <div class="container my-5">
   <!-- Banner -->
   <div class="banner text-center py-3 mb-4 border-bottom">
+    <!-- FROM DATABASE -->
     <h1>Fysik 2 Omtentamen 20230101</h1>
-    <!-- Add more content as needed -->
   </div>
 
   <!-- Three-column container -->
   <div class="row">
     <!-- First column -->
     <div class="col border-right">
+      <!-- FROM DATABASE -->
       <p>Uppladdad av ...</p>
     </div>
     <!-- Second column -->
     <div class="col border-right">
+      <!-- FROM DATABASE -->
       <p>Universitet och kurs osv</p>
     </div>
     <!-- Third column -->
     <div class="col">
+      <!-- FROM DATABASE -->
       <p>Annan information...?</p>
       <p>Typ av dokument?</p>
     </div>
@@ -29,41 +32,166 @@ content%}
   >
     <!-- Left-aligned button -->
     <div>
-      <button type="button" class="btn btn-info">View Document</button>
+      <button id="togglePdfViewer" type="button" class="btn btn-info">
+        View Document
+      </button>
     </div>
 
     <!-- Right-aligned buttons -->
     <div>
       <button type="button" class="btn btn-primary mx-1">Like</button>
       <button type="button" class="btn btn-secondary mx-1">Dislike</button>
-      <button type="button" class="btn btn-success mx-1">Comment</button>
+      <button type="button" class="btn btn-success mx-1">Comments</button>
+      <button
+        type="button"
+        class="btn btn-secondary mx-1"
+        data-toggle="modal"
+        data-target="#reportModal"
+      >
+        Report
+      </button>
     </div>
   </div>
 
-  <!-- PDF Reader -->
-  <div class="pdf-reader mt-4">
-    <iframe
-      src="path_to_your_pdf.pdf"
-      width="100%"
-      height="600px"
-      frameborder="0"
-    >
-      This browser does not support PDFs. Please download the PDF to view it:
-      <a href="path_to_your_pdf.pdf">Download PDF</a>.
-    </iframe>
+  <!-- PDF Viewer -->
+  <div id="pdfViewer" class="pdf-viewer border-top py-2" style="display: block">
+    <canvas id="pdf-canvas"></canvas>
+  </div>
+</div>
+
+<!-- Report Modal with form -->
+<div
+  class="modal fade"
+  id="reportModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="modelTitleId"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Report Document</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Form inside the modal -->
+        <form>
+          <div class="form-group">
+            <label for="reportReason">Choose an reason</label>
+            <select class="form-control" id="reportReason">
+              <option value="option1">Option 1</option>
+              <option value="option2">Option 2</option>
+              <option value="option3">Option 3</option>
+              <option value="option4">Option 4</option>
+              <option value="option5">Option 5</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="reportText">Comment</label>
+            <textarea
+              class="form-control"
+              id="reportText"
+              rows="3"
+              placeholder="Your Comment"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary">Submit Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Comment form -->
+<div id="commentSection" class="container mt-5">
+  <h3>Comments</h3>
+  <div class="comment-submit-form">
+    <textarea
+      id="commentInput"
+      class="form-control mb-2"
+      placeholder="Add a comment..."
+      rows="3"
+    ></textarea>
+    <button id="submitComment" class="btn btn-primary">Comment</button>
+  </div>
+  <!-- Display of comments -->
+  <div class="comments-display">
+    <!-- Comments will be dynamically added here from our database -->
   </div>
 </div>
 
 <style>
   .banner {
-    background-color: #f8f9fa; /* Light gray background, you can change the color as needed */
+    background-color: #f8f9fa; /* Light gray background */
     border-bottom: 2px solid #dee2e6; /* Adds a bottom border to separate from the content below */
   }
 
   .border-right {
     border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
   }
+  .pdf-viewer {
+    position: relative;
+    height: 500px; /* Or whatever size you prefer */
+    overflow: auto;
+  }
+
+  #pdf-canvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid #000; /* For visual separation */
+  }
+
+  .comment-section {
+    margin-top: 20px;
+  }
+
+  .comment {
+    display: flex;
+    margin-top: 15px;
+  }
+
+  .comment-avatar {
+    margin-right: 10px;
+  }
+
+  .comment-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .comment-content {
+    flex-grow: 1;
+  }
+
+  .comment-author {
+    font-weight: bold;
+  }
+
+  .comment-text {
+    margin-top: 5px;
+  }
 </style>
+
+<!-- Script för att importera javascript i static foldern -->
+<script
+  type="text/javascript"
+  src="{{url_for('static', filename='pdf_viewer.js') }}"
+></script>
 
 <!-- Include PDF.js -->
 <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
