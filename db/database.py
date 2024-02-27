@@ -1,8 +1,6 @@
 import firebase_admin, os
-from firebase_admin import db, credentials
+from firebase_admin import db, credentials, storage
 import datetime
-
-
 
 class Database:
     def __init__(self) -> None:
@@ -145,5 +143,20 @@ class Database:
 
         keys = list(db.reference(ref_path).get(shallow=True).keys())
         return keys
+    
+class FileStorage:
+    def __init__(self) -> None:
+        db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
+        storage_url = storage_url = {'storageBucket': 'studypal-8a379.appspot.com'}
+        firebase_admin.initialize_app(db_cert, storage_url)
 
-d = Database()
+    def upload_pdf(self, pdf):
+
+        # pdf file path
+        
+        bucket = storage.bucket()
+        blob = bucket.blob(pdf)
+        blob.upload_from_filename(pdf)
+
+#f = FileStorage()
+#f.upload_pdf(os.path.dirname(os.path.abspath(__file__))+ '/test.pdf')
