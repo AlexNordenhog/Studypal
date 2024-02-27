@@ -144,4 +144,6 @@ class Database:
         '''
 
         keys = list(db.reference(ref_path).get(shallow=True).keys())
+        return keys
 
+d = Database()
