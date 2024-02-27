@@ -2,6 +2,8 @@ import firebase_admin, os
 from firebase_admin import db, credentials
 import datetime
 
+
+
 class Database:
     def __init__(self) -> None:
         db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -114,12 +116,24 @@ class Database:
         id_lst_int = [eval(id) for id in id_lst_str]
 
         return id_lst_int
-    
+
+### Ta bort innan commit
+    def _get_keys(self, ref_path): 
+            '''
+            Get all keys from reference path in the database.
+            '''
+
+            keys = list(db.reference(ref_path).get(shallow=True).keys())
+
+            return keys
 
 d = Database()
 
-d.add_documet(pdf='This is a pdf file', 
-              course='PA2576',
-              school='BTH',
-              upload_comment='This is the upload comment',
-              tags=['programming', 'assignment', 'draft'])
+print(d._get_keys('documents'))
+
+
+# d.add_documet(pdf='This is a pdf file', 
+#               course='PA2576',
+#               school='BTH',
+#               upload_comment='This is the upload comment',
+#               tags=['programming', 'assignment', 'draft'])
