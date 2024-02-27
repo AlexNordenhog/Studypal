@@ -58,3 +58,20 @@ def upload():
 @views.route("/profile")
 def profile():
     return render_template("profile.html")
+
+@views.route('/get-courses')
+def get_courses():
+    university = request.args.get('university')
+    subject = request.args.get('subject')
+    courses = search(query="", university=university, subject=subject)
+    return jsonify(courses)
+
+@views.route('/get-subjects')
+def get_subjects():
+    university = request.args.get('university')
+    uni_subjects = d._get_keys(str('documents/' + university))
+    return jsonify(uni_subjects)
+
+@views.route("/document")
+def document():
+    return render_template("document.html")

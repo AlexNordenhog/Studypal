@@ -138,15 +138,10 @@ class Database:
         
         return id_lst_int
     
+    def _get_keys(self, ref_path):
+        '''
+        Get all keys from reference path in the database.
+        '''
 
         keys = list(db.reference(ref_path).get(shallow=True).keys())
 
-d.add_documet(pdf='This is a pdf file', 
-              course='PA2576',
-              school='BTH',
-              upload_comment='This is the upload comment',
-              tags=['programming', 'assignment', 'draft'])
-
-#d = Database()
-#print(d.get_full()['documents']['BTH'].keys())
-#d.add_documet('','MA1444', 'BTH', 'comment', 'math', 'simon', 'mattetenta', ['math', 'exam'])
