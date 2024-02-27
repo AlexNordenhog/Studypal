@@ -35,33 +35,61 @@
           <a class="nav-item nav-link" id="search" href="/search">Search</a>
           <a class="nav-item nav-link" id="upload" href="/upload">Upload</a>
           <a class="nav-item nav-link" id="profile" href="/profile">Profile</a>
+          <a class="nav-item nav-link" id="document" href="/document"
+            >Document (temporär)</a
+          >
         </div>
       </div>
     </nav>
 
-    {% with messages = get_flashed_messages(with_categories = true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-      {% if category == 'error' %}
-      <div class="alert alert-danger alter-dismissable fade show" role="alert">
-        {{ message }}
-        <button type ="button" class="close" data-dismiss="alert">
-          <span aria-hidden = "true">&times;</span>
-        </button>
-      </div>
-      {% else %}
-      <div class="alert alert-success alter-dismissable fade show" role="alert">
-        {{ message }}
-        <button type ="button" class="close" data-dissmiss="alert">
-          <span aria-hidden = "true">&times;</span>>
-        </button>
-      </div>
-      {% endif %}
-      {% endfor %}
-    {% endif %}    
-    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories = true) %} {% if
+    messages %} {% for category, message in messages %} {% if category ==
+    'error' %}
+    <div class="alert alert-danger alter-dismissable fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% else %}
+    <div class="alert alert-success alter-dismissable fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dissmiss="alert">
+        <span aria-hidden="true">&times;</span>>
+      </button>
+    </div>
+    {% endif %} {% endfor %} {% endif %} {% endwith %}
 
+    <!-- Our content in all templates -->
     <div class="container">{% block content %} {% endblock %}</div>
+
+    <!-- Added a divider to make it look more clean -->
+    <div class="divider"></div>
+
+    <!-- Added a footer from bootstrap -->
+    <div class="container">
+      <footer class="py-3 my-4">
+        <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+          <li class="nav-item">
+            <a href="#" class="nav-link px-2 text-muted">Hem</a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link px-2 text-muted">Något</a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link px-2 text-muted">Något</a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link px-2 text-muted">FAQs</a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link px-2 text-muted">Om oss</a>
+          </li>
+        </ul>
+        <p class="text-center text-muted">© 2024 StudyPal AB</p>
+      </footer>
+    </div>
+
     <script
       src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
       integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
@@ -83,5 +111,10 @@
       type="text/javascript"
       src="{{url_for('static', filename='index.js') }}"
     ></script>
+    <style>
+      .divider {
+        height: 100px;
+      }
+    </style>
   </body>
 </html>
