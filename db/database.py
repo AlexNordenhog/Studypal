@@ -7,6 +7,12 @@ class Database:
         db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
         db_url = {'databaseURL':'https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/'}
         firebase_admin.initialize_app(db_cert, db_url)
+
+        #ref = db.reference('Universities/Royal Institute of Simon Flisberg/Programming/PA2576/Course Info')
+        #ref.update({
+        #    'Name':'Programmering',
+        #    'Description':'Kurs i programmering.'
+        #})
     
     def add_documet(self, pdf, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
@@ -16,7 +22,7 @@ class Database:
         '''
         
         # Compile document
-        id = 1#self._new_id()
+        id = self._new_id()
         upload_datetime = datetime.datetime.utcnow()
         doc_content = {
                 'upload':{
@@ -139,10 +145,10 @@ class Database:
                 courses = self._get_keys(f'/Universities/{school}/{subject}')
                     
                 for course in courses:
-                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}')
+                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
 
                     for document_type in document_types:
-                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/{document_type}/Documents')
+                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
                     
                         for id in document_ids:
                             id_lst_str.append(id)
@@ -163,5 +169,5 @@ class Database:
 d = Database()
 
 
-#d.add_documet('pdf', 'MA1444', 'Blekinge Institute of Technology', 'i failed all questions', 'Mathematics', 'alex', 'My Exam', 'Exams', ['math', 'exam', 'funny'])
+#d.add_documet('pdf', 'PA2576', 'Royal Institute of Simon Flisberg', 'lecture notes from 28 feb', 'Programming', 'hampus', 'My Lecture Notes', 'Lecture Notes', ['programming', 'good'])
 #print(d.get_document(1))
