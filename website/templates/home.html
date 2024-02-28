@@ -10,7 +10,7 @@
   <!-- Combined Search Form -->
   <form action="/search" method="get" class="input-group my-3">
     <!-- University Dropdown -->
-    <select class="custom-select" id="university" name="university" onchange="updateCourses()"">
+    <select class="custom-select" id="university" name="university" onchange="updateCourses(); updateSubjects()">
       <option selected>Choose a university...</option>
       {% for university in universities %}
       <option value="{{ university }}">{{ university }}</option>
@@ -45,17 +45,23 @@
 </header>
 
 <script>
+  // Capture the initial subjects dropdown HTML
+  var initialSubjectsHTML = document.getElementById('subject').innerHTML;
+</script>
+
+<script>
 function updateCourses() {
     var universitySelect = document.getElementById('university');
     var subjectSelect = document.getElementById('subject');
+    var courseSelect = document.getElementById('course');
     var selectedUniversity = universitySelect.value;
     var selectedSubject = subjectSelect.value;
 
-    if (selectedUniversity && selectedSubject) {
+    if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) && 
+        (selectedSubject !== 'Choose a subject...' && selectedSubject)) {
         fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
             .then(response => response.json())
             .then(courses => {
-                var courseSelect = document.getElementById('course');
                 courseSelect.innerHTML = '<option selected>Choose a course...</option>';
                 courses.forEach(course => {
                     var option = document.createElement('option');
@@ -66,7 +72,32 @@ function updateCourses() {
                 courseSelect.disabled = false;
             });
     } else {
-        document.getElementById('course').disabled = true;
+        courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+        courseSelect.disabled = true; // Disable the course dropdown if either selection is the default
+    }
+}
+
+function updateSubjects() {
+    var universitySelect = document.getElementById('university');
+    var subjectSelect = document.getElementById('subject');
+    var selectedUniversity = universitySelect.value;
+
+    if (selectedUniversity && selectedUniversity !== 'Choose a university...') {
+        fetch(`/get-subjects?university=${selectedUniversity}`)
+            .then(response => response.json())
+            .then(subjects => {
+                subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';
+                subjects.forEach(subject => {
+                    var option = document.createElement('option');
+                    option.value = subject;
+                    option.textContent = subject;
+                    subjectSelect.appendChild(option);
+                });
+                subjectSelect.disabled = false;
+            });
+    } else {
+        // Reset the dropdown to its initial state when no university is selected
+        subjectSelect.innerHTML = initialSubjectsHTML;
     }
 }
 </script>
