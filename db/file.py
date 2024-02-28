@@ -8,7 +8,7 @@ class Database:
         db_url = {'databaseURL':'https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/'}
         firebase_admin.initialize_app(db_cert, db_url)
     
-    def add_documet(self, pdf, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, type_of_document: str, tags: list) -> bool:
+    def add_documet(self, pdf, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, tags: list) -> bool:
         '''
         Save a document to the database.
         
@@ -16,11 +16,11 @@ class Database:
         '''
         
         # Compile document
-        id = 1#self._new_id()
+        id = self._new_id()
         upload_datetime = datetime.datetime.utcnow()
-        doc_content = {
+        doc_content = { 
                 'upload':{
-                        'pdf_url': pdf,
+                        'pdf': pdf,
                         'author':username,
                         'header':header
                 },
@@ -43,28 +43,18 @@ class Database:
                 },
 
                 'comments':{
-                        'upload_comment':upload_comment,
-                        'document_comments':{
-                                1:{
-                                    'username':'simon',
-                                    'comment':'omg what',
-                                    'timestamp':{
-                                        'date':upload_datetime.strftime('%Y-%m-%d'),
-                                        'time':upload_datetime.strftime('%H:%M:%S')
-                                    }  
-                                }
-                        }
+                        'upload_comment':upload_comment
                 }
         }
 
         # Create db reference, then add to db
-        ref = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{type_of_document}/{str(id)}')
+        ref = db.reference(f'/documents/{school}/{subject}/{course}/{str(id)}')
         ref.update(doc_content)
         
         # Check if the document is stored in db
-        #doc = self.get_document(id)
+        doc = self.get_document(id)
 
-        #return True if doc == doc_content else False
+        return True if doc == doc_content else False
 
     def get_document(self, id: int):
         '''
@@ -72,22 +62,19 @@ class Database:
         '''
 
         ref = None
-        schools = self._get_keys(f'/Universities/')
+        schools = self._get_keys(f'/documents/')
         for school in schools:
-            subjects = self._get_keys(f'/Universities/{school}')
+            subjects = self._get_keys(f'/documents/{school}')
             
             for subject in subjects:
-                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                courses = self._get_keys(f'/documents/{school}/{subject}')
                     
                 for course in courses:
-                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
+                    document_ids = self._get_keys(f'/documents/{school}/{subject}/{course}')
                     
-                    for document_type in document_types:
-                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
-
                     for _id in document_ids:
-                        if int(_id) == int(id):
-                            ref = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}')
+                        if int(_id) == id:
+                            ref = db.reference(f'/documents/{school}/{subject}/{course}/{id}')
                             break
 
         try:
@@ -129,23 +116,20 @@ class Database:
         
         id_lst_str = []
 
-        schools = self._get_keys(f'/Universities/')
+        schools = self._get_keys(f'/documents/')
 
         # Get all document id's and add them to list
         for school in schools:
-            subjects = self._get_keys(f'/Universities/{school}')
+            subjects = self._get_keys(f'/documents/{school}')
             
             for subject in subjects:
-                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                courses = self._get_keys(f'/documents/{school}/{subject}')
                     
                 for course in courses:
-                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}')
-
-                    for document_type in document_types:
-                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/{document_type}/Documents')
+                    document_ids = self._get_keys(f'/documents/{school}/{subject}/{course}')
                     
-                        for id in document_ids:
-                            id_lst_str.append(id)
+                    for id in document_ids:
+                        id_lst_str.append(id)
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
@@ -163,5 +147,26 @@ class Database:
 d = Database()
 
 
-#d.add_documet('pdf', 'MA1444', 'Blekinge Institute of Technology', 'i failed all questions', 'Mathematics', 'alex', 'My Exam', 'Exams', ['math', 'exam', 'funny'])
-#print(d.get_document(1))
+
+class FileStorage:
+    def __init__(self) -> None:
+        db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
+        storage_url = storage_url = {'storageBucket': 'studypal-8a379.appspot.com'}
+        firebase_admin.initialize_app(db_cert, storage_url)
+
+    def upload_pdf(self, pdf):
+
+        # pdf file path
+        
+        bucket = storage.bucket()
+        blob = bucket.blob(pdf)
+        print(blob.bucket.name)
+
+        blob.upload_from_filename(pdf)
+
+    def test_upload_pdf(self, pdf):
+        return
+
+d = Database()
+f = FileStorage()
+f.upload_pdf(os.path.dirname(os.path.abspath(__file__))+ '/test.pdf')
