@@ -32,17 +32,14 @@ def search_results():
     if request.args.get('university') != 'Choose a university...':
         university = request.args.get('university')
     else:
-        print('A')
         university = None
     if request.args.get('subject') != 'Choose a subject...':
         subject = request.args.get('subject')
     else:
-        print('B')
         subject = None
     if request.args.get('course') != 'Choose a course...':
         course = request.args.get('course')
     else:
-        print('C')
         course = None
     query = request.args.get('query', '')
     
