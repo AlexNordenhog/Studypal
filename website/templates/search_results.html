@@ -1,13 +1,19 @@
 <!-- search_results.html -->
-{% extends "base.html" %}
-{% block title %}Search Results{% endblock %}
-{% block content %}
-<style>
-  body {
-    font-family: Arial, sans-serif;
-  }
+{% extends "base.html" %} {% block title %}Search Results{% endblock %} {% block
+content %}
 
-  h2 {
+<!-- Lägg till klasser istället för att ändra globalt -->
+<h2 class="simonsheader">Search Results for "{{ query }}"</h2>
+<ul>
+  {% for result in results %}
+  <li>{{ result }}</li>
+  {% else %}
+  <p>No results found.</p>
+  {% endfor %}
+</ul>
+
+<style>
+  .simonsheader {
     color: #333;
     font-size: 24px;
   }
@@ -22,7 +28,7 @@
     margin-bottom: 8px;
     padding: 10px;
     border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   li:hover {
@@ -34,12 +40,4 @@
   }
 </style>
 
-<h2>Search Results for "{{ query }}"</h2>
-<ul>
-  {% for result in results %}
-  <li>{{ result }}</li>
-  {% else %}
-  <p>No results found.</p>
-  {% endfor %}
-</ul>
 {% endblock %}
