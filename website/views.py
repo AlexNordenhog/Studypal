@@ -2,31 +2,16 @@ from flask import Blueprint, request, render_template, jsonify
 from .search import search
 from db.database import d
 
-
 views = Blueprint("views", __name__)
-
-universities = d._get_keys('documents')
-subjects = []
-for university in universities: # Vi kanske borde göra det till en metod i databasen att få ut alla subjects istället
-    uni_subjects = d._get_keys(str('documents/' + university))
-    for subject in uni_subjects:
-        if subject not in subjects:
-            subjects.append(subject)
 
 @views.route("/")
 def home():
-    universities = d._get_keys('documents')
-    subjects = []
-    for university in universities: # Vi kanske borde göra det till en metod i databasen att få ut alla subjects istället
-        uni_subjects = d._get_keys(str('documents/' + university))
-        for subject in uni_subjects:
-            if subject not in subjects:
-                subjects.append(subject)
+    universities = d.get_all_universities()
+    subjects = d.get_all_unique_subjects()
     return render_template("home.html",
                            universities=universities,
                            subjects=subjects)
                            
-
 @views.route("/search")
 def search_results():
     if request.args.get('university') != 'Choose a university...':
@@ -46,11 +31,9 @@ def search_results():
     results = search(query, university, subject, course)  
     return render_template('search_results.html', query=query, results=results)
 
-
 @views.route("/upload")
 def upload():
     return render_template("upload.html")
-
 
 @views.route("/profile")
 def profile():
@@ -66,7 +49,7 @@ def get_courses():
 @views.route('/get-subjects')
 def get_subjects():
     university = request.args.get('university')
-    uni_subjects = d._get_keys(str('documents/' + university))
+    uni_subjects = d.get_all_subjects_from_university(university)
     return jsonify(uni_subjects)
 
 @views.route("/document")

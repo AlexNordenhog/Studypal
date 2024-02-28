@@ -165,6 +165,78 @@ class Database:
 
         keys = list(db.reference(ref_path).get(shallow=True).keys())
         return keys
+    
+    def get_all_universities(self):
+        '''
+        Returns a list of all universities in the database.
+        '''
+        universities = self._get_keys('Universities')
+        return universities
+
+    def get_all_unique_subjects(self):
+        '''
+        Returns a list of all subjects in the database (no duplicates).
+        '''
+        unique_subjects = []
+        universities = self.get_all_universities()
+        for u in universities:
+            subjects = self._get_keys(str('Universities/' + u))
+            for s in subjects:
+                if s not in unique_subjects:
+                    unique_subjects.append(s)
+        return unique_subjects
+    
+    def get_all_subjects_from_university(self, university):
+        university_subjects = self._get_keys(str('Universities/' + university))
+        return university_subjects
+
+    def get_all_courses(self):
+        '''
+        Returns a list of all courses in the database.
+        '''
+        all_courses = []
+        universities = self.get_all_universities()
+        for u in universities:
+            subjects = self.get_all_subjects_from_university(u)
+            for s in subjects:
+                subject_courses = self.get_courses_from_subject_at_university(u, s)
+                all_courses.extend(subject_courses)
+        return all_courses
+
+    def get_courses_from_subject_at_university(self, university, subject):
+        '''
+        Returns a list of all courses from a specific subject at a specific university.
+        '''
+        subject_courses = self._get_keys(str('Universities/') + '/' + university + '/' + subject)
+        return subject_courses
+
+
+    def get_courses_from_university(self, university):
+        '''
+        Returns a list of all courses from a specific university.
+        '''
+        university_courses = []
+        university_subjects = self.get_all_subjects_from_university(university)
+        for s in university_subjects:
+            subject_courses = self.get_courses_from_subject_at_university(university, s)
+            university_courses.extend(subject_courses)
+        return university_courses
+            
+    def get_courses_from_subject(self, subject):
+        '''
+        Returns a list of all courses for a specific subject from all universities.
+        '''
+        all_subject_courses = []
+        universities = self.get_all_universities()
+        for u in universities:
+            university_subjects = self.get_all_subjects_from_university(u)
+            for s in university_subjects:
+                if subject == s:
+                    subject_courses = self.get_courses_from_subject_at_university(u, s)
+                    all_subject_courses.extend(subject_courses)
+        return all_subject_courses
+
+
 
 d = Database()
 

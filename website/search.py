@@ -16,31 +16,22 @@ def search(query, university=None, subject=None, course=None):
     filtered_courses = []
 
     if university and subject and course:
-        courses = d._get_keys(str('documents/' + university + '/' + subject))
-        for c in courses:
+        subject_courses = d.get_courses_from_subject_at_university(university, subject)
+        for c in subject_courses:
             if c == course:
                 filtered_courses.append(c)
 
     elif university and subject and not course:
-        courses = d._get_keys(str('documents/' + university + '/' + subject))
-        filtered_courses.extend(courses)
+        subject_courses = d.get_courses_from_subject_at_university(university, subject)
+        filtered_courses.extend(subject_courses)
 
     elif university and not subject and not course:
-        subjects = d._get_keys(str('documents/' + university))
-        for subject in subjects:
-            courses = d._get_keys(str('documents/' + university + '/' + subject))
-            filtered_courses.extend(courses)
+        university_courses = d.get_courses_from_university(university)
+        filtered_courses.extend(university_courses)
 
     elif not university and subject and not course:
-        universities = d._get_keys('documents')
-        for university in universities:
-            subjects = d._get_keys(str('documents/' + university))
-            for s in subjects:
-                if s == subject:
-                    courses = d._get_keys(str('documents/' + university + '/' + s))
-                    filtered_courses.extend(courses)
-    else:
-        None
+        subject_courses = d.get_courses_from_subject(subject)
+        filtered_courses.extend(subject_courses)
 
     matching_courses = []
     if query:
@@ -50,12 +41,7 @@ def search(query, university=None, subject=None, course=None):
             close_matches = difflib.get_close_matches(query.lower(), lower_filtered_courses, n=n_matches, cutoff=0.5)
             matching_courses = [filtered_courses[lower_filtered_courses.index(match)] for match in close_matches]
         else:
-            all_courses = []
-            universities = d._get_keys('documents')
-            for university in universities:
-                subjects = d._get_keys(str('documents/' + university))
-                for s in subjects:
-                    all_courses.extend(d._get_keys(str('documents/' + university + '/' + s)))
+            all_courses = d.get_all_courses()
             lower_courses = [item.lower() for item in all_courses]
             close_matches = difflib.get_close_matches(query.lower(), lower_courses, n=n_matches, cutoff=0.5)
             upper_close_matches = [item.upper() for item in close_matches]
