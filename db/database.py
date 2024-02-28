@@ -158,5 +158,7 @@ class FileStorage:
         blob = bucket.blob(pdf)
         blob.upload_from_filename(pdf)
 
+d = Database()
+
 #f = FileStorage()
 #f.upload_pdf(os.path.dirname(os.path.abspath(__file__))+ '/test.pdf')
