@@ -1,6 +1,6 @@
 import firebase_admin, os
 from pathlib import Path
-from firebase_admin import db, credentials, storage
+from firebase_admin import credentials, storage
 
 class FileStorage:
     def __init__(self) -> None:
@@ -12,13 +12,13 @@ class FileStorage:
         '''
         Save PDF file to firebase storage.
         '''
-
+        
         storage_path = f'PDF/{document_id}.pdf'
         bucket = storage.bucket(app=self.app)
         blob = bucket.blob(storage_path)
         blob.upload_from_filename(pdf_file_path)
         
-        return f'File: {pdf_file_path} \nUploaded to: {storage_path}.'
+        return storage_path
     
     def download_pdf(self, document_id: int):
         
