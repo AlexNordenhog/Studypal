@@ -162,7 +162,6 @@ class Database:
         '''
         Get all keys from reference path in the database.
         '''
-
         keys = list(db.reference(ref_path).get(shallow=True).keys())
         return keys
     
@@ -172,6 +171,19 @@ class Database:
         '''
         universities = self._get_keys('Universities')
         return universities
+    
+    def get_subject_universities(self, subject):
+        '''
+        Returns a list of all universities for a certain subject.
+        '''
+        subject_universities = []
+        universities = self.get_all_universities()
+        for u in universities:
+            university_subjects = self.get_all_subjects_from_university(u)
+            for s in university_subjects:
+                if s == subject:
+                    subject_universities.append(u)
+        return subject_universities
 
     def get_all_unique_subjects(self):
         '''
@@ -187,6 +199,9 @@ class Database:
         return unique_subjects
     
     def get_all_subjects_from_university(self, university):
+        '''
+        Returns a list of all subjects for a certain university.
+        '''
         university_subjects = self._get_keys(str('Universities/' + university))
         return university_subjects
 

@@ -43,6 +43,7 @@ def profile():
 def get_courses():
     university = request.args.get('university')
     subject = request.args.get('subject')
+    print(university, ':', subject)
     courses = search(query="", university=university, subject=subject)
     return jsonify(courses)
 
@@ -51,6 +52,12 @@ def get_subjects():
     university = request.args.get('university')
     uni_subjects = d.get_all_subjects_from_university(university)
     return jsonify(uni_subjects)
+    
+@views.route('/get-universities')
+def get_universities():
+    subject = request.args.get('subject')
+    subject_unis = d.get_subject_universities(subject)
+    return jsonify(subject_unis)
 
 @views.route("/document")
 def document():

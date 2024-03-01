@@ -10,7 +10,7 @@
   <!-- Combined Search Form -->
   <form action="/search" method="get" class="input-group my-3">
     <!-- University Dropdown -->
-    <select class="custom-select" id="university" name="university" onchange="updateCourses(); updateSubjects()">
+    <select class="custom-select" id="university" name="university" onchange="updateSubjects(); updateCourses();">
       <option selected>Choose a university...</option>
       {% for university in universities %}
       <option value="{{ university }}">{{ university }}</option>
@@ -18,7 +18,7 @@
     </select>
 
     <!-- Subject Dropdown -->
-    <select class="custom-select" id="subject" name="subject" onchange="updateCourses()">
+    <select class="custom-select" id="subject" name="subject" onchange="updateUniversities(); updateCourses();">
       <option selected>Choose a subject...</option>
       {% for subject in subjects %}
       <option value="{{ subject }}">{{ subject }}</option>
@@ -46,10 +46,11 @@
 
 <script>
   // Capture the initial subjects dropdown HTML
+  var initialUniversitiesHTML = document.getElementById('university').innerHTML;
   var initialSubjectsHTML = document.getElementById('subject').innerHTML;
-</script>
+  let universitySelected = 0;
+  let subjectSelected = 0;
 
-<script>
 function updateCourses() {
     var universitySelect = document.getElementById('university');
     var subjectSelect = document.getElementById('subject');
@@ -57,7 +58,7 @@ function updateCourses() {
     var selectedUniversity = universitySelect.value;
     var selectedSubject = subjectSelect.value;
 
-    if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) && 
+    if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
         (selectedSubject !== 'Choose a subject...' && selectedSubject)) {
         fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
             .then(response => response.json())
@@ -75,31 +76,73 @@ function updateCourses() {
         courseSelect.innerHTML = '<option selected>Choose a course...</option>';
         courseSelect.disabled = true; // Disable the course dropdown if either selection is the default
     }
-}
+}    
+
 
 function updateSubjects() {
     var universitySelect = document.getElementById('university');
     var subjectSelect = document.getElementById('subject');
     var selectedUniversity = universitySelect.value;
 
-    if (selectedUniversity && selectedUniversity !== 'Choose a university...') {
+    // Check if a university has been selected
+    if ((selectedUniversity && selectedUniversity !== 'Choose a university...') &&
+       (subjectSelected === 0)) {
+        universitySelected = 1;
         fetch(`/get-subjects?university=${selectedUniversity}`)
             .then(response => response.json())
             .then(subjects => {
-                subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';
+            subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';       
                 subjects.forEach(subject => {
                     var option = document.createElement('option');
                     option.value = subject;
                     option.textContent = subject;
                     subjectSelect.appendChild(option);
                 });
-                subjectSelect.disabled = false;
+
+                // Reset and disable the course dropdown until a subject is selected
+                courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+                courseSelect.disabled = true;
             });
+    } else if (selectedUniversity && selectedUniversity !== 'Choose a university...') {
+        //Nothing needs to be done
     } else {
+        universitySelected = 0;
         // Reset the dropdown to its initial state when no university is selected
         subjectSelect.innerHTML = initialSubjectsHTML;
     }
 }
+
+function updateUniversities() {
+    var universitySelect = document.getElementById('university');
+    var subjectSelect = document.getElementById('subject');
+    var selectedSubject = subjectSelect.value;
+    if ((selectedSubject && selectedSubject !== 'Choose a subject...') &&
+       (universitySelected === 0)) {
+        subjectSelected = 1;
+        fetch(`/get-universities?subject=${selectedSubject}`)
+            .then(response => response.json())
+            .then(universities => {
+            universitySelect.innerHTML = '<option selected>Choose a university...</option>';
+                universities.forEach(university => {
+                    var option = document.createElement('option');
+                    option.value = university;
+                    option.textContent = university;
+                    universitySelect.appendChild(option);
+                });
+
+                // Reset and disable the course dropdown until a subject is selected
+                courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+                courseSelect.disabled = true;
+            });
+    } else if (selectedSubject && selectedSubject !== 'Choose a subject...') {
+        //Nothing needs to be done
+    } else {
+        subjectSelected = 0;
+        // Reset the dropdown to its initial state when no subject is selected
+        universitySelect.innerHTML = initialUniversitiesHTML;
+    }
+}
+
 </script>
 
 <section class="text-center my-5">
