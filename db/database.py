@@ -21,7 +21,7 @@ class Database:
         # Compile document
         id = self._get_new_id()
         storage_path = self.file_storage.upload_pdf(pdf_file_path, id)
-        upload_datetime = datetime.datetime.utcnow()
+
         doc_content = {
                 'upload':{
                         'pdf_url': storage_path,
@@ -29,10 +29,7 @@ class Database:
                         'header':header
                 },
 
-                'timestamp':{
-                        'date':upload_datetime.strftime('%Y-%m-%d'),
-                        'time':upload_datetime.strftime('%H:%M:%S')
-                },
+                'timestamp':self._get_timestamp(),
 
                 'categorization':{
                         'school':school,
@@ -84,19 +81,35 @@ class Database:
         
         return
 
-    def add_document_comment(self, document_id, username):
+    def add_document_comment(self, document_id, username, comment):
         '''
         Add a comment to a document
         '''
 
         document_path = self._get_document_ref(document_id).path
-        ref = db.reference(f'{document_path}/comments/document_comments/')
-        print(ref.get(shallow=True).keys())
+        comments_path = f'{document_path}/comments/document_comments/'
         
         # generate new comment id
-        comment_id_lst = self._get_keys(ref)
+        comment_id_lst = list(eval(str_id) for str_id in (self._get_keys(comments_path)))
+        if len(comment_id_lst) == 0:
+            comment_id = 1
+        else:
+            comment_id = max(comment_id_lst) + 1
 
-        return comment_id_lst
+        # Compile comment 
+        comment_content = {
+            'comment':comment,
+            'username':username,
+            'timestamp':self._get_timestamp()
+        }
+
+        ref = db.reference(f'{comments_path}/{comment_id}')
+        ref.update(comment_content)
+
+        # Check if comment was added to db
+        json_comment = ref.get()
+        
+        return True if json_comment == comment_content else False
 
     def get_document(self, id: int):
         '''
@@ -343,7 +356,7 @@ class Database:
         '''
         Get all keys from reference path in the database.
         '''
-        print(ref_path)
+        
         try:
             keys = list(db.reference(ref_path).get(shallow=True).keys())
         except:
@@ -378,6 +391,16 @@ class Database:
 
         return ref
     
+    def _get_timestamp(self) -> dict:
+        
+        datetime_now = datetime.datetime.utcnow()
+        
+        timestamp = {
+            'date':datetime_now.strftime('%Y-%m-%d'),
+            'time':datetime_now.strftime('%H:%M:%S')
+        }
+
+        return timestamp
 
 
 class FileStorage:
@@ -406,7 +429,12 @@ class FileStorage:
             storage.bucket(app=self.app).get_blob(f'PDF/{document_id}.pdf').download_to_file(f)
 
 d = Database()
-print(d.add_document_comment(1, 'user0001'))
+
+
+
+
+#print(d.add_document_comment(1, 'student_1', 'so helpful'))
+#print(d.add_document_comment(1, 'toxic_student', 'y did u post this nonsense'))
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'IY0000', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Economics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
