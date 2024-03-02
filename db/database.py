@@ -70,30 +70,40 @@ class Database:
 
         return True if doc == doc_content else False
 
+    def add_course(self, university, subject, course_abbr, course_desc, course_name):
+        
+        ref = db.reference(f'Universities/{university}/{subject}/{course_abbr}/')
+        course_info = {'Course Info':{
+
+                'Description':course_desc,
+                'Name':course_name
+            }
+        }
+
+        ref.update(course_info)
+        
+        return
+
+    def add_document_comment(self, document_id, username):
+        '''
+        Add a comment to a document
+        '''
+
+        document_path = self._get_document_ref(document_id).path
+        ref = db.reference(f'{document_path}/comments/document_comments/')
+        print(ref.get(shallow=True).keys())
+        
+        # generate new comment id
+        comment_id_lst = self._get_keys(ref)
+
+        return comment_id_lst
+
     def get_document(self, id: int):
         '''
         Returns document json string. If no document with :id: in database, returns None.
         '''
-
-        ref = None
-        schools = self._get_keys(f'/Universities/')
-        for school in schools:
-            subjects = self._get_keys(f'/Universities/{school}')
-            
-            for subject in subjects:
-                courses = self._get_keys(f'/Universities/{school}/{subject}')
-                    
-                for course in courses:
-                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
-                    
-                    for document_type in document_types:
-                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
-
-                    for _id in document_ids:
-                        if int(_id) == int(id):
-                            ref = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}')
-                            break
-
+        ref = self._get_document_ref(id)
+        
         try:
             ref.get()
         except:
@@ -116,22 +126,9 @@ class Database:
         return doc['categorization']
     
     def get_full(self):
+        '''Returns full database dict'''
         return db.reference('').get()
 
-    def add_course(self, university, subject, course_abbr, course_desc, course_name):
-        
-        ref = db.reference(f'Universities/{university}/{subject}/{course_abbr}/')
-        course_info = {'Course Info':{
-
-                'Description':course_desc,
-                'Name':course_name
-            }
-        }
-
-        ref.update(course_info)
-        
-        return
-    
     def get_all_universities(self):
         '''
         Returns a list of all universities in the database.
@@ -221,58 +218,6 @@ class Database:
 
         return all_subject_courses
     
-    def _get_new_id(self):
-        '''
-        Generates the next document id.
-        '''
-        id_lst = self._get_id_lst()
-        new_id = max(id_lst) + 1
-        return new_id
-    
-    def _get_id_lst(self):
-        '''
-        Returns a list containing all document id's.
-        '''
-        
-        id_lst_str = []
-
-        schools = self._get_keys(f'/Universities/')
-        # Get all document id's and add them to list
-        for school in schools:
-            subjects = self._get_keys(f'/Universities/{school}')
-            
-            for subject in subjects:
-                courses = self._get_keys(f'/Universities/{school}/{subject}')
-                    
-                for course in courses:
-                    if 'Documents' in self._get_keys(f'/Universities/{school}/{subject}/{course}'):
-                        document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
-
-                        for document_type in document_types:
-                            document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
-                        
-                            for id in document_ids:
-                                id_lst_str.append(id)
-
-        # Parse id's to int
-        id_lst_int = [eval(id) for id in id_lst_str]
-        
-        #print(id_lst_int)
-        return id_lst_int
-    
-    def _get_keys(self, ref_path):
-        '''
-        Get all keys from reference path in the database.
-        '''
-        keys = []
-        
-        try:
-            keys = list(db.reference(ref_path).get(shallow=True).keys())
-        except:
-            return []
-
-        return keys
-    
     def get_all_universities(self):
         '''
         Returns a list of all universities in the database.
@@ -355,6 +300,86 @@ class Database:
                     all_subject_courses.extend(subject_courses)
         return all_subject_courses
 
+    def _get_new_id(self) -> int:
+        '''
+        Generates the next document id.
+        '''
+        id_lst = self._get_id_lst()
+        new_id = max(id_lst) + 1
+        return new_id
+    
+    def _get_id_lst(self) -> list:
+        '''
+        Returns a list containing all document id's.
+        '''
+        
+        id_lst_str = []
+
+        schools = self._get_keys(f'/Universities/')
+        # Get all document id's and add them to list
+        for school in schools:
+            subjects = self._get_keys(f'/Universities/{school}')
+            
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                    
+                for course in courses:
+                    if 'Documents' in self._get_keys(f'/Universities/{school}/{subject}/{course}'):
+                        document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
+
+                        for document_type in document_types:
+                            document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
+                        
+                            for id in document_ids:
+                                id_lst_str.append(id)
+
+        # Parse id's to int
+        id_lst_int = [eval(id) for id in id_lst_str]
+        
+        #print(id_lst_int)
+        return id_lst_int
+    
+    def _get_keys(self, ref_path) -> list:
+        '''
+        Get all keys from reference path in the database.
+        '''
+        print(ref_path)
+        try:
+            keys = list(db.reference(ref_path).get(shallow=True).keys())
+        except:
+            return []
+
+        return keys
+    
+    def _get_document_ref(self, id: int):
+        '''
+        Returns document firebase reference.
+        '''
+
+        ref = None
+        schools = self._get_keys(f'/Universities/')
+
+        for school in schools:
+            subjects = self._get_keys(f'/Universities/{school}')
+            
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                    
+                for course in courses:
+                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
+                    
+                    for document_type in document_types:
+                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
+
+                    for _id in document_ids:
+                        if int(_id) == int(id):
+                            ref = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}')
+                            break
+
+        return ref
+    
+
+
 class FileStorage:
     def __init__(self) -> None:
         self.db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -381,6 +406,7 @@ class FileStorage:
             storage.bucket(app=self.app).get_blob(f'PDF/{document_id}.pdf').download_to_file(f)
 
 d = Database()
+print(d.add_document_comment(1, 'user0001'))
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'IY0000', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Economics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
