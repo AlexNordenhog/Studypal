@@ -3,7 +3,6 @@ from firebase_admin import db, credentials, storage
 import datetime
 from pathlib import Path
 
-
 class Database:
     def __init__(self) -> None:
         db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -110,6 +109,26 @@ class Database:
         json_comment = ref.get()
         
         return True if json_comment == comment_content else False
+
+    def add_document_vote(self, document_id: int, upvote: bool, username: str) -> bool:
+        '''
+        Add an up or downvote to a document. 
+        '''
+
+        document_path = self._get_document_ref(document_id).path
+        
+        ref = db.reference(f'{document_path}/votes')
+        votes = dict(ref.get())
+        
+        if upvote:
+            votes['upvotes'] += 1
+        else:
+            votes['downvotes'] += 1
+
+        ref.update(votes)
+
+        return True if votes == ref.get() else False
+
 
     def get_document(self, id: int):
         '''
@@ -402,7 +421,6 @@ class Database:
 
         return timestamp
 
-
 class FileStorage:
     def __init__(self) -> None:
         self.db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -429,6 +447,10 @@ class FileStorage:
             storage.bucket(app=self.app).get_blob(f'PDF/{document_id}.pdf').download_to_file(f)
 
 d = Database()
+
+#print(d.add_document_vote(1, True, ''))
+#print(d.add_document_vote(1, True, ''))
+#print(d.add_document_vote(1, False, ''))
 
 
 
