@@ -1,7 +1,8 @@
 import firebase_admin, os
 from firebase_admin import db, credentials, storage
 import datetime
-from db.file_storage import FileStorage
+from pathlib import Path
+
 
 class Database:
     def __init__(self) -> None:
@@ -18,7 +19,7 @@ class Database:
         '''
         
         # Compile document
-        id = self._new_id()
+        id = self._get_new_id()
         storage_path = self.file_storage.upload_pdf(pdf_file_path, id)
         upload_datetime = datetime.datetime.utcnow()
         doc_content = {
@@ -220,12 +221,12 @@ class Database:
 
         return all_subject_courses
     
-    def _new_id(self):
+    def _get_new_id(self):
         '''
         Generates the next document id.
         '''
-
-        new_id = max(self._get_id_lst()) + 1
+        id_lst = self._get_id_lst()
+        new_id = max(id_lst) + 1
         return new_id
     
     def _get_id_lst(self):
@@ -236,7 +237,6 @@ class Database:
         id_lst_str = []
 
         schools = self._get_keys(f'/Universities/')
-
         # Get all document id's and add them to list
         for school in schools:
             subjects = self._get_keys(f'/Universities/{school}')
@@ -245,24 +245,32 @@ class Database:
                 courses = self._get_keys(f'/Universities/{school}/{subject}')
                     
                 for course in courses:
-                    document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
+                    if 'Documents' in self._get_keys(f'/Universities/{school}/{subject}/{course}'):
+                        document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
 
-                    for document_type in document_types:
-                        document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
-                    
-                        for id in document_ids:
-                            id_lst_str.append(id)
+                        for document_type in document_types:
+                            document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
+                        
+                            for id in document_ids:
+                                id_lst_str.append(id)
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
         
+        #print(id_lst_int)
         return id_lst_int
     
     def _get_keys(self, ref_path):
         '''
         Get all keys from reference path in the database.
         '''
-        keys = list(db.reference(ref_path).get(shallow=True).keys())
+        keys = []
+        
+        try:
+            keys = list(db.reference(ref_path).get(shallow=True).keys())
+        except:
+            return []
+
         return keys
     
     def get_all_universities(self):
@@ -322,7 +330,6 @@ class Database:
         subject_courses = self._get_keys(str('Universities/') + '/' + university + '/' + subject)
         return subject_courses
 
-
     def get_courses_from_university(self, university):
         '''
         Returns a list of all courses from a specific university.
@@ -348,10 +355,36 @@ class Database:
                     all_subject_courses.extend(subject_courses)
         return all_subject_courses
 
+class FileStorage:
+    def __init__(self) -> None:
+        self.db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
+        storage_url = storage_url = {'storageBucket': 'studypal-8a379.appspot.com'}
+        self.app = firebase_admin.initialize_app(self.db_cert, storage_url, name = 'pdf_storage')
 
+    def upload_pdf(self, pdf_file_path: str, document_id: int):
+        '''
+        Save PDF file to firebase storage.
+        '''
+        
+        storage_path = f'PDF/{document_id}.pdf'
+        bucket = storage.bucket(app=self.app)
+        blob = bucket.blob(storage_path)
+        blob.upload_from_filename(pdf_file_path)
+        
+        return storage_path
+    
+    def download_pdf(self, document_id: int):
+        
+        download_path = (f'{Path.home()}/Downloads')
+
+        with open(f'{download_path}/{document_id}.pdf', 'wb') as f:    
+            storage.bucket(app=self.app).get_blob(f'PDF/{document_id}.pdf').download_to_file(f)
 
 d = Database()
 
-#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'PA2576', 'Royal Institute of Simon Flisberg', 'lecture notes from 28 feb', 'Programming', 'hampus', 'My Lecture Notes', 'Lecture Notes', ['programming', 'good'])
+#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'IY0000', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Economics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
+#d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
+#d.add_course('Royal Institute of Simon Flisberg', 'Programming', 'PA2576', 'This is a programming course', 'Programvaruintensiv produktutveckling')
+
 #d.add_documet('pdf', 'PA2576', 'Royal Institute of Simon Flisberg', 'lecture notes from 28 feb', 'Programming', 'hampus', 'My Lecture Notes', 'Lecture Notes', ['programming', 'good'])
 #print(d.get_document(1))
