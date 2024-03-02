@@ -45,9 +45,9 @@
 </header>
 
 <script>
-  // Capture the initial subjects dropdown HTML
   var initialUniversitiesHTML = document.getElementById('university').innerHTML;
   var initialSubjectsHTML = document.getElementById('subject').innerHTML;
+  var ini
   let universitySelected = 0;
   let subjectSelected = 0;
 
@@ -58,40 +58,44 @@ function updateCourses() {
     var selectedUniversity = universitySelect.value;
     var selectedSubject = subjectSelect.value;
 
-    if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
-        (selectedSubject !== 'Choose a subject...' && selectedSubject)) {
-        fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
-            .then(response => response.json())
-            .then(courses => {
-                courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-                courses.forEach(course => {
-                    var option = document.createElement('option');
-                    option.value = course;
-                    option.textContent = course;
-                    courseSelect.appendChild(option);
+    setTimeout(function() {
+        if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
+            (selectedSubject !== 'Choose a subject...' && selectedSubject) &&
+            (universitySelected === 1) &&
+            (subjectSelected === 1)) {
+            fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
+                .then(response => response.json())
+                .then(courses => {
+                    courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+                    courses.forEach(course => {
+                        var option = document.createElement('option');
+                        option.value = course;
+                        option.textContent = course;
+                        courseSelect.appendChild(option);
+                    });
+                    courseSelect.disabled = false;
                 });
-                courseSelect.disabled = false;
-            });
-    } else {
-        courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-        courseSelect.disabled = true; // Disable the course dropdown if either selection is the default
-    }
-}    
-
+        } else {
+            courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+            courseSelect.disabled = true; 
+        }
+    }, 50);
+}
 
 function updateSubjects() {
     var universitySelect = document.getElementById('university');
     var subjectSelect = document.getElementById('subject');
+    var courseSelect = document.getElementById('course');
+    var selectedSubject = subjectSelect.value;
     var selectedUniversity = universitySelect.value;
-
-    // Check if a university has been selected
+    
     if ((selectedUniversity && selectedUniversity !== 'Choose a university...') &&
        (subjectSelected === 0)) {
         universitySelected = 1;
         fetch(`/get-subjects?university=${selectedUniversity}`)
             .then(response => response.json())
             .then(subjects => {
-            subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';       
+                subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';       
                 subjects.forEach(subject => {
                     var option = document.createElement('option');
                     option.value = subject;
@@ -99,22 +103,43 @@ function updateSubjects() {
                     subjectSelect.appendChild(option);
                 });
 
-                // Reset and disable the course dropdown until a subject is selected
                 courseSelect.innerHTML = '<option selected>Choose a course...</option>';
                 courseSelect.disabled = true;
             });
+    } else if ((selectedUniversity && selectedUniversity !== 'Choose a university...') &&
+              (selectedSubject && selectedSubject !== 'Choose a subject') &&
+              (universitySelected === 1) &&
+              (subjectSelected === 1)) {
+                  subjectSelected = 0;
+                  fetch(`/get-subjects?university=${selectedUniversity}`)
+                  .then(response => response.json())
+                  .then(subjects => {
+                      subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';       
+                      subjects.forEach(subject => {
+                          var option = document.createElement('option');
+                          option.value = subject;
+                          option.textContent = subject;
+                          subjectSelect.appendChild(option);
+                      });
+
+                      courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+                      courseSelect.disabled = true;
+                  });
     } else if (selectedUniversity && selectedUniversity !== 'Choose a university...') {
-        //Nothing needs to be done
+        universitySelected = 1;
     } else {
         universitySelected = 0;
-        // Reset the dropdown to its initial state when no university is selected
+        subjectSelected = 0;
         subjectSelect.innerHTML = initialSubjectsHTML;
     }
 }
 
+
 function updateUniversities() {
     var universitySelect = document.getElementById('university');
     var subjectSelect = document.getElementById('subject');
+    var courseSelect = document.getElementById('course');
+    var selectedUniversity = universitySelect.value;
     var selectedSubject = subjectSelect.value;
     if ((selectedSubject && selectedSubject !== 'Choose a subject...') &&
        (universitySelected === 0)) {
@@ -130,15 +155,14 @@ function updateUniversities() {
                     universitySelect.appendChild(option);
                 });
 
-                // Reset and disable the course dropdown until a subject is selected
                 courseSelect.innerHTML = '<option selected>Choose a course...</option>';
                 courseSelect.disabled = true;
             });
     } else if (selectedSubject && selectedSubject !== 'Choose a subject...') {
-        //Nothing needs to be done
+        subjectSelected = 1;
     } else {
+        universitySelected = 0;
         subjectSelected = 0;
-        // Reset the dropdown to its initial state when no subject is selected
         universitySelect.innerHTML = initialUniversitiesHTML;
     }
 }

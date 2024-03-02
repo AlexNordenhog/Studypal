@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, jsonify
-from .search import search
+from .search import s
 from db.database import d
 
 views = Blueprint("views", __name__)
@@ -27,8 +27,8 @@ def search_results():
     else:
         course = None
     query = request.args.get('query', '')
-    
-    results = search(query, university, subject, course)  
+
+    results = s.search(query, university, subject, course)  
     return render_template('search_results.html', query=query, results=results)
 
 @views.route("/upload")
@@ -43,8 +43,7 @@ def profile():
 def get_courses():
     university = request.args.get('university')
     subject = request.args.get('subject')
-    print(university, ':', subject)
-    courses = search(query="", university=university, subject=subject)
+    courses = d.get_courses_from_subject_at_university(university, subject)
     return jsonify(courses)
 
 @views.route('/get-subjects')
