@@ -1,7 +1,7 @@
 import firebase_admin, os
 from firebase_admin import db, credentials, storage
 import datetime
-from file_storage import FileStorage
+from db.file_storage import FileStorage
 
 class Database:
     def __init__(self) -> None:
