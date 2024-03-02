@@ -3,7 +3,6 @@ from firebase_admin import db, credentials, storage
 import datetime
 from pathlib import Path
 
-
 class Database:
     def __init__(self) -> None:
         db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -110,6 +109,60 @@ class Database:
         json_comment = ref.get()
         
         return True if json_comment == comment_content else False
+
+    def add_document_vote(self, document_id: int, upvote: bool, username: str) -> bool:
+        '''
+        Add an up or downvote to a document. 
+        '''
+
+        votes = self.get_document_votes(document_id)
+        
+        if upvote:
+            votes['upvotes'] += 1
+        else:
+            votes['downvotes'] += 1
+
+        ref = db.reference(f'{self._get_document_ref(document_id).path}/votes')
+        ref.update(votes)
+
+        return True if votes == ref.get() else False
+
+    def get_document_votes(self, document_id: int) -> dict:
+        '''
+        Returns dict with document upvotes & downvotes.
+        '''
+        document_path = self._get_document_ref(document_id).path
+        ref = db.reference(f'{document_path}/votes')
+        votes = dict(ref.get())
+
+        return votes
+    
+    def get_document_comments(self, document_id: int):
+        '''
+        Returns dict with all post-upload document comments.
+        '''
+        
+        document_path = self._get_document_ref(document_id).path
+        ref = db.reference(f'{document_path}/comments/document_comments')
+        
+        comment_ids = [eval(key) for key in list(self._get_keys(document_path + '/comments/document_comments'))]
+
+        comments = {}
+        
+        for key in comment_ids:
+            comments[key] = ref.get()[key]
+
+        return comments
+    
+    def get_document_upload_comment(self, document_id: int):
+        '''
+        Returns dict with the upload comment only.
+        '''
+
+        document_path = self._get_document_ref(document_id).path
+        ref = db.reference(f'{document_path}/comments/upload_comment')
+
+        return ref.get()
 
     def get_document(self, id: int):
         '''
@@ -402,7 +455,6 @@ class Database:
 
         return timestamp
 
-
 class FileStorage:
     def __init__(self) -> None:
         self.db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -430,6 +482,22 @@ class FileStorage:
 
 d = Database()
 
+
+def upload_comments_example():
+
+    doc_1_upload_comment = d.get_document_upload_comment(1)
+
+    print(f'\nThis is the upload comment: {doc_1_upload_comment}\n')
+    doc_1_post_upload_comments = d.get_document_comments(1)
+
+    for key in doc_1_post_upload_comments.keys():
+        print(f'This is comment id: {key}, and the comment data is: {doc_1_post_upload_comments[key]}')
+
+upload_comments_example()
+
+#print(d.add_document_vote(1, True, ''))
+#print(d.add_document_vote(1, True, ''))
+#print(d.add_document_vote(1, False, ''))
 
 
 
