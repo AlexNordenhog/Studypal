@@ -34,6 +34,10 @@ class SearchBar:
             subject_courses = d.get_courses_from_subject(subject)
             filtered_courses.extend(subject_courses)
 
+        elif not university and not subject and not course:
+            all_courses = d.get_all_courses()
+            filtered_courses.extend(all_courses)
+
         matching_courses = []
         if query:
             lower_filtered_courses = [c.lower() for c in filtered_courses]
