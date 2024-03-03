@@ -493,7 +493,7 @@ def upload_comments_example():
     for key in doc_1_post_upload_comments.keys():
         print(f'This is comment id: {key}, and the comment data is: {doc_1_post_upload_comments[key]}')
 
-upload_comments_example()
+#upload_comments_example()
 
 #print(d.add_document_vote(1, True, ''))
 #print(d.add_document_vote(1, True, ''))
