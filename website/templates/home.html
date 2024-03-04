@@ -61,21 +61,30 @@ class DropDownMenu {
         var selectedSubject = subjectSelect.value;
 
         setTimeout(() => {
-            if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
+          if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
                 (selectedSubject !== 'Choose a subject...' && selectedSubject) &&
                 (this.universitySelected === 1) &&
                 (this.subjectSelected === 1)) {
                 fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to load courses'); // Error handling
+                        }
+                        return response.json();
+                    })
                     .then(courses => {
                         courseSelect.innerHTML = '<option selected>Choose a course...</option>';
                         courses.forEach(course => {
                             var option = document.createElement('option');
                             option.value = course;
-                            option.textContent = course;
+                            option.textContent = course; 
                             courseSelect.appendChild(option);
                         });
                         courseSelect.disabled = false;
+                    })
+                    .catch(error => { // Error handling
+                        console.error('Failed to fetch courses:', error);
+                        alert('Failed to fetch courses. Please try again.');
                     });
             } else {
                 courseSelect.innerHTML = '<option selected>Choose a course...</option>';
@@ -95,7 +104,12 @@ class DropDownMenu {
             (this.subjectSelected === 0)) {
             this.universitySelected = 1;
             fetch(`/get-subjects?university=${selectedUniversity}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load subjects.'); // Error handling
+                    }
+                    return response.json();
+                })
                 .then(subjects => {
                     subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';
                     subjects.forEach(subject => {
@@ -107,6 +121,10 @@ class DropDownMenu {
 
                     courseSelect.innerHTML = '<option selected>Choose a course...</option>';
                     courseSelect.disabled = true;
+                })
+                .catch(error => { // Error handling
+                    console.error('Failed to fetch subjects:', error);
+                    alert('Failed to fetch subjects. Please try again.');
                 });
         } else if ((selectedUniversity && selectedUniversity !== 'Choose a university...') &&
                   (selectedSubject && selectedSubject !== 'Choose a subject') &&
@@ -146,7 +164,12 @@ class DropDownMenu {
             (this.universitySelected === 0)) {
             this.subjectSelected = 1;
             fetch(`/get-universities?subject=${selectedSubject}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load universities.'); // Error handling
+                    }
+                    return response.json();
+                })
                 .then(universities => {
                     universitySelect.innerHTML = '<option selected>Choose a university...</option>';
                     universities.forEach(university => {
@@ -158,6 +181,10 @@ class DropDownMenu {
 
                     courseSelect.innerHTML = '<option selected>Choose a course...</option>';
                     courseSelect.disabled = true;
+                })
+                .catch(error => { // Error handling
+                    console.error('Failed to fetch universities:', error);
+                    alert('Failed to fetch subjects. Please try again.');
                 });
         } else if (selectedSubject && selectedSubject !== 'Choose a subject...') {
             this.subjectSelected = 1;
