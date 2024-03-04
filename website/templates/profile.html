@@ -1,6 +1,62 @@
-{% extends "base.html" %} {% block title %}Profile{% endblock %} {% block
-content %}
+{% extends "base.html" %}
 
-<h1 align="center">your profile</h1>
+{% block title %}Profile{% endblock %}
 
+{% block content %}
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAjihd9ILzcVlPzCWrr4SLVJCOw6I1nzAc",
+        authDomain: "studypal-8a379.firebaseapp.com",
+        databaseURL: "https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "studypal-8a379",
+        storageBucket: "studypal-8a379.appspot.com",
+        messagingSenderId: "475383216328",
+        appId: "1:475383216328:web:dcebc7bfd95236ebd7cdfd",
+        measurementId: "G-68F0PLPVS6"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // User is signed in, display profile
+            const profileView = `
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6 offset-md-3">
+                            <div class="card mt-5">
+                                <div class="card-body">
+                                    <h3 class="card-title">Welcome, ${user.displayName || "User"}!</h3>
+                                    <p class="card-text">Email: ${user.email}</p>
+                                    <p class="card-text">User ID: ${user.uid}</p>
+                                    <!-- Add more profile information here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById("profileContainer").innerHTML = profileView;
+        } else {
+            // User is not signed in, provide login link
+            const loginPrompt = `
+                <div class="container-box">
+                    <div class="card mt-5">
+                        <div class="card-body login-prompt">
+                            <p>Please <a href="/login" class="login-link">log in</a> to view your profile.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById("profileContainer").innerHTML = loginPrompt;
+        }
+    });
+</script>
+
+<div id="profileContainer"></div>
 {% endblock %}
