@@ -1,0 +1,186 @@
+{% extends "base.html" %} {% block title %}Name of course{% endblock %} {% block
+content %}
+<div class="container my-5">
+  <div class="banner text-center py-3 mb-4 border-bottom">
+    <!-- Importet from database -->
+    <h1>Course name...</h1>
+  </div>
+  <div class="row">
+    <div class="col border-right">
+      <p>Info from database</p>
+    </div>
+    <div class="col border-right">
+      <p>Info from database</p>
+    </div>
+    <div class="col">
+      <p>Info from database</p>
+    </div>
+  </div>
+  <div class="container-fluid text-center my-4">
+    <div class="row">
+      <div class="col-6 px-1">
+        <button type="button" class="btn btn-secondary w-100" id="btnContent1">
+          Documents
+        </button>
+      </div>
+      <div class="col-6 px-1">
+        <button type="button" class="btn btn-secondary w-100" id="btnContent2">
+          Forum
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- All documents in database related course -->
+    <div id="content1" class="content">
+      <p>documents</p>
+    </div>
+    <!-- All comments in database related to course -->
+    <div id="content2" class="content" style="display: none">
+      <!-- Comment form -->
+      <div id="commentSection" class="container mt-0">
+        <h1 class="text-center">Forum</h1>
+        <div class="comment-submit-form">
+          <textarea
+            id="commentInput"
+            class="form-control mb-2"
+            placeholder="Add a comment..."
+            rows="3"
+          ></textarea>
+          <button id="submitComment" class="btn btn-primary">Comment</button>
+        </div>
+        <!-- Display of comments -->
+        <div class="comments-display">
+          <!-- Comments will be dynamically added here from our database -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .banner {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6; /* Adds a bottom border*/
+  }
+  .border-right {
+    border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
+  }
+  .content {
+    margin-top: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    display: none; /* Start with both content areas hidden */
+  }
+  .comment-section {
+    margin-top: 20px;
+  }
+  .comment {
+    display: flex;
+    margin-top: 15px;
+  }
+  .comment-avatar {
+    margin-right: 10px;
+  }
+  .comment-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  .comment-content {
+    flex-grow: 1;
+  }
+  .comment-author {
+    font-weight: bold;
+  }
+  .comment-text {
+    margin-top: 5px;
+  }
+</style>
+
+<script>
+  // Button documents page
+  document.getElementById("btnContent1").addEventListener("click", function () {
+    document.getElementById("content1").style.display = "block";
+    document.getElementById("content2").style.display = "none";
+    this.classList.add("active");
+    document.getElementById("btnContent2").classList.remove("active");
+  });
+  // Button forum page
+  document.getElementById("btnContent2").addEventListener("click", function () {
+    document.getElementById("content2").style.display = "block";
+    document.getElementById("content1").style.display = "none";
+    this.classList.add("active");
+    document.getElementById("btnContent1").classList.remove("active");
+  });
+  document.addEventListener("DOMContentLoaded", function () {
+    // Function to update button classes
+    function updateButtonClasses(activeButtonId) {
+      const buttonIds = ["btnContent1", "btnContent2"];
+      const activeClass = "btn-primary";
+      const inactiveClass = "btn-secondary";
+
+      buttonIds.forEach((id) => {
+        const button = document.getElementById(id);
+        if (id === activeButtonId) {
+          button.classList.add(activeClass);
+          button.classList.remove(inactiveClass);
+        } else {
+          button.classList.add(inactiveClass);
+          button.classList.remove(activeClass);
+        }
+      });
+    }
+
+    document
+      .getElementById("btnContent1")
+      .addEventListener("click", function () {
+        document.getElementById("content1").style.display = "block";
+        document.getElementById("content2").style.display = "none";
+        updateButtonClasses("btnContent1");
+      });
+
+    document
+      .getElementById("btnContent2")
+      .addEventListener("click", function () {
+        document.getElementById("content2").style.display = "block";
+        document.getElementById("content1").style.display = "none";
+        updateButtonClasses("btnContent2");
+      });
+  });
+
+  // Add comments visually
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("submitComment")
+      .addEventListener("click", function () {
+        const commentInput = document.getElementById("commentInput");
+        const commentText = commentInput.value.trim();
+
+        if (commentText) {
+          // Create the comment element
+          const comment = document.createElement("div");
+          comment.classList.add("comment");
+
+          comment.innerHTML = `
+            <div class="comment-avatar">
+                <p>profilbild</p>
+            </div>
+            <div class="comment-content">
+                <div class="comment-author">Testnamn</div>
+                <div class="comment-text">${commentText}</div>
+            </div>
+        `;
+
+          // Append the new comment to the comments display area
+          document.querySelector(".comments-display").appendChild(comment);
+
+          // Clear the input field
+          commentInput.value = "";
+        }
+      });
+  });
+</script>
+{% endblock %}
