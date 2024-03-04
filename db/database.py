@@ -10,6 +10,7 @@ class Database:
         firebase_admin.initialize_app(db_cert, db_url)
         self.file_storage = FileStorage()
 
+            
     def add_documet(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
         Save a document to the database.
@@ -48,10 +49,7 @@ class Database:
                                 1:{
                                     'username':'simon',
                                     'comment':'omg what',
-                                    'timestamp':{
-                                        'date':upload_datetime.strftime('%Y-%m-%d'),
-                                        'time':upload_datetime.strftime('%H:%M:%S')
-                                    }  
+                                    'timestamp':self._get_timestamp()
                                 }
                         }
                 }
@@ -504,9 +502,12 @@ def upload_comments_example():
 #print(d.add_document_comment(1, 'student_1', 'so helpful'))
 #print(d.add_document_comment(1, 'toxic_student', 'y did u post this nonsense'))
 
-#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'IY0000', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Economics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
+#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444 Analys 1', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Mathematics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
 #d.add_course('Royal Institute of Simon Flisberg', 'Programming', 'PA2576', 'This is a programming course', 'Programvaruintensiv produktutveckling')
 
 #d.add_documet('pdf', 'PA2576', 'Royal Institute of Simon Flisberg', 'lecture notes from 28 feb', 'Programming', 'hampus', 'My Lecture Notes', 'Lecture Notes', ['programming', 'good'])
 #print(d.get_document(1))
+
+
+#os.path.dirname(os.path.abspath(__file__)).
