@@ -1,7 +1,7 @@
 import difflib
 from db.database import d
 
-class SearchBar:
+class Search:
     def search(self, query, university=None, subject=None, course=None):
         '''
         Search function to search for courses in the database.
@@ -14,6 +14,7 @@ class SearchBar:
 
         Returns a list of matching courses based on the search criteria.
         '''
+
         filtered_courses = []
 
         if university and subject and course:
@@ -57,4 +58,6 @@ class SearchBar:
 
         return matching_courses
 
-s = SearchBar()
+
+
+s = Search()

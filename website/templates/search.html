@@ -1,17 +1,43 @@
-{% extends "base.html" %} {% block title %}Search{% endblock %} {% block content
-%}
+<!-- search_results.html -->
+{% extends "base.html" %} {% block title %}Search Results{% endblock %} {% block
+content %}
 
-<h1 align="center">StudyPal</h1>
-<h1>This is the search page</h1>
+<!-- Lägg till klasser istället för att ändra globalt -->
+<h2 class="simonsheader">Search Results for "{{ query }}"</h2>
+<ul>
+  {% for result in results %}
+  <li>{{ result }}</li>
+  {% else %}
+  <p>No results found.</p>
+  {% endfor %}
+</ul>
 
-<div class="form-floating">
-  <textarea
-    class="form-control"
-    id="searchText"
-    placeholder="Search Here"
-    style="height: 50px"
-  ></textarea>
-  <!-- <label for="searchText">Search</label> -->
-</div>
+<style>
+  .simonsheader {
+    color: #333;
+    font-size: 24px;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    background-color: #f0f0f0;
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  li:hover {
+    background-color: #e9e9e9;
+  }
+
+  p {
+    color: #666;
+  }
+</style>
 
 {% endblock %}

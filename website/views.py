@@ -29,7 +29,7 @@ def search_results():
     query = request.args.get('query', '')
 
     results = s.search(query, university, subject, course)  
-    return render_template('search_results.html', query=query, results=results)
+    return render_template('search.html', query=query, results=results)
 
 @views.route("/upload")
 def upload():
