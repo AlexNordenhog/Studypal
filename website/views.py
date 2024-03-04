@@ -61,3 +61,7 @@ def get_universities():
 @views.route("/document")
 def document():
     return render_template("document.html")
+
+@views.route("/course")
+def course():
+    return render_template("course.html")

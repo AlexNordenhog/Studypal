@@ -1,32 +1,119 @@
-{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
-%}
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
 
-<!-- {{ text }} {% if boolean == True %} Yes it is True {% else %} No its not true {%
-endif %} -->
-<form method="post">
-  <h3 align="center">Login</h3>
-  <div class="form-group">
-    <label for="email">Email Adress</label>
-    <input
-      type="email"
-      class="form-control"
-      id="email"
-      name="email"
-      placeholder="Enter Email"
-    />
+<style>
+
+  .container {
+    margin-top: 50px;
+  }
+
+  .card {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #e0e0e0;
+    color:  #333;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .btn:hover {
+    background-color: #c5c5c5;
+  }
+
+  .btn img {
+    width: 24px;
+    margin-right: 10px;
+  }
+
+  .text-allign {
+    position: relative;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+</style>
+
+<!-- Header from start page -->
+<header class="text-center my-5">
+  <h1 class="display-3">StudyPal</h1>
+  <small>
+    <h2>The easiest way to better grades!</h2>
+  </small>
+</header>
+
+<div class="container">
+  <!-- Login Card -->
+  <div class="card">
+    <div class="text-allign">
+      <h2>Login Options</h2>
+      <span class="line"></span>
+    </div>
+    <div class="input">
+      <button id="google_login_btn" class="btn">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+        Sign in with Google
+      </button>
+    </div>
   </div>
-  <div class="form-group">
-    <label for="password1">Password</label>
-    <input
-      type="password"
-      class="form-control"
-      id="password"
-      name="password"
-      placeholder="Enter Password"
-    />
-  </div>
-  <br />
-  <button type="submit" class="btn btn_primary">Login</button>
-</form>
+</div>
+
+<!-- Google pop up -->
+<script type="module"> 
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { GoogleAuthProvider, getAuth, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAjihd9ILzcVlPzCWrr4SLVJCOw6I1nzAc",
+    authDomain: "studypal-8a379.firebaseapp.com",
+    databaseURL: "https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "studypal-8a379",
+    storageBucket: "studypal-8a379.appspot.com",
+    messagingSenderId: "475383216328",
+    appId: "1:475383216328:web:dcebc7bfd95236ebd7cdfd",
+    measurementId: "G-68F0PLPVS6"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  
+  document.getElementById("google_login_btn").addEventListener("click", function(){
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        // IdP data available using getAdditionalUserInfo(result)
+      }).catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+      });
+  });
+</script>
 
 {% endblock %}
