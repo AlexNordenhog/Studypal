@@ -57,37 +57,3 @@ storageRef.getBlob().then(function(blob) {
 
 
 
-// Added to test the comment UI
-// We will have to implement comments linked with firebase later  
-document.addEventListener("DOMContentLoaded", function () {
-  document
-    .getElementById("submitComment")
-    .addEventListener("click", function () {
-      const commentInput = document.getElementById("commentInput");
-      const commentText = commentInput.value.trim();
-
-      if (commentText) {
-        // Create the comment element
-        const comment = document.createElement("div");
-        comment.classList.add("comment");
-
-        comment.innerHTML = `
-          <div class="comment-avatar">
-              <p>profilbild</p>
-          </div>
-          <div class="comment-content">
-              <div class="comment-author">Testnamn</div>
-              <div class="comment-text">${commentText}</div>
-          </div>
-      `;
-
-        // Append the new comment to the comments display area
-        document.querySelector(".comments-display").appendChild(comment);
-
-        // Clear the input field
-        commentInput.value = "";
-      }
-    });
-});
-
-

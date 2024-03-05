@@ -4,7 +4,7 @@ content%}
   <!-- Banner -->
   <div class="banner text-center py-3 mb-4 border-bottom">
     <!-- FROM DATABASE -->
-    <h1>Document name</h1>
+    <h1>{{header}}</h1>
   </div>
 
   <!-- Three-column container -->
@@ -32,9 +32,15 @@ content%}
   >
     <!-- Left-aligned button -->
     <div>
-      <button id="togglePdfViewer" type="button" class="btn btn-info">
-        Reload Document
-      </button>
+      <a
+        href="{{ download_url }}"
+        type="button"
+        class="btn btn-info"
+        download
+        target="_blank"
+      >
+        Download Document
+      </a>
     </div>
 
     <!-- Right-aligned buttons -->
@@ -187,9 +193,8 @@ content%}
 </style>
 
 <!-- Script för att importera javascript i static foldern -->
-<!-- Kopplingen funkar INTE -->
 <script
-  type="text/javascript"
+  type="module"
   src="{{url_for('static', filename='pdf_viewer.js') }}"
 ></script>
 
