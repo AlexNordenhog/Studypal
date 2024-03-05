@@ -75,13 +75,11 @@ def document():
     author = document['upload']['author']
     date = document['timestamp']['date']
     time = document['timestamp']['time']
-    
+
     file_storage = d.file_storage
     download_url = file_storage.generate_download_url(id) 
 
-    
-
-    return render_template("document.html", upload_comment, comments, header, author, date, time, upvotes, downvotes, download_url=download_url)
+    return render_template("document.html", votes=votes, upload_comment=upload_comment, comments=comments, header=header, author=author, date=date, time=time, upvotes=upvotes, downvotes=downvotes, download_url=download_url)
 
 
 @views.route("/course_page")
