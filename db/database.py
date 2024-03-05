@@ -465,6 +465,7 @@ class Database:
 
         return timestamp
 
+
 class FileStorage:
     def __init__(self) -> None:
         self.db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -489,6 +490,15 @@ class FileStorage:
 
         with open(f'{download_path}/{document_id}.pdf', 'wb') as f:    
             storage.bucket(app=self.app).get_blob(f'PDF/{document_id}.pdf').download_to_file(f)
+
+    # Generates url to filestorage document
+    def generate_download_url(self, document_id: int):
+        """Generate a download URL for a document."""
+        storage_path = f'PDF/{document_id}.pdf'
+        bucket = storage.bucket(app=self.app)
+        blob = bucket.blob(storage_path)
+        download_url = blob.generate_signed_url(datetime.timedelta(seconds=300), method='GET') # URL expires in 5 minutes
+        return download_url
 
 d = Database()
 
