@@ -60,7 +60,10 @@ def get_universities():
 
 @views.route("/document")
 def document():
-    return render_template("document.html")
+    file_storage = d.file_storage
+    download_url = file_storage.generate_download_url(1) 
+    return render_template("document.html", download_url=download_url)
+
 
 @views.route("/course_page")
 def course_page():
