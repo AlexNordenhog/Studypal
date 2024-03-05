@@ -37,7 +37,12 @@ def upload():
 
 @views.route("/profile")
 def profile():
-    return render_template("profile.html")
+    user = d.get_user()
+    username = user['username']
+    creation_date = user['creation_date']
+    user_documents = user['documents']
+
+    return render_template("profile.html", username = username, creation_date = creation_date, user_documents = user_documents)
 
 @views.route('/get-courses')
 def get_courses():

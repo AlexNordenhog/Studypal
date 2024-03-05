@@ -17,7 +17,8 @@ class Database:
         user = {
             uid:{
                 'username': username,
-                'timestamp': self._get_timestamp()
+                'creation_date': self._get_timestamp()['date'],
+                'documents':[]
             }
         }
 
@@ -136,6 +137,13 @@ class Database:
         ref.update(votes)
 
         return True if votes == ref.get() else False
+
+    def get_user(self, uid):
+        
+        ref = db.reference(f'/Users/{uid}')
+        user = ref.get()
+        
+        return user
 
     def get_document_votes(self, document_id: int) -> dict:
         '''
@@ -559,35 +567,3 @@ class FileStorage:
         return download_url
 
 d = Database()
-
-
-def upload_comments_example():
-
-    doc_1_upload_comment = d.get_document_upload_comment(1)
-
-    print(f'\nThis is the upload comment: {doc_1_upload_comment}\n')
-    doc_1_post_upload_comments = d.get_document_comments(1)
-
-    for key in doc_1_post_upload_comments.keys():
-        print(f'This is comment id: {key}, and the comment data is: {doc_1_post_upload_comments[key]}')
-
-#upload_comments_example()
-
-#print(d.add_document_vote(1, True, ''))
-#print(d.add_document_vote(1, True, ''))
-#print(d.add_document_vote(1, False, ''))
-
-
-
-#print(d.add_document_comment(1, 'student_1', 'so helpful'))
-#print(d.add_document_comment(1, 'toxic_student', 'y did u post this nonsense'))
-
-#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444 Analys 1', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Mathematics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
-#d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
-#d.add_course('Royal Institute of Simon Flisberg', 'Programming', 'PA2576', 'This is a programming course', 'Programvaruintensiv produktutveckling')
-
-#d.add_documet('pdf', 'PA2576', 'Royal Institute of Simon Flisberg', 'lecture notes from 28 feb', 'Programming', 'hampus', 'My Lecture Notes', 'Lecture Notes', ['programming', 'good'])
-#print(d.get_document(1))
-
-
-#os.path.dirname(os.path.abspath(__file__)).
