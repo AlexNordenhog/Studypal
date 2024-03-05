@@ -454,6 +454,26 @@ class Database:
 
         return ref
     
+    def _get_course_ref(self, course_name):
+        '''
+        Returns course firebase reference.
+        '''
+
+        course_ref = None
+        schools = self._get_keys(f'/Universities/')
+
+        for school in schools:
+            subjects = self._get_keys(f'/Universities/{school}')
+            
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                if course_name in courses:
+                    break
+
+        course_ref = str(courses + '/' + course_name + '/Course Info')
+
+        return course_ref
+
     def _get_timestamp(self) -> dict:
         
         datetime_now = datetime.datetime.utcnow()
@@ -464,6 +484,44 @@ class Database:
         }
 
         return timestamp
+
+    def _get_document_ids_for_course(self, course_university, course_subject, course_name):
+        '''
+        Takes a university, subject and a course name (str) as parameters and
+        returns a dictionary including the document types and the document ids.
+        The dictionary will be of the form:
+        {Graded exams : [1, 2, 3, ...], 
+        Non-Graded Exams : [4, 5, 6, ...],
+        Assignments : [7, 8, 9, ...],
+        Lecture Notes : [10, 11, 12, ...],
+        Other Documents : [13, 14, 15, ...]}
+        '''
+        course_id_dict = {}
+        document_types = self._get_keys(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents')
+        for document_type in document_types:
+            document_ids = self._get_keys(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}')
+            course_id_dict.update({document_type : document_ids})
+        return course_id_dict
+
+    def _get_university_and_subject_for_course_name(self, course_name):
+        '''
+        Takes a string for a course name and returns the university and
+        the subject for that course in a list [university, subject]
+        '''
+        all_courses = self.get_all_courses()
+        for c in all_courses:
+            if c == course_name:
+                course_ref = self._get_course_ref(course_name)
+                university_name = db.reference(course_ref).get()['University']
+                subject_name = db.reference(course_ref).get()['Subject']
+                break
+        return [university_name, subject_name]
+
+    def get_course_data(self, course_name):
+        course_name = self.course_name
+        course_university_and_subject = self._get_university_and_subject_for_course_name(course_name)
+        course_university = course_university_and_subject[0]
+        course_subject = course_university_and_subject[1]
 
 
 class FileStorage:
