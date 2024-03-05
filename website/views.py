@@ -62,14 +62,14 @@ def get_universities():
 def document():
 
     id = 1
-    document = d.get_document(id=id)
+    document = d.get_document(id)
 
-    votes = d.get_document_votes(id=id)
+    votes = d.get_document_votes(id)
     upvotes = votes['upvotes']
     downvotes = votes['downvotes']
 
-    upload_comment = d.get_document_upload_comment(id=id)
-    comments = d.get_document_comments(id=id)
+    upload_comment = d.get_document_upload_comment(id)
+    comments = d.get_document_comments(id)
 
     header = document['upload']['header']
     author = document['upload']['author']
