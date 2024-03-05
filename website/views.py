@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, jsonify
-from .search import s
+from .search import s, SearchError
 from db.database import d
 
 views = Blueprint("views", __name__)
@@ -65,3 +65,11 @@ def document():
 @views.route("/course_page")
 def course_page():
     return render_template("course_page.html")
+
+@views.app_errorhandler(SearchError)
+def handle_search_error(error):
+    '''
+    Redirects the user to the search_error page if there is an issue with 
+    executing the search() function when they press on the search button.
+    '''
+    return render_template('search_error.html')
