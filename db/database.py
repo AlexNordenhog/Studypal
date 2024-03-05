@@ -10,6 +10,18 @@ class Database:
         firebase_admin.initialize_app(db_cert, db_url)
         self.file_storage = FileStorage()
 
+    def add_user(self, uid: str, username: str):
+        ref = db.reference('/Users')
+
+        # Create the user
+        user = {
+            uid:{
+                'username': username,
+                'timestamp': self._get_timestamp()
+            }
+        }
+
+        ref.update(user)
             
     def add_documet(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, type_of_document: str, tags: list) -> bool:
         '''

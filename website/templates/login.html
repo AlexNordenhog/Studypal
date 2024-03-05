@@ -2,8 +2,10 @@
 {% block title %}Login{% endblock %}
 {% block content %}
 
-<style>
+<!-- https://firebase.google.com/docs/auth/web/manage-users -->
 
+<style>
+  
   .container {
     margin-top: 50px;
   }
@@ -62,7 +64,7 @@
   <!-- Login Card -->
   <div class="card">
     <div class="text-allign">
-      <h2>Login Options</h2>
+      <h2 id="login_text">Please Wait</h2>
       <span class="line"></span>
     </div>
     <div class="input">
@@ -77,7 +79,7 @@
 <!-- Google pop up -->
 <script type="module"> 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { GoogleAuthProvider, getAuth, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import { GoogleAuthProvider, getAuth, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAjihd9ILzcVlPzCWrr4SLVJCOw6I1nzAc",
@@ -94,7 +96,22 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
-  
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/auth.user
+        const uid = user.uid;
+        window.location.href = '/profile'
+        // ...
+    } else {
+      
+        document.getElementById("login_text").textContent = "Login Options"
+        // User is signed out
+        // ...
+    }
+    });
+
   document.getElementById("google_login_btn").addEventListener("click", function(){
     signInWithPopup(auth, provider)
       .then((result) => {
@@ -103,7 +120,9 @@
         const token = credential.accessToken;
         // The signed-in user info.
         const user = result.user;
-        // IdP data available using getAdditionalUserInfo(result)
+        
+        //window.location.href = "/profile"
+
       }).catch((error) => {
         // Handle Errors here.
         const errorCode = error.code;
