@@ -60,9 +60,28 @@ def get_universities():
 
 @views.route("/document")
 def document():
+
+    id = 1
+    document = d.get_document(id=id)
+
+    votes = d.get_document_votes(id=id)
+    upvotes = votes['upvotes']
+    downvotes = votes['downvotes']
+
+    upload_comment = d.get_document_upload_comment(id=id)
+    comments = d.get_document_comments(id=id)
+
+    header = document['upload']['header']
+    author = document['upload']['author']
+    date = document['timestamp']['date']
+    time = document['timestamp']['time']
+    
     file_storage = d.file_storage
-    download_url = file_storage.generate_download_url(1) 
-    return render_template("document.html", download_url=download_url)
+    download_url = file_storage.generate_download_url(id) 
+
+    
+
+    return render_template("document.html", upload_comment, comments, header, author, date, time, upvotes, downvotes, download_url=download_url)
 
 
 @views.route("/course_page")
