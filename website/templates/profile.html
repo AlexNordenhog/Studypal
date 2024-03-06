@@ -6,6 +6,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAjihd9ILzcVlPzCWrr4SLVJCOw6I1nzAc",
@@ -24,24 +25,37 @@
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // User is signed in, display profile
-            const profileView = `
-                <div class="container">
-                    <div class="row">
-                        <div class="col-md-6 offset-md-3">
-                            <div class="card mt-5">
-                                <div class="card-body">
-                                    <h3 class="card-title">Welcome, ${user.displayName || "User"}!</h3>
-                                    <p class="card-text">Email: ${user.email}</p>
-                                    <p class="card-text">User ID: ${user.uid}</p>
-                                    <!-- Add more profile information here -->
+            const dbRef = ref(getDatabase());
+            
+            get(child(dbRef, `Users/${user.uid}/username`)).then((snapshot) => {
+                let username = '';
+                if (snapshot.exists()) {
+                    username = snapshot.val().toString();
+                } else {
+                    username = 'unknown user';
+                }
+
+                // User is signed in, display profile
+                const profileView = `
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-6 offset-md-3">
+                                <div class="card mt-5">
+                                    <div class="card-body">
+                                        <h3 class="card-title">Welcome, ${username}!</h3>
+                                        <p class="card-text">Email: ${user.email}</p>
+                                        <p class="card-text">User ID: ${user.uid}</p>
+                                        <!-- Add more profile information here -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            document.getElementById("profileContainer").innerHTML = profileView;
+                `;
+                document.getElementById("profileContainer").innerHTML = profileView;
+            }).catch((error) => {
+                console.error(error);
+            });
         } else {
             // User is not signed in, provide login link
             const loginPrompt = `
