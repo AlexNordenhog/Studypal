@@ -501,7 +501,7 @@ class Database:
                             doc_ref = f'/Universities/{university}/{subject}/{course}/Documents/{doc_type}/{doc_id}'
                             doc = db.reference(doc_ref).get()
                             # Check if the document name matches the one we're looking for
-                            if doc and 'categorization' in doc and doc['categorization'].get('document name') == document_name:
+                            if doc and 'upload' in doc and doc['upload'].get('header') == document_name:
                                 return doc_id  # Found the document ID
         return document_id  # Return None if not found
 
@@ -564,7 +564,7 @@ class Database:
         for document_type in course_document_types:
             document_names_for_document_type = []
             for id in course_documents_id_dict.get(document_type):
-                document_name = db.reference(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}/{id}/categorization').get()['document name']
+                document_name = db.reference(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}/{id}/upload').get()['header']
                 document_names_for_document_type.append(document_name)
             course_documents_name_dict.update({document_type : document_names_for_document_type})
         return course_documents_name_dict
