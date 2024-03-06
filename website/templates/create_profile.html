@@ -122,6 +122,9 @@
                     // Handle if user does not exist
                 }
             });
+        } else {
+            // Redirect to login page if no user is authenticated
+            window.location.href = '/login';
         }
     });
 

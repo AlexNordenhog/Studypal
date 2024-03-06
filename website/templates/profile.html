@@ -11,6 +11,8 @@
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         background-color: #fff;
+        position: relative; /* Added position relative for positioning the sign-out button */
+        min-height: 320px; /* Set minimum height for profile card */
     }
     .profile-card h3 {
         margin-bottom: 15px;
@@ -47,6 +49,8 @@
     }
     .document-item {
         margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
     }
     .document-link {
         color: #007bff;
@@ -78,16 +82,54 @@
         clear: both; /* Ensure the footer stays below both floating elements */
         margin-top: 40px; /* Add space between the profile card and the footer */
     }
+    /* Add style for sign-out button */
+    .sign-out-btn {
+        background-color: #dc3545; /* Red color */
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        position: fixed; /* Position the sign-out button */
+        top: 80px; /* Adjust the bottom position */
+        right: 20px; /* Adjust the right position */
+    }
+    .sign-out-btn:hover {
+        background-color: #c82333; /* Darker red on hover */
+    }
+    .document-date {
+        margin-left: auto;
+    }
+    .loading-documents {
+        margin-bottom: 10px;
+        color: #888;
+    }
 </style>
 
 <div class="profile-card" id="profileContainer"></div>
 
+<button class="sign-out-btn" onclick="signOutUser()">Sign Out</button>
+
 <div class="document-box">
     <h3>My Uploads</h3>
-    <div id="documentList"></div>
+    <div id="documentList">
+        <p class="loading-documents">Loading documents...</p>
+    </div>
 </div>
 
 <script type="module">
+
+    // Firebase configuration and initialization
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getDatabase, ref, child, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+
     // Function to check if user exists in the database
     function userExists(uid) {
         const dbRef = ref(getDatabase());
@@ -98,15 +140,6 @@
             return false;
         });
     }
-
-    // Firebase configuration and initialization
-    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getDatabase, ref, child, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
 
     // Function to display profile information
     function displayProfile(uid, user) {
@@ -147,7 +180,7 @@
         });
     }
 
-    // Function to display the document list
+  // Function to display the document list
     function displayDocumentList(uid) {
         const documentListRef = ref(getDatabase(), `Users/${uid}/Documents/`);
         get(documentListRef).then((snapshot) => {
@@ -155,23 +188,56 @@
 
             let documentListView = '';
             if (documentList !== null && Object.keys(documentList).length > 0) {
-                Object.keys(documentList).forEach((key) => {
+                // Convert document IDs to numbers and then sort
+                const sortedDocumentIds = Object.keys(documentList).map(Number).sort((a, b) => a - b);
+
+                // Iterate through sorted document IDs
+                sortedDocumentIds.forEach((key) => {
                     const documentId = documentList[key];
-                    documentListView += `
-                        <div class="document-item">
-                            <a href="/PDF/${documentId}" class="document-link">Document ${documentId}</a>
-                        </div>
-                    `;
+                    // Fetch document details using AJAX request
+                    fetchDocumentDetails(documentId).then(data => {
+                        // Add document details to the document list view
+                        const validationStatus = data.validated ? 'Validated' : 'Awaiting Verification';
+                        documentListView += `
+                            <div class="document-item">
+                                <a href="/PDF/${documentId}" class="document-link">${data.header}</a>
+                                <span class="document-validation">${validationStatus}</span>
+                            </div>
+                        `;
+                        document.getElementById("documentList").innerHTML = documentListView;
+                        // Remove the loading text once documents are loaded
+                        document.querySelector(".loading-documents").style.display = "none";
+                    }).catch(error => {
+                        console.error(error);
+                    });
                 });
             } else {
                 documentListView += '<p class="no-documents-message">No uploads yet. ';
                 documentListView += '<a href="/upload" class="upload-link">Upload your first document</a>.</p>';
+                document.getElementById("documentList").innerHTML = documentListView;
+                // Remove the loading text when there are no documents
+                document.querySelector(".loading-documents").style.display = "none";
             }
-            document.getElementById("documentList").innerHTML = documentListView;
         }).catch((error) => {
             console.error(error);
         });
     }
+
+
+    // Function to fetch document details
+    function fetchDocumentDetails(documentId) {
+        return fetch("/get_document", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ document_id: documentId })
+        }).then(response => response.json());
+    }
+
+
+
+
 
     // Fetch user data and display profile and document list
     onAuthStateChanged(auth, (user) => {

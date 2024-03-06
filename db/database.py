@@ -22,11 +22,9 @@ class Database:
             }
         }
 
-        print(user)
-
         ref.update(user)
             
-    def add_documet(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, type_of_document: str, tags: list) -> bool:
+    def add_documet(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
         Save a document to the database.
         
@@ -36,6 +34,11 @@ class Database:
         # Compile document
         id = self._get_new_id()
         storage_path = self.file_storage.upload_pdf(pdf_file_path, id)
+        user = db.reference(f'Users/{uid}').get()
+        try:
+            username = user['username']
+        except:
+            username = 'anonymous'
 
         doc_content = {
                 'upload':{
@@ -67,7 +70,9 @@ class Database:
                                     'timestamp':self._get_timestamp()
                                 }
                         }
-                }
+                },
+
+                'validated':False
         }
 
         # Create db reference, then add to db
@@ -77,8 +82,13 @@ class Database:
         # Check if the document is stored in db
         doc = self.get_document(id)
 
-        return True if doc == doc_content else False
+    
+        # Set link to user
+        self._link_document_to_user(uid, id)
+        return True
 
+    
+    
     def add_course(self, university, subject, course_abbr, course_desc, course_name):
         
         ref = db.reference(f'Universities/{university}/{subject}/{course_abbr}/')
@@ -584,6 +594,26 @@ class Database:
         }
         return course_data_dict
 
+    def _link_document_to_user(self, uid, document_id):
+        user_ref = db.reference(f'/Users/{uid}')
+        
+        document_lst = self.get_user_documents(uid)
+
+        if document_lst == None:
+            document_lst = []
+    
+        document_lst.append(document_id)
+
+        user_documents = {
+            'Documents':document_lst
+        }
+
+        user_ref.update(user_documents)
+
+    def get_user_documents(self, uid):
+        ref = db.reference(f'/Users/{uid}/Documents')
+        return ref.get()
+
 class FileStorage:
     def __init__(self) -> None:
         self.db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
@@ -633,11 +663,14 @@ def upload_comments_example():
 
 #upload_comments_example()
 
+
 #print(d.add_document_vote(1, True, ''))
 #print(d.add_document_vote(1, True, ''))
 #print(d.add_document_vote(1, False, ''))
 
-
+#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
+#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
+#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My third document', 'Exams', ['this is a tag', 'this is another tag'])
 
 #print(d.add_document_comment(1, 'student_1', 'so helpful'))
 #print(d.add_document_comment(1, 'toxic_student', 'y did u post this nonsense'))

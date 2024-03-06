@@ -100,3 +100,38 @@ def add_user():
 @views.route("/create_profile")
 def create_profile():
     return render_template("create_profile.html")
+
+@views.route("/get_document", methods=["POST"])
+def get_document():
+    data = request.json
+    document_id = data.get("document_id")
+    
+    # Get the document from the database
+    document = d.get_document(document_id)
+    
+    if document:
+        categorization = document.get("categorization", {})
+        comments = document.get("comments", {})
+        upload = document.get("upload", {})
+        votes = document.get("votes", {})
+        timestamp = document.get("timestamp", {})
+        
+        # Return specific values from the document
+        return jsonify({
+            "course": categorization.get("course"),
+            "school": categorization.get("school"),
+            "subject": categorization.get("subject"),
+            "tags": categorization.get("tags"),
+            "upload_comment": comments.get("upload_comment"),
+            "author": upload.get("author"),
+            "header": upload.get("header"),
+            "pdf_url": upload.get("pdf_url"),
+            "upvotes": votes.get("upvotes"),
+            "downvotes": votes.get("downvotes"),
+            "date":timestamp.get("date"),
+            "time":timestamp.get("time"),
+            "validated":upload.get("validated")
+        })
+    else:
+        return jsonify({"error": "Document not found"})
+
