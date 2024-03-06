@@ -12,12 +12,12 @@ content%}
     <!-- First column -->
     <div class="col border-right">
       <!-- FROM DATABASE -->
-      <p>Uppladdad av ...</p>
+      <p>Author:{{ author }}</p>
     </div>
     <!-- Second column -->
     <div class="col border-right">
       <!-- FROM DATABASE -->
-      <p>Universitet och kurs osv</p>
+      <p>University:</p>
     </div>
     <!-- Third column -->
     <div class="col">
@@ -60,7 +60,7 @@ content%}
 
   <!-- PDF Viewer -->
   <div id="pdfViewer" class="pdf-viewer border-top py-2" style="display: block">
-    <canvas id="pdf-canvas"></canvas>
+    <iframe src="{{ download_url }}" frameborder="0" class="pdf_frame"></iframe>
   </div>
 </div>
 
@@ -147,6 +147,11 @@ content%}
 
   .border-right {
     border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
+  }
+
+  .pdf_frame {
+    height: 100%;
+    width: 100%;
   }
   .pdf-viewer {
     position: relative;
