@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block title %}{{ course_page_dict['course_name'] }}{% endblock %} {% block
-content %}
+{% extends "base.html" %} {% block title %}{{ course_page_dict['course_name']
+}}{% endblock %} {% block content %}
 <div class="container my-5">
   <div class="banner text-center py-3 mb-4 border-bottom">
     <!-- Importet from database -->
@@ -29,17 +29,22 @@ content %}
   </div>
 
   <!-- All documents in database related to course -->
-    <div class="container my-5">
-      <div id="content1" class="content">
-        {% for doc_type, doc_names in course_page_dict['course_documents_name_dict'].items() %}
-          <h3>{{ doc_type }}</h3>
-          <ul class="documentList">
-            {% for doc_name in doc_names %}
-            <li class="documentResult"><a>{{ doc_name }}</a></li>
-            {% endfor %}
-          </ul>
+  <div class="container my-5">
+    <div id="content1" class="content">
+      {% for doc_type, doc_names in
+      course_page_dict['course_documents_name_dict'].items() %}
+      <h3>{{ doc_type }}</h3>
+      <ul class="documentList">
+        {% for doc_name in doc_names %}
+        <li class="documentResult">
+          <a href="{{ url_for('views.document', document_name=doc_name) }}"
+            >{{ doc_name }}</a
+          >
+        </li>
         {% endfor %}
-      </div>
+      </ul>
+      {% endfor %}
+    </div>
     <!-- All comments in database related to course -->
     <div id="content2" class="content" style="display: none">
       <!-- Comment form -->

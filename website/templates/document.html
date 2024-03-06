@@ -1,10 +1,11 @@
-{% extends "base.html" %} {% block title %}Document{% endblock %} {% block
+{% extends "base.html" %} {% block title %}{{
+document_dict['categorization']['document name'] }}{% endblock %} {% block
 content%}
 <div class="container my-5">
   <!-- Banner -->
   <div class="banner text-center py-3 mb-4 border-bottom">
     <!-- FROM DATABASE -->
-    <h1>{{header}}</h1>
+    <h1>{{document_dict['categorization']['document name']}}</h1>
   </div>
 
   <!-- Three-column container -->
@@ -12,18 +13,22 @@ content%}
     <!-- First column -->
     <div class="col border-right">
       <!-- FROM DATABASE -->
-      <p>Author:{{ author }}</p>
+      <p>Author: <strong>{{ document_dict['upload']['author']}}</strong></p>
     </div>
     <!-- Second column -->
     <div class="col border-right">
       <!-- FROM DATABASE -->
-      <p>University:</p>
+      <p>University: {{ document_dict['categorization']['school'] }}</p>
+      <p>Course: {{document_dict['categorization']['course']}}</p>
+      <p>Subject: {{document_dict['categorization']['subject']}}</p>
     </div>
     <!-- Third column -->
     <div class="col">
       <!-- FROM DATABASE -->
-      <p>Annan information...?</p>
-      <p>Typ av dokument?</p>
+      <p>
+        Comment from Author: {{document_dict['comments']['upload_comment']}}
+      </p>
+      <p>Uploaded: {{document_dict['timestamp']['date']}}</p>
     </div>
   </div>
   <!-- Button bar -->

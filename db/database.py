@@ -480,6 +480,28 @@ class Database:
             if found:
                 break
         return course_ref
+    
+    def _get_document_id_by_name(self, document_name):
+        """
+        Returns the document ID for a given document name, searching within 'assignments' and 'exams' categories.
+        """
+        document_id = None
+        universities = self._get_keys('/Universities/')
+        for university in universities:
+            subjects = self._get_keys(f'/Universities/{university}')
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{university}/{subject}')
+                for course in courses:
+                    # Directly check in 'assignments' and 'exams' categories. We have to add paths if needed
+                    for doc_type in ['Assignments', 'Exams']:
+                        document_ids = self._get_keys(f'/Universities/{university}/{subject}/{course}/Documents/{doc_type}')
+                        for doc_id in document_ids:
+                            doc_ref = f'/Universities/{university}/{subject}/{course}/Documents/{doc_type}/{doc_id}'
+                            doc = db.reference(doc_ref).get()
+                            # Check if the document name matches the one we're looking for
+                            if doc and 'categorization' in doc and doc['categorization'].get('document name') == document_name:
+                                return doc_id  # Found the document ID
+        return document_id  # Return None if not found
 
     def _get_timestamp(self) -> dict:
         

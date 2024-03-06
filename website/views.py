@@ -59,28 +59,18 @@ def get_universities():
     subject_unis = d.get_subject_universities(subject)
     return jsonify(subject_unis)
 
-@views.route("/document")
-def document():
-
-    id = 1
-    document = d.get_document(id)
-
-    votes = d.get_document_votes(id)
-    upvotes = votes['upvotes']
-    downvotes = votes['downvotes']
-
-    upload_comment = d.get_document_upload_comment(id)
-    comments = d.get_document_comments(id)
-
-    header = document['upload']['header']
-    author = document['upload']['author']
-    date = document['timestamp']['date']
-    time = document['timestamp']['time']
+@views.route("document/<document_name>")
+def document(document_name):
+    id = d._get_document_id_by_name(document_name)
+    if id is None:
+        # Test Line
+        return "ID doesnt work", 404
+    document_dict = d.get_document(id)
 
     file_storage = d.file_storage
-    download_url = file_storage.generate_download_url(id) 
+    download_url = file_storage.generate_download_url(id)
 
-    return render_template("document.html", votes=votes, upload_comment=upload_comment, comments=comments, header=header, author=author, date=date, time=time, upvotes=upvotes, downvotes=downvotes, download_url=download_url)
+    return render_template("document.html", document_dict=document_dict, download_url=download_url)
 
 
 @views.route('course_page/<course_name>')
