@@ -17,7 +17,8 @@ class Database:
         user = {
             uid:{
                 'username': username,
-                'timestamp': self._get_timestamp()
+                'creation_date': self._get_timestamp()['date'],
+                'documents':[]
             }
         }
 
@@ -136,6 +137,13 @@ class Database:
         ref.update(votes)
 
         return True if votes == ref.get() else False
+
+    def get_user(self, uid):
+        
+        ref = db.reference(f'/Users/{uid}')
+        user = ref.get()
+        
+        return user
 
     def get_document_votes(self, document_id: int) -> dict:
         '''
@@ -619,4 +627,3 @@ def upload_comments_example():
 
 
 #os.path.dirname(os.path.abspath(__file__)).
-
