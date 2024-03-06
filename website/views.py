@@ -37,13 +37,9 @@ def upload():
 
 @views.route("/profile")
 def profile():
-    user = d.get_user()
-    username = user['username']
-    creation_date = user['creation_date']
-    user_documents = user['documents']
-
-    return render_template("profile.html", username = username, creation_date = creation_date, user_documents = user_documents)
-
+    
+    return render_template("profile.html")
+    
 @views.route('/get-courses')
 def get_courses():
     university = request.args.get('university')
@@ -99,3 +95,14 @@ def handle_search_error(error):
     executing the search() function when they press on the search button.
     '''
     return render_template('search_error.html')
+
+@views.route("/add_user", methods=["POST"])
+def add_user():
+    data = request.json
+    uid = data.get("uid")
+    username = data.get("username")
+    
+    # Add the user to the database
+    d.add_user(uid, username)
+    
+    return jsonify({"message": "User added successfully"})
