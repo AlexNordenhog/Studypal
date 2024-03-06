@@ -466,20 +466,19 @@ class Database:
         '''
         Returns course firebase reference.
         '''
-
+        found = False
         course_ref = None
-        schools = self._get_keys(f'/Universities/')
-
-        for school in schools:
-            subjects = self._get_keys(f'/Universities/{school}')
-            
+        universities = self._get_keys(f'/Universities/')
+        for university in universities:
+            subjects = self._get_keys(f'/Universities/{university}')
             for subject in subjects:
-                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                courses = self._get_keys(f'/Universities/{university}/{subject}')
                 if course_name in courses:
+                    found = True
+                    course_ref = f'Universities/{university}/{subject}/{course_name}/Course Info'
                     break
-
-        course_ref = str(courses + '/' + course_name + '/Course Info')
-
+            if found:
+                break
         return course_ref
 
     def _get_timestamp(self) -> dict:
@@ -504,12 +503,12 @@ class Database:
         Lecture Notes : [10, 11, 12, ...],
         Other Documents : [13, 14, 15, ...]}
         '''
-        course_id_dict = {}
+        course_documents_id_dict = {}
         document_types = self._get_keys(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents')
         for document_type in document_types:
             document_ids = self._get_keys(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}')
-            course_id_dict.update({document_type : document_ids})
-        return course_id_dict
+            course_documents_id_dict.update({document_type : document_ids})
+        return course_documents_id_dict
 
     def _get_university_and_subject_for_course_name(self, course_name):
         '''
@@ -525,12 +524,41 @@ class Database:
                 break
         return [university_name, subject_name]
 
+    def _get_document_names_for_course(self, course_university, course_subject, course_name, course_documents_id_dict):
+        '''
+        Takes a university, subject, a course name (str) and a course documents id dict 
+        as parameters and returns a dictionary including the document types and the document names.
+        The dictionary will be of the form:
+        {Graded exams : [A, B, C, ...], 
+        Non-Graded Exams : [D, E, F, ...],
+        Assignments : [G, H, I, ...],
+        Lecture Notes : [J, K, L, ...],
+        Other Documents : [M, N, O, ...]}
+        '''
+        course_documents_name_dict = {}
+        course_document_types = course_documents_id_dict.keys()
+        for document_type in course_document_types:
+            document_names_for_document_type = []
+            for id in course_documents_id_dict.get(document_type):
+                document_name = db.reference(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}/{id}/categorization').get()['Document Name']
+                document_names_for_document_type.append(document_name)
+            course_documents_name_dict.update({document_type : document_names_for_document_type})
+        return course_documents_name_dict
+
     def get_course_data(self, course_name):
-        course_name = self.course_name
         course_university_and_subject = self._get_university_and_subject_for_course_name(course_name)
         course_university = course_university_and_subject[0]
         course_subject = course_university_and_subject[1]
-
+        course_documents_id_dict = self._get_document_ids_for_course(course_university, course_subject, course_name)
+        course_documents_name_dict = self._get_document_names_for_course(course_university, course_subject, course_name, course_documents_id_dict)
+        course_data_dict = {
+            "course_name": course_name,
+            "course_university": course_university,
+            "course_subject": course_subject,
+            "course_documents_id_dict": course_documents_id_dict,
+            "course_documents_name_dict": course_documents_name_dict,
+        }
+        return course_data_dict
 
 class FileStorage:
     def __init__(self) -> None:
@@ -567,3 +595,50 @@ class FileStorage:
         return download_url
 
 d = Database()
+
+
+def upload_comments_example():
+
+    doc_1_upload_comment = d.get_document_upload_comment(1)
+
+    print(f'\nThis is the upload comment: {doc_1_upload_comment}\n')
+    doc_1_post_upload_comments = d.get_document_comments(1)
+
+    for key in doc_1_post_upload_comments.keys():
+        print(f'This is comment id: {key}, and the comment data is: {doc_1_post_upload_comments[key]}')
+
+#upload_comments_example()
+
+#print(d.add_document_vote(1, True, ''))
+#print(d.add_document_vote(1, True, ''))
+#print(d.add_document_vote(1, False, ''))
+
+
+
+#print(d.add_document_comment(1, 'student_1', 'so helpful'))
+#print(d.add_document_comment(1, 'toxic_student', 'y did u post this nonsense'))
+
+#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444 Analys 1', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Mathematics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
+#d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
+#d.add_course('Royal Institute of Simon Flisberg', 'Programming', 'PA2576', 'This is a programming course', 'Programvaruintensiv produktutveckling')
+
+#d.add_documet('pdf', 'PA2576', 'Royal Institute of Simon Flisberg', 'lecture notes from 28 feb', 'Programming', 'hampus', 'My Lecture Notes', 'Lecture Notes', ['programming', 'good'])
+#print(d.get_document(1))
+
+
+#os.path.dirname(os.path.abspath(__file__)).
+
+
+
+
+### Kladd ###
+# Reference to the Royal Institute of Simon Flisberg's MA1444 path
+# ref = db.reference('Universities/Royal Institute of Simon Flisberg/Mathematics/MA1444 Analys 1/Documents/Exams/2/categorization')
+
+# # Set the Course Info data at the new path
+# ref.child('Course Info').set({
+#     'Subject': 'Mathematics',
+#     'University': 'Royal Institute of Simon Flisberg'
+# })
+
+# db.reference('Universities/Blekinge Institute of Technology/Mathematics/MA1444/Documents/Exams/1/categorization').update({'Document Name': 'MA1444 Jesu Födelse Exam 0000/00/00'})
