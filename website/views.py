@@ -87,9 +87,10 @@ def document():
     return render_template("document.html", votes=votes, upload_comment=upload_comment, comments=comments, header=header, author=author, date=date, time=time, upvotes=upvotes, downvotes=downvotes, download_url=download_url)
 
 
-@views.route("/course_page")
-def course_page():
-    return render_template("course_page.html")
+@views.route('course_page/<course_name>')
+def course_page(course_name):
+    course_page_dict = d.get_course_data(course_name)
+    return render_template("course_page.html", course_page_dict=course_page_dict)
 
 @views.app_errorhandler(SearchError)
 def handle_search_error(error):

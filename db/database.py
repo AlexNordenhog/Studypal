@@ -627,3 +627,18 @@ def upload_comments_example():
 
 
 #os.path.dirname(os.path.abspath(__file__)).
+
+
+
+
+### Kladd ###
+# Reference to the Royal Institute of Simon Flisberg's MA1444 path
+# ref = db.reference('Universities/Royal Institute of Simon Flisberg/Mathematics/MA1444 Analys 1/Documents/Exams/2/categorization')
+
+# # Set the Course Info data at the new path
+# ref.child('Course Info').set({
+#     'Subject': 'Mathematics',
+#     'University': 'Royal Institute of Simon Flisberg'
+# })
+
+# db.reference('Universities/Blekinge Institute of Technology/Mathematics/MA1444/Documents/Exams/1/categorization').update({'Document Name': 'MA1444 Jesu Födelse Exam 0000/00/00'})
