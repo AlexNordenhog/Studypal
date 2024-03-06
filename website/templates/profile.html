@@ -4,8 +4,9 @@
 <style>
     /* Add your custom CSS styles here */
     .profile-card {
-        max-width: 500px;
-        margin: 50px auto;
+        width: 350px; /* Increased width for the profile card */
+        float: left; /* Changed float to left */
+        margin-bottom: 20px; /* Added margin-bottom to separate profile card from documents box */
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -13,11 +14,33 @@
     }
     .profile-card h3 {
         margin-bottom: 15px;
+        margin-top: 20px; /* Increased margin-top for the "Welcome" text */
         color: #333;
     }
     .profile-card p {
         margin-bottom: 10px;
         color: #666;
+    }
+    .profile-picture {
+        width: 150px; /* Increased width for the profile picture */
+        height: 150px; /* Increased height for the profile picture */
+        border-radius: 50%; /* Rounded border for circular profile picture */
+        margin: 20px auto 30px; /* Changed margin to include larger margin-top and margin-bottom */
+        display: block; /* Display as a block element */
+        object-fit: cover; /* Ensure the image covers the entire area */
+    }
+    .document-box {
+        max-width: calc(100% - 390px); /* Adjusted max-width for the documents box */
+        margin-left: 370px; /* Changed margin-left to accommodate the profile card */
+        margin-top: 40px; /* Added margin-top to create space between the top and the boxes */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+    .document-box h3 {
+        margin-bottom: 15px;
+        color: #333;
     }
     .document-list {
         margin-top: 20px;
@@ -37,47 +60,134 @@
         color: #007bff;
         text-decoration: none;
     }
+    /* Custom styles for the submit button */
+    .submit-btn {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .submit-btn:hover {
+        background-color: #0056b3;
+    }
+    /* Add space between profile card and footer */
+    footer {
+        clear: both; /* Ensure the footer stays below both floating elements */
+        margin-top: 40px; /* Add space between the profile card and the footer */
+    }
 </style>
 
 <div class="profile-card" id="profileContainer"></div>
 
+<div class="document-box">
+    <h3>My Uploads</h3>
+    <div id="documentList"></div>
+</div>
+
 <script type="module">
+    // Function to check if user exists in the database
+    function userExists(uid) {
+        const dbRef = ref(getDatabase());
+        return get(child(dbRef, `Users/${uid}`)).then((snapshot) => {
+            return snapshot.exists();
+        }).catch((error) => {
+            console.error(error);
+            return false;
+        });
+    }
+
+    // Firebase configuration and initialization
     import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, child, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            const dbRef = ref(getDatabase());
-            const uid = user.uid;
-            
-            get(child(dbRef, `Users/${user.uid}/username`)).then((snapshot) => {
-                let username = '';
-                if (snapshot.exists()) {
-                    username = snapshot.val().toString();
-                    // If username exists, fetch creation date
-                    get(child(dbRef, `Users/${user.uid}/creation_date`)).then((dateSnapshot) => {
-                        let creationDate = '';
-                        if (dateSnapshot.exists()) {
-                            creationDate = dateSnapshot.val().toString();
-                        } else {
-                            creationDate = 'Unknown';
-                        }
-                        // Display profile including username and creation date
-                        displayProfile(user.displayName, username, user.email, creationDate);
-                    }).catch((error) => {
-                        console.error(error);
-                    });
-                } else {
-                    // If username doesn't exist, display form to add username
-                    displayUsernameForm();
+    // Function to display profile information
+    function displayProfile(uid, user) {
+        get(child(ref(getDatabase()), `Users/${uid}/username`)).then((snapshot) => {
+            let username = '';
+            if (snapshot.exists()) {
+                username = snapshot.val().toString();
+            } else {
+                username = 'unknown user';
+            }
+
+            // Display profile information
+            let profileView = `
+                <img src="${user.photoURL}" alt="Profile Picture" class="profile-picture">
+                <h3>Welcome, ${user.displayName}</h3>
+                <p>Username: ${username}</p>
+                <p>Email: ${user.email}</p>
+                <!-- Add more profile information here -->
+            `;
+
+            // Fetch user creation date from the database
+            get(child(ref(getDatabase()), `Users/${uid}/creation_date`)).then((dateSnapshot) => {
+                let creationDate = '';
+                if (dateSnapshot.exists()) {
+                    creationDate = dateSnapshot.val().toString();
                 }
+
+                // Add Member since text here
+                profileView += `<p>Member since: ${creationDate}</p>`;
+
+                // Update profile container with the profile view
+                document.getElementById("profileContainer").innerHTML = profileView;
             }).catch((error) => {
                 console.error(error);
+            });
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    // Function to display the document list
+    function displayDocumentList(uid) {
+        const documentListRef = ref(getDatabase(), `Users/${uid}/Documents/`);
+        get(documentListRef).then((snapshot) => {
+            const documentList = snapshot.val();
+
+            let documentListView = '';
+            if (documentList !== null && Object.keys(documentList).length > 0) {
+                Object.keys(documentList).forEach((key) => {
+                    const documentId = documentList[key];
+                    documentListView += `
+                        <div class="document-item">
+                            <a href="/PDF/${documentId}" class="document-link">Document ${documentId}</a>
+                        </div>
+                    `;
+                });
+            } else {
+                documentListView += '<p class="no-documents-message">No uploads yet. ';
+                documentListView += '<a href="/upload" class="upload-link">Upload your first document</a>.</p>';
+            }
+            document.getElementById("documentList").innerHTML = documentListView;
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    // Fetch user data and display profile and document list
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const uid = user.uid;
+
+            userExists(uid).then((exists) => {
+                if (exists) {
+                    // Display profile
+                    displayProfile(uid, user);
+
+                    // Display document list
+                    displayDocumentList(uid);
+                } else {
+                    window.location.href = '/create_profile'
+                }
             });
         } else {
             // Provide login prompt
@@ -89,20 +199,5 @@
             document.getElementById("profileContainer").innerHTML = loginPrompt;
         }
     });
-
-    function displayProfile(displayName, username, email, creationDate) {
-        let profileView = `
-            <h3>Welcome, ${displayName}!</h3>
-            <p>Username: ${username}</p>
-            <p>Email: ${email}</p>
-            <p>Member since: ${creationDate}</p>
-            <!-- Add more profile information here -->
-        `;
-        document.getElementById("profileContainer").innerHTML = profileView;
-    }
-
-    function displayUsernameForm() {
-        // Add code here to display the form for adding a username
-    }
 </script>
 {% endblock %}

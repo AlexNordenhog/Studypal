@@ -96,3 +96,7 @@ def add_user():
     d.add_user(uid, username)
     
     return jsonify({"message": "User added successfully"})
+
+@views.route("/create_profile")
+def create_profile():
+    return render_template("create_profile.html")

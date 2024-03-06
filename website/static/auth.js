@@ -42,7 +42,7 @@ if (user) {
         // move on as usual
     }
     else {
-        // create new user, ask for username
+        window.location.href = '/create_profile'
     }
     
     
@@ -54,6 +54,8 @@ if (user) {
     window.location.href = '/profile'
     // ...
 } else {
+
+    //window.location.href = '/create_profile'
     
     document.getElementById("login_text").textContent = "Login Options"
     // User is signed out
