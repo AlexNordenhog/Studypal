@@ -62,7 +62,7 @@ def get_universities():
 @views.route("/document")
 def document():
 
-    id = 1
+    id = 4
     document = d.get_document(id)
 
     votes = d.get_document_votes(id)
