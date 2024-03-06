@@ -1,28 +1,56 @@
-// <!-- Google pop up -->
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { GoogleAuthProvider, getAuth, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { GoogleAuthProvider, getAuth, signInWithPopup, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+import firebaseConfig from "./firebase-cfg.js";
 
-const firebaseConfig = {
-apiKey: "AIzaSyAjihd9ILzcVlPzCWrr4SLVJCOw6I1nzAc",
-authDomain: "studypal-8a379.firebaseapp.com",
-databaseURL: "https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app",
-projectId: "studypal-8a379",
-storageBucket: "studypal-8a379.appspot.com",
-messagingSenderId: "475383216328",
-appId: "1:475383216328:web:dcebc7bfd95236ebd7cdfd",
-measurementId: "G-68F0PLPVS6"
-};
-
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const db = getDatabase();
+
+
+function userExists(uid) {
+
+    const dbRef = ref(getDatabase());
+    
+    get(child(dbRef, "Users/")).then((snapshot) => {
+        let userExists = false;
+        snapshot.forEach((childSnapshot) => {
+            const current_uid = childSnapshot.key;
+            if (uid === current_uid) {
+                userExists = true;
+                return true;
+            }
+        });
+    }).catch((error) => {
+        console.error(error);
+    });
+
+    return false
+}
+
+
 
 onAuthStateChanged(auth, (user) => {
 if (user) {
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/auth.user
+    
     const uid = user.uid;
+    
+    if (userExists(uid)) {
+        // move on as usual
+    }
+    else {
+        // create new user, ask for username
+    }
+    
+    
+
+    //uname = get(ref(database), 'Users/' + uid)
+    //alert(uname)
+
+
     window.location.href = '/profile'
     // ...
 } else {

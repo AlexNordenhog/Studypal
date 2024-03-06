@@ -540,7 +540,7 @@ class Database:
         for document_type in course_document_types:
             document_names_for_document_type = []
             for id in course_documents_id_dict.get(document_type):
-                document_name = db.reference(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}/{id}/categorization').get()['Document Name']
+                document_name = db.reference(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}/{id}/categorization').get()['document name']
                 document_names_for_document_type.append(document_name)
             course_documents_name_dict.update({document_type : document_names_for_document_type})
         return course_documents_name_dict
@@ -618,7 +618,7 @@ def upload_comments_example():
 #print(d.add_document_comment(1, 'student_1', 'so helpful'))
 #print(d.add_document_comment(1, 'toxic_student', 'y did u post this nonsense'))
 
-#d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444 Analys 1', 'Royal Institute of Simon Flisberg', 'This is my exma', 'Mathematics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
+# d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is my exma', 'Mathematics', 'some_user', 'Some exam i found in the trashcan', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_course('Royal Institute of Simon Flisberg', 'Economics', 'IY0000', 'En introduktionskurs', 'Företagsekonomi - Introduktionskurs')
 #d.add_course('Royal Institute of Simon Flisberg', 'Programming', 'PA2576', 'This is a programming course', 'Programvaruintensiv produktutveckling')
 
@@ -627,3 +627,6 @@ def upload_comments_example():
 
 
 #os.path.dirname(os.path.abspath(__file__)).
+
+
+

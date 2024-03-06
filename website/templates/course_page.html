@@ -3,17 +3,14 @@ content %}
 <div class="container my-5">
   <div class="banner text-center py-3 mb-4 border-bottom">
     <!-- Importet from database -->
-    <h1>Course name...</h1>
+    <h1>{{ course_page_dict['course_name'] }}</h1>
   </div>
   <div class="row">
     <div class="col border-right">
-      <p>Info from database</p>
-    </div>
-    <div class="col border-right">
-      <p>Info from database</p>
+      <p>University: {{ course_page_dict['course_university'] }}</p>
     </div>
     <div class="col">
-      <p>Info from database</p>
+      <p>Subject: {{ course_page_dict['course_subject'] }}</p>
     </div>
   </div>
   <div class="container-fluid text-center my-4">
@@ -31,11 +28,18 @@ content %}
     </div>
   </div>
 
-  <div class="container">
-    <!-- All documents in database related course -->
-    <div id="content1" class="content">
-      <p>documents</p>
-    </div>
+  <!-- All documents in database related to course -->
+    <div class="container my-5">
+      <div id="content1" class="content">
+        {% for doc_type, doc_names in course_page_dict['course_documents_name_dict'].items() %}
+          <h3>{{ doc_type }}</h3>
+          <ul class="documentList">
+            {% for doc_name in doc_names %}
+            <li class="documentResult"><a>{{ doc_name }}</a></li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      </div>
     <!-- All comments in database related to course -->
     <div id="content2" class="content" style="display: none">
       <!-- Comment form -->
@@ -97,6 +101,17 @@ content %}
   }
   .comment-text {
     margin-top: 5px;
+  }
+  .documentList {
+    list-style-type: none;
+    padding: 0;
+  }
+  .documentResult {
+    background-color: #f0f0f0;
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 </style>
 
