@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Create Profile{% endblock %}
+{% block content %}
+<style>
+    /* Add your custom CSS styles here */
+    .profile-form {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+    .profile-form label {
+        display: block;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    .profile-form input[type="text"],
+    .profile-form button {
+        width: calc(100% - 22px); /* Same width as username input */
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .profile-form input[type="text"] {
+        width: calc(100% - 22px); /* Same width as username input */
+    }
+    .profile-form button {
+        background-color: white; /* Change color to white */
+        color: #007bff; /* Text color */
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .profile-form button.add-image {
+        background-color: white; /* Change color to white */
+        color: #007bff; /* Text color */
+    }
+    .profile-form button:hover {
+        background-color: #f0f0f0; /* Hover color */
+    }
+    #image-input {
+        display: none; /* Hide the input field */
+    }
+</style>
+
+<div class="profile-form">
+    <h2>Create Your Profile</h2>
+    <form id="profileForm">
+        <label for="username">Enter your username:</label>
+        <input type="text" id="username" name="username" required>
+        <button type="button" class="add-image">Add Profile Image</button>
+        <input type="file" id="image-input" accept="image/*">
+        <br>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<script type="module">
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getDatabase, ref, child, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    function userExists(uid) {
+        const dbRef = ref(getDatabase());
+
+        return get(child(dbRef, "Users/")).then((snapshot) => {
+            let userExists = false;
+            snapshot.forEach((childSnapshot) => {
+                const current_uid = childSnapshot.key;
+                if (uid === current_uid) {
+                    userExists = true;
+                    return true;
+                }
+            });
+            return userExists;
+        }).catch((error) => {
+            console.error(error);
+            return false;
+        });
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const uid = user.uid;
+
+            userExists(uid).then((exists) => {
+                if (exists) {
+                    document.getElementById("profileForm").addEventListener("submit", function(event) {
+                        event.preventDefault(); // Prevent default form submission
+
+                        // Get the username from the form input
+                        const username = document.getElementById("username").value;
+
+                        // Send a POST request to the Flask server to add the user
+                        fetch('/add_user', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ uid: uid, username: username })
+                        })
+                        .then((response) => {
+                            if (response.ok) {
+                                // User added successfully, redirect to profile page or perform other actions
+                                window.location.href = '/profile'; // Redirect to profile page
+                            } else {
+                                console.error('Error adding user');
+                            }
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                    });
+                } else {
+                    // Handle if user does not exist
+                }
+            });
+        }
+    });
+
+    // Add event listener to the "Add Image" button
+    document.querySelector(".add-image").addEventListener("click", function() {
+        // Trigger click event on the hidden file input
+        document.getElementById("image-input").click();
+    });
+
+    // Add event listener to the file input
+    document.getElementById("image-input").addEventListener("change", function(event) {
+        // Handle file selection
+        const file = event.target.files[0];
+        console.log("Selected file:", file);
+    });
+
+</script>
+
+
+{% endblock %}

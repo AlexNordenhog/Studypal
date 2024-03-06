@@ -37,15 +37,38 @@
         color: #007bff;
         text-decoration: none;
     }
+    /* Custom styles for the submit button */
+    .submit-btn {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .submit-btn:hover {
+        background-color: #0056b3;
+    }
 </style>
 
 <div class="profile-card" id="profileContainer"></div>
 
 <script type="module">
+    function userExists(uid) {
+        const dbRef = ref(getDatabase());
+        return get(child(dbRef, `Users/${uid}`)).then((snapshot) => {
+            return snapshot.exists();
+        }).catch((error) => {
+            console.error(error);
+            return false;
+        });
+    }
+
     import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, child, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -54,30 +77,69 @@
         if (user) {
             const dbRef = ref(getDatabase());
             const uid = user.uid;
-            
-            get(child(dbRef, `Users/${user.uid}/username`)).then((snapshot) => {
-                let username = '';
-                if (snapshot.exists()) {
-                    username = snapshot.val().toString();
-                    // If username exists, fetch creation date
-                    get(child(dbRef, `Users/${user.uid}/creation_date`)).then((dateSnapshot) => {
-                        let creationDate = '';
-                        if (dateSnapshot.exists()) {
-                            creationDate = dateSnapshot.val().toString();
+
+            userExists(uid).then((exists) => {
+                if (exists) {
+                    // User exists, proceed as normal
+                    get(child(dbRef, `Users/${uid}/username`)).then((snapshot) => {
+                        let username = '';
+                        if (snapshot.exists()) {
+                            username = snapshot.val().toString();
                         } else {
-                            creationDate = 'Unknown';
+                            username = 'unknown user';
                         }
-                        // Display profile including username and creation date
-                        displayProfile(user.displayName, username, user.email, creationDate);
+
+                        // Display profile
+                        let profileView = `
+                            <h3>Welcome, ${user.displayName}!</h3>
+                            <p>Username: ${username}</p>
+                            <p>Email: ${user.email}</p>
+                            <!-- Add more profile information here -->
+                        `;
+
+                        // Fetch user creation date from the database
+                        get(child(dbRef, `Users/${uid}/creation_date`)).then((dateSnapshot) => {
+                            let creationDate = '';
+                            if (dateSnapshot.exists()) {
+                                creationDate = dateSnapshot.val().toString();
+                            }
+
+                            // Add Member since text here
+                            profileView += `<p>Member since: ${creationDate}</p>`;
+
+                            // Fetch document list
+                            const documentListRef = ref(getDatabase(), `Users/${uid}/Documents/`);
+                            get(documentListRef).then((snapshot) => {
+                                const documentList = snapshot.val();
+
+                                if (documentList !== null && Object.keys(documentList).length > 0) {
+                                    profileView += '<div class="document-list"><h4>Document List</h4>';
+                                    Object.keys(documentList).forEach((key) => {
+                                        const documentId = documentList[key];
+                                        profileView += `
+                                            <div class="document-item">
+                                                <a href="/PDF/${documentId}" class="document-link">Document ${documentId}</a>
+                                            </div>
+                                        `;
+                                    });
+                                    profileView += '</div>';
+                                } else {
+                                    profileView += '<p class="no-documents-message">No uploads yet. ';
+                                    profileView += '<a href="/upload" class="upload-link">Upload your first document</a>.</p>';
+                                }
+                                document.getElementById("profileContainer").innerHTML = profileView;
+                            }).catch((error) => {
+                                console.error(error);
+                            });
+                        }).catch((error) => {
+                            console.error(error);
+                        });
                     }).catch((error) => {
                         console.error(error);
                     });
                 } else {
-                    // If username doesn't exist, display form to add username
-                    displayUsernameForm();
+                    window.location.href = '/create_profile'
                 }
-            }).catch((error) => {
-                console.error(error);
             });
         } else {
             // Provide login prompt
@@ -89,20 +151,5 @@
             document.getElementById("profileContainer").innerHTML = loginPrompt;
         }
     });
-
-    function displayProfile(displayName, username, email, creationDate) {
-        let profileView = `
-            <h3>Welcome, ${displayName}!</h3>
-            <p>Username: ${username}</p>
-            <p>Email: ${email}</p>
-            <p>Member since: ${creationDate}</p>
-            <!-- Add more profile information here -->
-        `;
-        document.getElementById("profileContainer").innerHTML = profileView;
-    }
-
-    function displayUsernameForm() {
-        // Add code here to display the form for adding a username
-    }
 </script>
 {% endblock %}

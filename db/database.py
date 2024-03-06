@@ -22,6 +22,8 @@ class Database:
             }
         }
 
+        print(user)
+
         ref.update(user)
             
     def add_documet(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, username: str, header: str, type_of_document: str, tags: list) -> bool:
