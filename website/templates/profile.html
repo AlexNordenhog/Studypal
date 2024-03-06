@@ -1,25 +1,51 @@
 {% extends "base.html" %}
-
 {% block title %}Profile{% endblock %}
-
 {% block content %}
+<style>
+    .profile-card {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+    .profile-card h3 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+    .profile-card p {
+        margin-bottom: 10px;
+        color: #666;
+    }
+    .document-list {
+        margin-top: 20px;
+    }
+    .document-item {
+        margin-bottom: 10px;
+    }
+    .document-link {
+        color: #007bff;
+        text-decoration: none;
+    }
+    .no-documents-message {
+        font-style: italic;
+        color: #888;
+    }
+    .upload-link {
+        color: #007bff;
+        text-decoration: none;
+    }
+</style>
+
+<div class="profile-card" id="profileContainer"></div>
+
 <script type="module">
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getDatabase, ref, child, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAjihd9ILzcVlPzCWrr4SLVJCOw6I1nzAc",
-        authDomain: "studypal-8a379.firebaseapp.com",
-        databaseURL: "https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "studypal-8a379",
-        storageBucket: "studypal-8a379.appspot.com",
-        messagingSenderId: "475383216328",
-        appId: "1:475383216328:web:dcebc7bfd95236ebd7cdfd",
-        measurementId: "G-68F0PLPVS6"
-    };
-
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
@@ -35,42 +61,50 @@
                     username = 'unknown user';
                 }
 
-                // User is signed in, display profile
-                const profileView = `
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-md-6 offset-md-3">
-                                <div class="card mt-5">
-                                    <div class="card-body">
-                                        <h3 class="card-title">Welcome, ${username}!</h3>
-                                        <p class="card-text">Email: ${user.email}</p>
-                                        <p class="card-text">User ID: ${user.uid}</p>
-                                        <!-- Add more profile information here -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                // Display profile
+                let profileView = `
+                    <h3>Welcome, ${user.displayName}!</h3>
+                    <p>Username: ${username}</p>
+                    <p>Email: ${user.email}</p>
+                    <!-- Add more profile information here -->
                 `;
-                document.getElementById("profileContainer").innerHTML = profileView;
+
+                // Fetch document list
+                const documentListRef = ref(getDatabase(), `Users/${user.uid}/Documents/`);
+                get(documentListRef).then((snapshot) => {
+                    const documentList = snapshot.val();
+
+                    if (documentList !== null && Object.keys(documentList).length > 0) {
+                        profileView += '<div class="document-list"><h4>Document List</h4>';
+                        Object.keys(documentList).forEach((key) => {
+                            const documentId = documentList[key];
+                            profileView += `
+                                <div class="document-item">
+                                    <a href="/PDF/${documentId}" class="document-link">Document ${documentId}</a>
+                                </div>
+                            `;
+                        });
+                        profileView += '</div>';
+                    } else {
+                        profileView += '<p class="no-documents-message">No uploads yet. ';
+                        profileView += '<a href="/upload" class="upload-link">Upload your first document</a>.</p>';
+                    }
+                    document.getElementById("profileContainer").innerHTML = profileView;
+                }).catch((error) => {
+                    console.error(error);
+                });
             }).catch((error) => {
                 console.error(error);
             });
         } else {
-            // User is not signed in, provide login link
+            // Provide login prompt
             const loginPrompt = `
-                <div class="container-box">
-                    <div class="card mt-5">
-                        <div class="card-body login-prompt">
-                            <p>Please <a href="/login" class="login-link">log in</a> to view your profile.</p>
-                        </div>
-                    </div>
+                <div class="login-prompt">
+                    <p>Please <a href="/login" class="login-link">log in</a> to view your profile.</p>
                 </div>
             `;
             document.getElementById("profileContainer").innerHTML = loginPrompt;
         }
     });
 </script>
-
-<div id="profileContainer"></div>
 {% endblock %}
