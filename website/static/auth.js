@@ -8,12 +8,44 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getDatabase();
 
+
+function userExists(uid) {
+
+    const dbRef = ref(getDatabase());
+    
+    get(child(dbRef, "Users/")).then((snapshot) => {
+        let userExists = false;
+        snapshot.forEach((childSnapshot) => {
+            const current_uid = childSnapshot.key;
+            if (uid === current_uid) {
+                userExists = true;
+                return true;
+            }
+        });
+    }).catch((error) => {
+        console.error(error);
+    });
+
+    return false
+}
+
+
+
 onAuthStateChanged(auth, (user) => {
 if (user) {
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/auth.user
     
     const uid = user.uid;
+    
+    if (userExists(uid)) {
+        // move on as usual
+    }
+    else {
+        // create new user, ask for username
+    }
+    
+    
 
     //uname = get(ref(database), 'Users/' + uid)
     //alert(uname)

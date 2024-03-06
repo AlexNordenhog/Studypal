@@ -95,3 +95,14 @@ def handle_search_error(error):
     executing the search() function when they press on the search button.
     '''
     return render_template('search_error.html')
+
+@views.route("/add_user", methods=["POST"])
+def add_user():
+    data = request.json
+    uid = data.get("uid")
+    username = data.get("username")
+    
+    # Add the user to the database
+    d.add_user(uid, username)
+    
+    return jsonify({"message": "User added successfully"})
