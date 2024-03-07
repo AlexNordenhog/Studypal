@@ -313,13 +313,6 @@ class Database:
 
         return all_subject_courses
     
-    def get_all_universities(self):
-        '''
-        Returns a list of all universities in the database.
-        '''
-        universities = self._get_keys('Universities')
-        return universities
-
     def get_all_unique_subjects(self):
         '''
         Returns a list of all subjects in the database (no duplicates).
