@@ -202,27 +202,48 @@
   }
 </style>
 
-<!-- Script för att importera javascript i static foldern -->
-<script
-  type="module"
-  src="{{url_for('static', filename='pdf_viewer.js') }}"
-></script>
+<!-- Script for Firebase authentication and voting -->
+<script type="module">
+    // Firebase configuration and initialization
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getDatabase, ref, child, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-<!-- Include PDF.js -->
-<script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-<!-- Adds the comment  -->
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("likeBtn").addEventListener("click", function() {
-        castVote(true);
+    // Function to check if user exists in the database
+    function userExists(uid) {
+        const dbRef = ref(getDatabase());
+        return get(child(dbRef, `Users/${uid}`)).then((snapshot) => {
+            return snapshot.exists();
+        }).catch((error) => {
+            console.error(error);
+            return false;
+        });
+    }
+
+    // Check if user is signed in and get user's UID
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const uid = user.uid;
+            console.log("User is signed in with UID:", uid);
+            // Call your function here with UID if needed
+            document.getElementById("likeBtn").addEventListener("click", function() {
+                castVote(true, uid);
+            });
+
+            document.getElementById("dislikeBtn").addEventListener("click", function() {
+                castVote(false, uid);
+            });
+        } else {
+            console.log("User is signed out");
+            // Redirect user to sign in page or handle the case where user is not signed in
+        }
     });
 
-    document.getElementById("dislikeBtn").addEventListener("click", function() {
-        castVote(false);
-    });
-
-    function castVote(isUpvote) {
+    function castVote(isUpvote, uid) {
         var documentId = "{{ document_dict['id'] }}";
         if (!documentId) {
             alert("Document ID not available!");
@@ -231,7 +252,7 @@
         fetch("/vote_document", {
             method: "POST",
             body: JSON.stringify({
-                uid: 'vIFFzQ6MEBXOdsV7095oLUmnriF2', // Hardcoded user ID for testing
+                uid: uid,
                 document_id: documentId,
                 is_upvote: isUpvote
             }),
@@ -247,7 +268,6 @@
             console.error("Error:", error);
         });
     }
-  });
 
   document.getElementById("submitComment").addEventListener("click", function () {
     const commentInput = document.getElementById("commentInput");
