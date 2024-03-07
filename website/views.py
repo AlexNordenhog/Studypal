@@ -65,7 +65,13 @@ def document(document_name):
     if id is None:
         # Test Line
         return "ID doesnt work", 404
+    else:
+        print(id)
     document_dict = d.get_document(id)
+    if document_dict is None:
+        return "Document dict doesnt work", 404
+    else:
+        print(document_dict)
 
     file_storage = d.file_storage
     download_url = file_storage.generate_download_url(id)

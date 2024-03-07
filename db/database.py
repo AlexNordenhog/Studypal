@@ -430,49 +430,41 @@ class Database:
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
-        
+
         #print(id_lst_int)
         return id_lst_int
-    
+
     def _get_keys(self, ref_path) -> list:
         '''
         Get all keys from reference path in the database.
         '''
-        
+
         try:
             keys = list(db.reference(ref_path).get(shallow=True).keys())
         except:
             return []
 
         return keys
-    
+
     def _get_document_ref(self, id: int):
         '''
         Returns document firebase reference.
         '''
-
-        ref = None
         schools = self._get_keys(f'/Universities/')
-
         for school in schools:
             subjects = self._get_keys(f'/Universities/{school}')
-            
             for subject in subjects:
                 courses = self._get_keys(f'/Universities/{school}/{subject}')
-                    
                 for course in courses:
                     document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
-                    
                     for document_type in document_types:
                         document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
+                        for _id in document_ids:
+                            if int(_id) == int(id):
+                                return db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}')
+        print(f"Document with ID {id} not found.")
+        return None
 
-                    for _id in document_ids:
-                        if int(_id) == int(id):
-                            ref = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}')
-                            break
-
-        return ref
-    
     def _get_course_ref(self, course_name):
         '''
         Returns course firebase reference.
