@@ -156,12 +156,25 @@ def vote_document():
     data = request.json
     uid = data.get("uid")
     document_id = data.get("document_id")
-    vote_type = data.get("vote_type")  # 'upvote' or 'downvote'
-    
-    # Determine if it's an upvote or a downvote
-    is_upvote = vote_type == 'upvote'
+    is_upvote = data.get("is_upvote")
     
     # Add vote to the document in the database
-    d.add_vote(uid, document_id, is_upvote)
+    d.add_document_vote(document_id, uid, is_upvote)
     
     return jsonify({"message": "Vote added successfully"})
+
+@views.route("/get_username", methods=["POST"])
+def get_username():
+    data = request.json
+    uid = data.get("uid")
+
+    username = d.get_username(uid)
+
+    if username != None:
+        return jsonify({"username":username})
+    else:
+        return jsonify({"username":'unregistered user'})
+
+@views.route("/test-vote")
+def test_comment():
+    return render_template("/test-vote.html")

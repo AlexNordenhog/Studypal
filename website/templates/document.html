@@ -1,5 +1,6 @@
-{% extends "base.html" %} {% block title %} {{ document_dict['upload']['header']
-}} {% endblock %} {% block content%}
+{% extends "base.html" %}
+{% block title %} {{ document_dict['upload']['header'] }} {% endblock %}
+{% block content%}
 <div class="container my-5">
   <!-- Banner -->
   <div class="banner text-center py-3 mb-4 border-bottom">
@@ -49,8 +50,8 @@
 
     <!-- Right-aligned buttons -->
     <div>
-      <button type="button" class="btn btn-primary mx-1">Like</button>
-      <button type="button" class="btn btn-secondary mx-1">Dislike</button>
+      <button type="button" class="btn btn-primary mx-1" id="likeBtn">Like</button>
+      <button type="button" class="btn btn-secondary mx-1" id="dislikeBtn">Dislike</button>
       <button
         type="button"
         class="btn btn-secondary mx-1"
@@ -213,34 +214,66 @@
 <!-- Adds the comment  -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    document
-      .getElementById("submitComment")
-      .addEventListener("click", function () {
-        const commentInput = document.getElementById("commentInput");
-        const commentText = commentInput.value.trim();
+    document.getElementById("likeBtn").addEventListener("click", function() {
+        castVote(true);
+    });
 
-        if (commentText) {
-          // Create the comment element
-          const comment = document.createElement("div");
-          comment.classList.add("comment");
+    document.getElementById("dislikeBtn").addEventListener("click", function() {
+        castVote(false);
+    });
 
-          comment.innerHTML = `
-            <div class="comment-avatar">
-                <p>profilbild</p>
-            </div>
-            <div class="comment-content">
-                <div class="comment-author">Testnamn</div>
-                <div class="comment-text">${commentText}</div>
-            </div>
-        `;
-
-          // Append the new comment to the comments display area
-          document.querySelector(".comments-display").appendChild(comment);
-
-          // Clear the input field
-          commentInput.value = "";
+    function castVote(isUpvote) {
+        var documentId = "{{ document_dict['id'] }}";
+        if (!documentId) {
+            alert("Document ID not available!");
+            return;
         }
-      });
+        fetch("/vote_document", {
+            method: "POST",
+            body: JSON.stringify({
+                uid: 'vIFFzQ6MEBXOdsV7095oLUmnriF2', // Hardcoded user ID for testing
+                document_id: documentId,
+                is_upvote: isUpvote
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Successfully added vote')
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+    }
+  });
+
+  document.getElementById("submitComment").addEventListener("click", function () {
+    const commentInput = document.getElementById("commentInput");
+    const commentText = commentInput.value.trim();
+
+    if (commentText) {
+      // Create the comment element
+      const comment = document.createElement("div");
+      comment.classList.add("comment");
+
+      comment.innerHTML = `
+        <div class="comment-avatar">
+            <p>profilbild</p>
+        </div>
+        <div class="comment-content">
+            <div class="comment-author">Testnamn</div>
+            <div class="comment-text">${commentText}</div>
+        </div>
+    `;
+
+      // Append the new comment to the comments display area
+      document.querySelector(".comments-display").appendChild(comment);
+
+      // Clear the input field
+      commentInput.value = "";
+    }
   });
 </script>
 

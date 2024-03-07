@@ -132,7 +132,7 @@ class Database:
         
         return True if json_comment == comment_content else False
 
-    def add_document_vote(self, document_id: int, upvote: bool, username: str) -> bool:
+    def add_document_vote(self, document_id: int, uid: str, upvote: bool) -> bool:
         '''
         Add an up or downvote to a document. 
         '''
@@ -200,11 +200,11 @@ class Database:
         ref = self._get_document_ref(id)
         
         try:
-            ref.get()
+            document = ref.get()
+            document['id'] = id
+            return document
         except:
             return None
-        
-        return ref.get()
     
     def get_categorization(self, id: int):
         '''
@@ -612,6 +612,10 @@ class Database:
     def get_user_documents(self, uid):
         ref = db.reference(f'/Users/{uid}/Documents')
         return ref.get()
+    
+    def get_username(self, uid):
+        ref = db.reference(f'/Users/{uid}/username')
+        return ref.get()
 
 class FileStorage:
     def __init__(self) -> None:
@@ -650,22 +654,7 @@ class FileStorage:
 d = Database()
 
 
-def upload_comments_example():
 
-    doc_1_upload_comment = d.get_document_upload_comment(1)
-
-    print(f'\nThis is the upload comment: {doc_1_upload_comment}\n')
-    doc_1_post_upload_comments = d.get_document_comments(1)
-
-    for key in doc_1_post_upload_comments.keys():
-        print(f'This is comment id: {key}, and the comment data is: {doc_1_post_upload_comments[key]}')
-
-#upload_comments_example()
-
-
-#print(d.add_document_vote(1, True, ''))
-#print(d.add_document_vote(1, True, ''))
-#print(d.add_document_vote(1, False, ''))
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
@@ -683,6 +672,3 @@ def upload_comments_example():
 
 
 #os.path.dirname(os.path.abspath(__file__)).
-
-
-
