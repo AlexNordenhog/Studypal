@@ -118,6 +118,7 @@
     </div>
 </div>
 
+
 <script type="module">
 
     // Firebase configuration and initialization
@@ -180,7 +181,7 @@
         });
     }
 
-  // Function to display the document list
+    // Function to display the document list
     function displayDocumentList(uid) {
         const documentListRef = ref(getDatabase(), `Users/${uid}/Documents/`);
         get(documentListRef).then((snapshot) => {
@@ -200,7 +201,7 @@
                         const validationStatus = data.validated ? 'Validated' : 'Awaiting Verification';
                         documentListView += `
                             <div class="document-item">
-                                <a href="/PDF/${documentId}" class="document-link">${data.header}</a>
+                                <a href="/document/${documentId}" class="document-link">${data.header}</a>
                                 <span class="document-validation">${validationStatus}</span>
                             </div>
                         `;
@@ -222,6 +223,7 @@
             console.error(error);
         });
     }
+
 
 
     // Function to fetch document details

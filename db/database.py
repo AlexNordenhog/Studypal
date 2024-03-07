@@ -44,7 +44,8 @@ class Database:
                 'upload':{
                         'pdf_url': storage_path,
                         'author':username,
-                        'header':header
+                        'header':header,
+                        'validated':False
                 },
 
                 'timestamp':self._get_timestamp(),
@@ -70,9 +71,7 @@ class Database:
                                     'timestamp':self._get_timestamp()
                                 }
                         }
-                },
-
-                'validated':False
+                }
         }
 
         # Create db reference, then add to db
@@ -103,7 +102,7 @@ class Database:
         
         return
 
-    def add_document_comment(self, document_id, username, comment):
+    def add_document_comment(self, document_id, uid, text):
         '''
         Add a comment to a document
         '''
@@ -120,8 +119,8 @@ class Database:
 
         # Compile comment 
         comment_content = {
-            'comment':comment,
-            'username':username,
+            'text':text,
+            'uid':uid,
             'timestamp':self._get_timestamp()
         }
 
@@ -156,7 +155,7 @@ class Database:
         user = ref.get()
         
         return user
-
+ 
     def get_document_votes(self, document_id: int) -> dict:
         '''
         Returns dict with document upvotes & downvotes.

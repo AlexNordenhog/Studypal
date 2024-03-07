@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Comment</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Add Comment</h1>
+    <form id="commentForm">
+        <label for="document_id">Document ID:</label>
+        <input type="text" id="document_id" name="document_id"><br><br>
+        <label for="text">Comment:</label><br>
+        <textarea id="text" name="text"></textarea><br><br>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            $('#commentForm').submit(function(event) {
+                event.preventDefault();
+                var formData = {
+                    uid: 'vIFFzQ6MEBXOdsV7095oLUmnriF2',
+                    document_id: $('#document_id').val(),
+                    text: $('#text').val()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/add_document_comment',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function(response) {
+                        console.log(response.message);
+                        // Handle success, e.g., show a success message to the user
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        // Handle error, e.g., show an error message to the user
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

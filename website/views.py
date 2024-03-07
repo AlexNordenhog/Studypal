@@ -135,3 +135,33 @@ def get_document():
     else:
         return jsonify({"error": "Document not found"})
 
+@views.route("/add_document_comment", methods=["POST"])
+def add_document_comment():
+    data = request.json
+    uid = data.get("uid")
+    document_id = data.get("document_id")
+    text = data.get("text")
+    
+    # Add the comment to the document in the database
+    d.add_document_comment(document_id, uid, text)
+    
+    return jsonify({"message": "Comment added to document successfully"})
+
+@views.route("/test-comment")
+def comment():
+    return render_template("test-comment.html")
+
+@views.route("/vote_document", methods=["POST"])
+def vote_document():
+    data = request.json
+    uid = data.get("uid")
+    document_id = data.get("document_id")
+    vote_type = data.get("vote_type")  # 'upvote' or 'downvote'
+    
+    # Determine if it's an upvote or a downvote
+    is_upvote = vote_type == 'upvote'
+    
+    # Add vote to the document in the database
+    d.add_vote(uid, document_id, is_upvote)
+    
+    return jsonify({"message": "Vote added successfully"})
