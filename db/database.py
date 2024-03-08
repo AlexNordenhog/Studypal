@@ -147,7 +147,23 @@ class Database:
         ref = db.reference(f'{self._get_document_ref(document_id).path}/votes')
         ref.update(votes)
 
-        return True if votes == ref.get() else False
+        if votes == ref.get():
+            # Vote was successfully added
+
+
+            ##### fix linking with user
+            db.reference(f'/Users/{uid}/Votes').update({
+                {
+                    'document_id':document_id,
+                    'upvote':upvote
+                }
+            })
+            #####
+
+
+            return True
+
+        return False
 
     def get_user(self, uid):
         
