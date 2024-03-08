@@ -1,11 +1,143 @@
 {% extends "base.html" %} {% block title %}Upload{% endblock %} {% block content
-%}
-
-<h1 align="center">StudyPal</h1>
-<h1>This is the upload page</h1>
-
-<div class="input-group mb-3">
-  <input type="file" class="form-control" id="inputGroupFile02" />
-  <label class="input-group-text" for="inputGroupFile02">Upload</label>
-</div>
-{% endblock %}
+  %}
+  
+  
+  <style>
+    .banner {
+      background-color: #ececec;
+      border-bottom: 2px solid #d2d4d5; /* Adds a bottom border */
+    }
+  
+    .file-container {
+      background-color: #e4dddd;
+    }
+  
+    .submit-container {
+      background-color: #b6c4da;
+    }
+  
+    .form-control {
+      width: 100%; /* Adjust the width as per your requirement */
+      padding: 10px; /* Increase padding to make the input taller */
+      font-size: 16px; /* Increase font size if you want */
+      height: 50px; 
+      /* Additional styles to make the input bigger or more visually appealing */
+    }
+  
+    .center-align {
+      text-align: center;
+    }
+  
+    .input-group {
+      margin-bottom: 2px; /* Adjust as needed */
+    }
+  
+    .flex-container {
+      display: flex;
+      align-items: center; /* Aligns items vertically in the center */
+      justify-content: start; /* Aligns items to the start of the container horizontally */
+      margin-bottom: 10px; /* Adds some space between this and the next element */
+      width: 100%;
+    }
+  
+    .flex-container label {
+      white-space: nowrap; /* Prevent the label from wrapping */
+      margin-right: 10px; /* Adds some space between the label and the textarea */
+    }
+  
+    /* #imagePreview {
+      max-width: 100%;
+      height: auto;
+    }*/
+  
+  </style>
+  
+  <h1 class="center-align">StudyPal</h1>
+  
+  <h1 class="banner center-align">Upload Page</h1>
+  <br>
+  <div class="input-group mb-3">
+    <input type="file" class=" form-control" id="inputGroupFile02" accept=".pdf,image/*" onchange="previewPDF()" />
+    <label class="file-container input-group-text" for="inputGroupFile02">Upload</label>
+  </div>
+  
+  <div id="previewContainer" class="center-align">
+    <iframe id="pdfPreview" style="display: none; width:100%; height:500px;" frameborder="0"></iframe>
+    <img id="imagePreview" src="#" alt="Image preview" style="display: none; max-width:100%; max-height:500px;">
+  </div>
+  
+  <br>
+  
+  <label for="gradeSelect">Enter your grade here: </label>
+  <select id="gradeSelect">
+    <option value="select">Välj</option>
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
+    <option value="D">D</option>
+    <option value="E">E</option>
+    <option value="F">F</option>
+  </select>
+  <br>
+  
+  <label for="typeDocument">Enter the type of document: </label>
+  <select id="typeDocument">
+    <option value="select">Välj</option>
+    <option value="Exam">Exam</option>
+    <option value="Assignment">Assignment</option>
+    <option value="LectureNotes">Lecture Notes</option>
+  </select>
+  <br>
+  
+  <div class="flex-container">
+    <label for="courseCode">Enter the course code: </label>
+    <textarea id="courseCode" placeholder="Write your course code here..." rows="1" cols="20"></textarea>
+  </div>
+  
+  <div class="flex-container">
+    <label for="courseCode">Enter a comment here: </label>
+    <textarea id="commentBox" placeholder="Write your comment here..." rows="3" cols="50"></textarea>
+  </div>
+  <br>
+  <button class= "submit-container" type="button" onclick="submitToFirebase()">Submit Upload Details</button>
+    <!-- Create function submitToFirebase() etc -->
+  
+  
+  <script>
+  function previewPDF() {
+      var file = document.getElementById('inputGroupFile02').files[0];
+      var previewContainer = document.getElementById('previewContainer');
+      var pdfPreview = document.getElementById('pdfPreview');
+      var imagePreview = document.getElementById('imagePreview');
+  
+      // Hide both elements initially
+      pdfPreview.style.display = 'none';
+      imagePreview.style.display = 'none';
+  
+      if (file) {
+          var blobUrl = URL.createObjectURL(file);
+          
+          if (file.type === 'application/pdf') {
+              // Handle PDF files
+              pdfPreview.src = blobUrl;
+              pdfPreview.style.display = 'block';
+          } else if (file.type.match('image.*')) {
+              // Handle image files (JPG, PNG, etc.)
+              imagePreview.src = blobUrl;
+              imagePreview.style.display = 'block';
+              imagePreview.style.objectFit = 'contain'; // Ensure the image is zoomed to fit the box
+          }
+      }
+  }
+  
+  function submitToFirebase() {
+      // Implementation details for submitting to Firebase
+      console.log('Submit to Firebase function called');
+      // You would include your Firebase submission logic here
+    }
+  </script>
+  
+  
+  
+  {% endblock %}
+  
