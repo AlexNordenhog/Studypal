@@ -92,12 +92,15 @@
 
             userExists(uid).then((exists) => {
                 if (exists) {
+                window.location.href = '/login';
+                    
+                } else {
                     document.getElementById("profileForm").addEventListener("submit", function(event) {
                         event.preventDefault(); // Prevent default form submission
 
                         // Get the username from the form input
                         const username = document.getElementById("username").value;
-
+                        console.log(username)
                         // Send a POST request to the Flask server to add the user
                         fetch('/add_user', {
                             method: 'POST',
@@ -118,27 +121,12 @@
                             console.error(error);
                         });
                     });
-                } else {
-                    // Handle if user does not exist
                 }
             });
         } else {
             // Redirect to login page if no user is authenticated
             window.location.href = '/login';
         }
-    });
-
-    // Add event listener to the "Add Image" button
-    document.querySelector(".add-image").addEventListener("click", function() {
-        // Trigger click event on the hidden file input
-        document.getElementById("image-input").click();
-    });
-
-    // Add event listener to the file input
-    document.getElementById("image-input").addEventListener("change", function(event) {
-        // Handle file selection
-        const file = event.target.files[0];
-        console.log("Selected file:", file);
     });
 
 </script>
