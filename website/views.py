@@ -33,7 +33,13 @@ def search_results():
 
 @views.route("/upload")
 def upload():
+<<<<<<< HEAD
     return render_template("upload-document.html")
+=======
+    universities = d.get_all_universities()
+    subjects = d.get_all_unique_subjects()
+    return render_template("upload.html", universities=universities, subjects=subjects)
+>>>>>>> refs/remotes/origin/main
 
 @views.route("/profile")
 def profile():
