@@ -1,0 +1,85 @@
+{% extends "base.html" %} {% block title %}Upload{% endblock %} {% block content
+%}
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Document</title>
+</head>
+<body>
+  <h1>Upload Document</h1>
+  <form id="uploadForm">
+    <label for="pdf_file">Select PDF file:</label><br />
+    <input
+      type="file"
+      id="pdf_file"
+      name="pdf_file"
+      accept=".pdf"
+      required
+    /><br /><br />
+
+    <label for="course">Course:</label><br />
+    <input type="text" id="course" name="course" required /><br /><br />
+
+    <label for="school">School:</label><br />
+    <input type="text" id="school" name="school" required /><br /><br />
+
+    <label for="upload_comment">Upload Comment:</label><br />
+    <textarea
+      id="upload_comment"
+      name="upload_comment"
+      rows="4"
+      cols="50"
+      required
+    ></textarea
+    ><br /><br />
+
+    <label for="subject">Subject:</label><br />
+    <input type="text" id="subject" name="subject" required /><br /><br />
+
+    <label for="uid">User ID:</label><br />
+    <input type="text" id="uid" name="uid" required /><br /><br />
+
+    <label for="header">Header:</label><br />
+    <input type="text" id="header" name="header" required /><br /><br />
+
+    <label for="type_of_document">Type of Document:</label><br />
+    <input
+      type="text"
+      id="type_of_document"
+      name="type_of_document"
+      required
+    /><br /><br />
+
+    <label for="tags">Tags:</label><br />
+    <input type="text" id="tags" name="tags" required /><br /><br />
+
+    <button type="button" onclick="uploadDocument()">Upload</button>
+  </form>
+
+  <script>
+    function uploadDocument() {
+      var form = document.getElementById("uploadForm");
+      var formData = new FormData(form);
+
+      fetch("/upload_document", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.text();
+        })
+        .then((data) => {
+          console.log(data); // Handle success response
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+        });
+    }
+  </script>
+</body>
+
+{% endblock %}

@@ -33,7 +33,7 @@ def search_results():
 
 @views.route("/upload")
 def upload():
-    return render_template("upload.html")
+    return render_template("upload-document.html")
 
 @views.route("/profile")
 def profile():
@@ -177,3 +177,35 @@ def get_username():
 @views.route("/test-vote")
 def test_comment():
     return render_template("/test-vote.html")
+
+@views.route('/upload_document', methods=['POST'])
+def upload_document():
+    if 'pdf_file' not in request.files:
+        return "No file part"
+    
+    pdf_file = request.files['pdf_file']
+    
+    # You can access other form fields similarly: request.form['field_name']
+
+    # Check if the file is selected
+    if pdf_file.filename == '':
+        return "No selected file"
+
+    # Call the function to add document to the database
+    
+    d.add_document(
+        pdf_file_path=pdf_file.filename,
+        course=request.form['course'],
+        school=request.form['school'],
+        upload_comment=request.form['upload_comment'],
+        subject=request.form['subject'],
+        uid=request.form['uid'],
+        header=request.form['header'],
+        type_of_document=request.form['type_of_document'],
+        tags=request.form.getlist('tags')
+    )
+    
+    # Save the file to a location
+    #pdf_file.save('path/to/save/' + pdf_file.filename)
+    
+    return "Document uploaded successfully"

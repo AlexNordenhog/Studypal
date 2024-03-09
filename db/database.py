@@ -24,7 +24,7 @@ class Database:
 
         ref.update(user)
             
-    def add_documet(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
+    def add_document(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
         Save a document to the database.
         
@@ -33,7 +33,7 @@ class Database:
         
         # Compile document
         id = self._get_new_id()
-        storage_path = self.file_storage.upload_pdf(pdf_file_path, id)
+        storage_path = "wip"#self.file_storage.upload_pdf(pdf_file_path, id)
         user = db.reference(f'Users/{uid}').get()
         try:
             username = user['username']
