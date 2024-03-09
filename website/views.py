@@ -215,7 +215,3 @@ def upload_document():
     #pdf_file.save('path/to/save/' + pdf_file.filename)
     
     return "Document uploaded successfully"
-
-@views.route("/temp-upload")
-def temp_upload():
-    return render_template("upload-document.html")

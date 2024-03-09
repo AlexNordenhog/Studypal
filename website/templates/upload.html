@@ -1,140 +1,83 @@
 {% extends "base.html" %} {% block title %}Upload{% endblock %} {% block content
 %}
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload Document</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<style>
-  /* Your CSS styles */
-</style>
 <body>
-  <h1 class="center-align">StudyPal</h1>
-  <h1 class="banner center-align">Upload Page</h1>
-  <br />
-  <div class="input-group mb-3">
+  <h1>Upload Document</h1>
+  <form id="uploadForm">
+    <label for="pdf_file">Select PDF file:</label><br />
     <input
       type="file"
-      class="form-control"
-      id="inputGroupFile02"
-      accept=".pdf,image/*"
+      id="pdf_file"
+      name="pdf_file"
+      accept=".pdf"
       onchange="previewPDF()"
-    />
-    <label class="file-container input-group-text" for="inputGroupFile02"
-      >Upload</label
-    >
-  </div>
+      required
+    /><br /><br />
 
-  <div id="previewContainer" class="center-align">
-    <iframe
-      id="pdfPreview"
-      style="display: none; width: 100%; height: 500px"
-      frameborder="0"
-    ></iframe>
-    <img
-      id="imagePreview"
-      src="#"
-      alt="Image preview"
-      style="display: none; max-width: 100%; max-height: 500px"
-    />
-  </div>
+    <label for="school">School:</label><br />
+    <input type="text" id="school" name="school" required /><br /><br />
 
-  <br />
+    <label for="subject">Subject:</label><br />
+    <select id="subject" name="subject" required>
+      <option value="" disabled selected>Select Subject</option>
+      <option value="Economics">Economics</option>
+      <option value="Programming">Programming</option>
+      <option value="Mathematics">Mathematics</option>
+      <option value="Other">Other</option></select
+    ><br /><br />
 
-  <label for="gradeSelect">Enter your grade here: </label>
-  <select id="gradeSelect">
-    <option value="select">Välj</option>
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-    <option value="D">D</option>
-    <option value="E">E</option>
-    <option value="F">F</option>
-  </select>
-  <br />
+    <label for="course">Course:</label><br />
+    <input type="text" id="course" name="course" required /><br /><br />
 
-  <label for="typeDocument">Enter the type of document: </label>
-  <select id="typeDocument">
-    <option value="select">Välj</option>
-    <option value="Exam">Exam</option>
-    <option value="Assignment">Assignment</option>
-    <option value="LectureNotes">Lecture Notes</option>
-  </select>
-  <br />
+    <label for="type_of_document">Type of Document:</label><br />
+    <select id="type_of_document" name="type_of_document" required>
+      <option value="" disabled selected>Select Type</option>
+      <option value="Assignments">Assignment</option>
+      <option value="Exams">Exam</option>
+      <option value="Course Materials">Lecture Material</option>
+      <option value="Lecture Notes">Lecture Notes</option>
+      <option value="Other">Other</option></select
+    ><br /><br />
 
-  <div class="flex-container">
-    <label for="courseCode">Enter the course code: </label>
+    <label for="header">Header:</label><br />
+    <input type="text" id="header" name="header" required /><br /><br />
+
+    <label for="upload_comment">Upload Comment:</label><br />
     <textarea
-      id="courseCode"
-      placeholder="Write your course code here..."
-      rows="1"
-      cols="20"
-    ></textarea>
-  </div>
-
-  <div class="flex-container">
-    <label for="header">Enter a title: </label>
-    <textarea
-      id="headerBox"
-      placeholder="Write your comment here..."
-      rows="1"
-      cols="20"
-    ></textarea>
-  </div>
-
-  <div class="flex-container">
-    <label for="courseCode">Enter a comment here: </label>
-    <textarea
-      id="commentBox"
-      placeholder="Write your comment here..."
-      rows="3"
+      id="upload_comment"
+      name="upload_comment"
+      rows="4"
       cols="50"
-    ></textarea>
-  </div>
-  <br />
-  <button class="submit-container" type="button" id="submitBtn">
-    Submit Upload Details
-  </button>
+      required
+    ></textarea
+    ><br /><br />
+
+    <label for="tags">Tags (Optional):</label><br />
+    <input type="text" id="tags" name="tags" /><br /><br />
+
+    <div id="previewContainer" class="center-align">
+      <iframe
+        id="pdfPreview"
+        style="display: none; width: 100%; height: 500px"
+        frameborder="0"
+      ></iframe>
+    </div>
+
+    <button type="button" id="submitUploadBtn">Submit Upload</button>
+  </form>
 
   <script>
-    $(document).ready(function () {
-      $("#submitBtn").click(function () {
-        var formData = new FormData();
-        formData.append("grade", $("#gradeSelect").val());
-        formData.append("documentType", $("#typeDocument").val());
-        formData.append("courseCode", $("#courseCode").val());
-        formData.append("comment", $("#commentBox").val());
-        formData.append("header", $("#headerBox").val());
-        formData.append("file", $("#inputGroupFile02")[0].files[0]);
-        formData.append("uid", "vIFFzQ6MEBXOdsV7095oLUmnriF2"); // Assuming this is the user ID
-
-        $.ajax({
-          type: "POST",
-          url: "/upload_document",
-          processData: false,
-          contentType: false,
-          data: formData,
-          success: function (response) {
-            console.log(response.message);
-            // Handle success, e.g., show a success message to the user
-          },
-          error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-            // Handle error, e.g., show an error message to the user
-          },
-        });
-      });
-    });
-
     function previewPDF() {
-      var file = document.getElementById("inputGroupFile02").files[0];
+      var file = document.getElementById("pdf_file").files[0];
       var pdfPreview = document.getElementById("pdfPreview");
-      var imagePreview = document.getElementById("imagePreview");
 
-      // Hide both elements initially
+      // Hide the preview initially
       pdfPreview.style.display = "none";
-      imagePreview.style.display = "none";
 
       if (file) {
         var blobUrl = URL.createObjectURL(file);
@@ -143,13 +86,104 @@
           // Handle PDF files
           pdfPreview.src = blobUrl;
           pdfPreview.style.display = "block";
-        } else if (file.type.match("image.*")) {
-          // Handle image files (JPG, PNG, etc.)
-          imagePreview.src = blobUrl;
-          imagePreview.style.display = "block";
-          imagePreview.style.objectFit = "contain"; // Ensure the image is zoomed to fit the box
         }
       }
+    }
+  </script>
+
+  <script type="module">
+    // Firebase configuration and initialization
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL,
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { app, auth, userExists } from "../static/index.js";
+
+    // Add event listener to submit button
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+
+        userExists(uid).then((exists) => {
+          if (exists) {
+            document
+              .getElementById("submitUploadBtn")
+              .addEventListener("click", () => {
+                uploadDocument(uid);
+              });
+          } else {
+            window.location.href = "/create_profile";
+          }
+        });
+      } else {
+        window.location.href = "/login";
+      }
+    });
+
+    function uploadDocument(uid) {
+      var fileInput = document.getElementById("pdf_file");
+      var file = fileInput.files[0];
+
+      // Create a storage reference
+      var storage = getStorage(app);
+      var storageRef = ref(storage, "temp/" + file.name);
+      var storageRef = ref(storage, `temp/${uid}/${file.name}`);
+
+      // Upload file to Firebase Storage
+      var uploadTask = uploadBytesResumable(storageRef, file);
+
+      // Listen for state changes, errors, and completion of the upload.
+      uploadTask.on(
+        "state_changed",
+        function (snapshot) {
+          // Handle upload progress
+          var progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Upload is " + progress + "% done");
+        },
+        function (error) {
+          // Handle unsuccessful upload
+          console.error("Error uploading file:", error);
+        },
+        function () {
+          // Handle successful upload
+          getDownloadURL(uploadTask.snapshot.ref).then(function (downloadURL) {
+            console.log("File available at", downloadURL);
+            // Once you have the downloadURL, you can add it to the form data and submit the form
+            var formData = new FormData(document.getElementById("uploadForm"));
+            formData.append("downloadURL", downloadURL); // Add downloadURL to form data
+            formData.append("uid", uid); // Add uid to form data
+
+            // Now you can submit the form with all data, including the downloadURL
+            submitForm(formData);
+          });
+        }
+      );
+    }
+
+    function submitForm(formData) {
+      // Submit the form with all data, including the downloadURL
+      fetch("/upload_document", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.text();
+        })
+        .then((data) => {
+          console.log(data); // Handle success response
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+        });
     }
   </script>
 </body>

@@ -33,7 +33,7 @@ class Database:
         
         # Compile document
         id = self._get_new_id()
-        storage_path = "wip"#self.file_storage.upload_pdf(pdf_file_path, id)
+        #storage_path = self.file_storage.upload_pdf(pdf_file_path, id)
         user = db.reference(f'Users/{uid}').get()
         try:
             username = user['username']
@@ -74,6 +74,10 @@ class Database:
                 }
         }
 
+        # Check if Course exists, if not, create it
+        if len(self._get_keys(f'/Universities/{school}/{subject}/')) < 1:
+            self.add_course(university=school, subject=subject, course_name=course)
+
         # Create db reference, then add to db
         ref = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{type_of_document}/{str(id)}')
         ref.update(doc_content)
@@ -88,13 +92,13 @@ class Database:
 
     
     
-    def add_course(self, university, subject, course_abbr, course_desc, course_name):
+    def add_course(self, university, subject, course_name):
         
-        ref = db.reference(f'Universities/{university}/{subject}/{course_abbr}/')
+        ref = db.reference(f'Universities/{university}/{subject}/{course_name}/')
         course_info = {'Course Info':{
 
-                'Description':course_desc,
-                'Name':course_name
+                'Subject':subject,
+                'University':university
             }
         }
 
