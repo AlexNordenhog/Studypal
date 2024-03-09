@@ -24,7 +24,7 @@ class Database:
 
         ref.update(user)
             
-    def add_document(self, pdf_file_path, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
+    def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
         Save a document to the database.
         
@@ -42,7 +42,7 @@ class Database:
 
         doc_content = {
                 'upload':{
-                        'pdf_url': storage_path,
+                        'pdf_url': pdf_url,
                         'author':username,
                         'header':header,
                         'validated':False

@@ -33,13 +33,9 @@ def search_results():
 
 @views.route("/upload")
 def upload():
-<<<<<<< HEAD
-    return render_template("upload-document.html")
-=======
     universities = d.get_all_universities()
     subjects = d.get_all_unique_subjects()
     return render_template("upload.html", universities=universities, subjects=subjects)
->>>>>>> refs/remotes/origin/main
 
 @views.route("/profile")
 def profile():
@@ -72,9 +68,13 @@ def document(document_id):
         return "Document dict doesnt work", 404
     else:
         pass
+
+    download_url = document_dict['upload']['pdf_url']
     
-    file_storage = d.file_storage
-    download_url = file_storage.generate_download_url(document_id)
+    # pdf id instead of download url
+    if 'https://' not in download_url:
+        file_storage = d.file_storage
+        download_url = file_storage.generate_download_url(document_id)
 
     return render_template("document.html", document_dict=document_dict, download_url=download_url)
 
@@ -200,7 +200,7 @@ def upload_document():
     # Call the function to add document to the database
     
     d.add_document(
-        pdf_file_path=pdf_file.filename,
+        pdf_url=request.form['downloadURL'],
         course=request.form['course'],
         school=request.form['school'],
         upload_comment=request.form['upload_comment'],
@@ -215,3 +215,7 @@ def upload_document():
     #pdf_file.save('path/to/save/' + pdf_file.filename)
     
     return "Document uploaded successfully"
+
+@views.route("/temp-upload")
+def temp_upload():
+    return render_template("upload-document.html")
