@@ -33,7 +33,9 @@ def search_results():
 
 @views.route("/upload")
 def upload():
-    return render_template("upload.html")
+    universities = d.get_all_universities()
+    subjects = d.get_all_unique_subjects()
+    return render_template("upload.html", universities=universities, subjects=subjects)
 
 @views.route("/profile")
 def profile():

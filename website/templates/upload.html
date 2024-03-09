@@ -66,7 +66,9 @@
     <img id="imagePreview" src="#" alt="Image preview" style="display: none; max-width:100%; max-height:500px;">
   </div>
   
-  <br>
+
+  <!-- Fråga om grade i slutet istället-->
+  <!-- <br>
   
   <label for="gradeSelect">Enter your grade here: </label>
   <select id="gradeSelect">
@@ -78,20 +80,39 @@
     <option value="E">E</option>
     <option value="F">F</option>
   </select>
+  <br> -->
+
+  <label for="documentUniversity">Enter the university that the document is from: </label>
+  <select id="documentUniversity">
+    <option selected>Choose a university...</option>
+    {% for university in universities %}
+    <option value="{{ university }}">{{ university }}</option>
+    {% endfor %}
+  </select>
   <br>
   
   <label for="typeDocument">Enter the type of document: </label>
   <select id="typeDocument">
-    <option value="select">Välj</option>
+    <option selected>Choose a document type...</option>
+    <option value="GradedExam">Graded Exam (not part of MVP, will be implemented later)</option>   
     <option value="Exam">Exam</option>
     <option value="Assignment">Assignment</option>
     <option value="LectureNotes">Lecture Notes</option>
+    <option value="OtherDocument">Other Document</option>
   </select>
   <br>
   
+  <!-- För course dropdown kommer vi behöva skriva en funktion i javascript som uppdaterar kurserna baserat på vilket universitet och subject som har valts-->
+    <!--Implementeras senare-->
+  <label for="existingCourse">Select the course for your document: </label>
+  <select id="existingCourse" disabled>
+   <!-- Här kommer vi lägga funktionen som populatear course dropdown-->
+  </select>
+  <br>
+<!-- Denna kommer också vara disabled tills användaren har valt university och subject-->
   <div class="flex-container">
-    <label for="courseCode">Enter the course code: </label>
-    <textarea id="courseCode" placeholder="Write your course code here..." rows="1" cols="20"></textarea>
+    <label for="nonExistingCourse">Enter the course code (if course not available in dropdown): </label>
+    <textarea id="courseCode" placeholder="Write your course code here..." rows="1" cols="20" disabled></textarea>
   </div>
   
   <div class="flex-container">
