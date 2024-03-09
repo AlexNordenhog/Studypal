@@ -59,25 +59,18 @@ def get_universities():
     subject_unis = d.get_subject_universities(subject)
     return jsonify(subject_unis)
 
-@views.route("document/<document_name>")
-def document(document_name):
-    id = d._get_document_id_by_name(document_name)
-    if id is None:
-        # Test Line
-        return "ID doesnt work", 404
-    else:
-        print(id)
-    document_dict = d.get_document(id)
+@views.route("document/<document_id>")
+def document(document_id):
+    document_dict = d.get_document(document_id)
     if document_dict is None:
         return "Document dict doesnt work", 404
     else:
-        print(document_dict)
-
+        pass
+    
     file_storage = d.file_storage
-    download_url = file_storage.generate_download_url(id)
+    download_url = file_storage.generate_download_url(document_id)
 
     return render_template("document.html", document_dict=document_dict, download_url=download_url)
-
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):

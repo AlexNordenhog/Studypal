@@ -31,20 +31,19 @@
   <!-- All documents in database related to course -->
   <div class="container my-5">
     <div id="content1" class="content">
-      {% for doc_type, doc_names in
-      course_page_dict['course_documents_name_dict'].items() %}
-      <h3>{{ doc_type }}</h3>
-      <ul class="documentList">
-        {% for doc_name in doc_names %}
-        <li class="documentResult">
-          <a href="{{ url_for('views.document', document_name=doc_name) }}"
-            >{{ doc_name }}</a
-          >
-        </li>
+        {% for doc_type, doc_names in course_page_dict['course_documents_name_dict'].items() %}
+        <h3>{{ doc_type }}</h3>
+        <ul class="documentList">
+            {% for doc_name in doc_names %}
+            <li class="documentResult">
+                {% set doc_id = course_page_dict['course_documents_id_dict'][doc_type][loop.index0] %}
+                <a href="{{ url_for('views.document', document_id=doc_id) }}">{{ doc_name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
         {% endfor %}
-      </ul>
-      {% endfor %}
     </div>
+</div>
     <!-- All comments in database related to course -->
     <div id="content2" class="content" style="display: none">
       <!-- Comment form -->
