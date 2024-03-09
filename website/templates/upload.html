@@ -128,11 +128,12 @@
     function uploadDocument(uid) {
       var fileInput = document.getElementById("pdf_file");
       var file = fileInput.files[0];
+      const uuid = generateUUID();
 
       // Create a storage reference
       var storage = getStorage(app);
-      var storageRef = ref(storage, "temp/" + file.name);
-      var storageRef = ref(storage, `temp/${uid}/${file.name}`);
+      var storageRef = ref(storage, "temp/" + uuid); //)file.name);
+      var storageRef = ref(storage, `temp/${uid}/${uuid}`);
 
       // Upload file to Firebase Storage
       var uploadTask = uploadBytesResumable(storageRef, file);
@@ -184,6 +185,25 @@
         .catch((error) => {
           console.error("There was a problem with the fetch operation:", error);
         });
+    }
+
+    function generateUUID() {
+      let uuid = "";
+      const chars = "0123456789abcdef";
+
+      for (let i = 0; i < 36; i++) {
+        if (i === 8 || i === 13 || i === 18 || i === 23) {
+          uuid += "-";
+        } else if (i === 14) {
+          uuid += "4";
+        } else if (i === 19) {
+          uuid += chars.charAt(Math.floor(Math.random() * 4) + 8);
+        } else {
+          uuid += chars.charAt(Math.floor(Math.random() * 16));
+        }
+      }
+
+      return uuid;
     }
   </script>
 </body>
