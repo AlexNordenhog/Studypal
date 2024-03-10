@@ -1,0 +1,66 @@
+{% extends "base.html" %} {% block title %}Upload Specifications{% endblock %}
+{% block content %}
+<head>
+  <title>Upload Specifications</title>
+</head>
+<body>
+  <h1>Upload Specifications</h1>
+
+  <!-- PDF Preview -->
+  <iframe
+    id="pdfPreview"
+    style="width: 100%; height: 500px"
+    frameborder="0"
+  ></iframe>
+
+  <script type="module">
+    // Firebase configuration and initialization
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL,
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import {
+      app,
+      auth,
+      userExists,
+    } from "{{ url_for('static', filename='index.js') }}";
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+
+        userExists(uid).then((exists) => {
+          if (exists) {
+            // Retrieve the tempURL parameter from the template context
+            const tempURL = "{{ url }}";
+            console.log(tempURL);
+
+            // Call the previewPDF function with the tempURL parameter
+            previewPDF(tempURL);
+          } else {
+            window.location.href = "/create_profile";
+          }
+        });
+      } else {
+        window.location.href = "/login";
+      }
+    });
+
+    // Function to preview the PDF
+    function previewPDF(tempURL) {
+      const pdfPreview = document.getElementById("pdfPreview");
+      if (tempURL) {
+        pdfPreview.src = tempURL;
+      } else {
+        // Handle case when tempURL is not provided
+        pdfPreview.style.display = "none";
+        console.error("Temporary URL not found");
+      }
+    }
+  </script>
+</body>
+{% endblock %}

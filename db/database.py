@@ -21,15 +21,34 @@ class Database:
                 'documents':[]
             }
         }
-
         ref.update(user)
-            
+    
+    def add_temp_pdf(self, uid, temp_id, temp_url: str):
+        user_ref = db.reference(f"/Users/{uid}/Temp")
+        user_ref.update({
+            temp_id:temp_url
+        })
+
+    def get_temp_pdf(self, temp_id: str):
+        users = self._get_keys("/Users")
+        pdf_url = None
+        
+        for uid in users:
+            if temp_id in self._get_keys(f"Users/{uid}/Temp/"):
+                pdf_url = db.reference(f"Users/{uid}/Temp/{temp_id}").get()
+        
+        return pdf_url
+    
     def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
         Save a document to the database.
         
         Returns bool to confirm if document was successfully uploaded or not.
         '''
+
+        # Test change in naming convention
+        date = self._get_timestamp()['date']
+        header = f'{course}_{type_of_document}_{date}'
         
         # Compile document
         id = self._get_new_id()
@@ -90,8 +109,6 @@ class Database:
         self._link_document_to_user(uid, id)
         return True
 
-    
-    
     def add_course(self, university, subject, course_name):
         
         ref = db.reference(f'Universities/{university}/{subject}/{course_name}/')
@@ -239,10 +256,6 @@ class Database:
             return None
 
         return doc['categorization']
-    
-    def get_full(self):
-        '''Returns full database dict'''
-        return db.reference('').get()
 
     def get_all_universities(self):
         '''
@@ -504,7 +517,7 @@ class Database:
         timestamp = {
             'date':datetime_now.strftime('%Y-%m-%d'),
             'time':datetime_now.strftime('%H:%M:%S')
-        }
+        }  
 
         return timestamp
 

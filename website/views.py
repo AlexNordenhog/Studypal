@@ -190,15 +190,12 @@ def upload_document():
         return "No file part"
     
     pdf_file = request.files['pdf_file']
-    
-    # You can access other form fields similarly: request.form['field_name']
 
     # Check if the file is selected
     if pdf_file.filename == '':
         return "No selected file"
 
-    # Call the function to add document to the database
-    
+    # Add document to db
     d.add_document(
         pdf_url=request.form['downloadURL'],
         course=request.form['course'],
@@ -211,14 +208,7 @@ def upload_document():
         tags=request.form.getlist('tags')
     )
     
-    # Save the file to a location
-    #pdf_file.save('path/to/save/' + pdf_file.filename)
-    
     return "Document uploaded successfully"
-
-@views.route("/categorize_document")
-def categorize_document():
-    return render_template("categorize_document.html")
 
 @views.route("/get_user_documents", methods=["POST"])
 def get_user_documents_view():
@@ -241,3 +231,22 @@ def get_user_documents_view():
 @views.route("/upload_v2")
 def upload_v2():
     return render_template("upload_v2.html")
+
+@views.route("/upload/temp", methods=["POST"])
+def upload_temp_pdf():
+    temp_url = request.json.get('temp_url')
+    temp_id = request.json.get('temp_id')
+    uid = request.json.get('uid')
+
+    if temp_url and temp_id and uid:
+        d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
+        return "Success"
+    else:
+        return "Missing parameters", 400
+
+
+
+@views.route('upload/specifications/<temp_id>', methods=["GET"])
+def upload_specificatoins(temp_id):
+    temp_url = d.get_temp_pdf(temp_id)
+    return render_template("upload_specifications.html", url=temp_url)
