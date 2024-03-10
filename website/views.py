@@ -168,17 +168,17 @@ def vote_document():
     
     return jsonify({"message": "Vote added successfully"})
 
-@views.route("/get_username", methods=["POST"])
-def get_username():
+@views.route("/get_user", methods=["POST"])
+def get_user():
     data = request.json
     uid = data.get("uid")
 
-    username = d.get_username(uid)
+    user = d.get_user(uid)
 
-    if username != None:
-        return jsonify({"username":username})
+    if user != None:
+        return jsonify({"username":user["username"],"creation_date":user["creation_date"]})
     else:
-        return jsonify({"username":'unregistered user'})
+        return jsonify({"username":'unregistered user', "creation_date":"none"})
 
 @views.route("/test-vote")
 def test_comment():
@@ -215,3 +215,25 @@ def upload_document():
     #pdf_file.save('path/to/save/' + pdf_file.filename)
     
     return "Document uploaded successfully"
+
+@views.route("/categorize_document")
+def categorize_document():
+    return render_template("categorize_document.html")
+
+@views.route("/get_user_documents", methods=["POST"])
+def get_user_documents_view():
+    data = request.json
+    uid = data.get("uid")
+
+    if uid is None:
+        return jsonify({"error": "UID is required"}), 400
+
+    documents = d.get_user_documents(uid)
+
+    if documents is not None:
+        # Format the list of IDs into a list of dictionaries
+        formatted_documents = [{"id": doc_id} for doc_id in documents]
+        return jsonify(formatted_documents)
+    else:
+        return jsonify([])  # Return an empty list if no documents are found
+

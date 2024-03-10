@@ -596,9 +596,14 @@ class Database:
         ref = db.reference(f'/Users/{uid}/Documents')
         return ref.get()
     
-    def get_username(self, uid):
-        ref = db.reference(f'/Users/{uid}/username')
-        return ref.get()
+    def get_user(self, uid):
+        ref = db.reference(f'/Users/{uid}/')
+        user = ref.get()
+        
+        return {
+            'username':user['username'],
+            'creation_date':user['creation_date']['date']
+        }
 
 class FileStorage:
     def __init__(self) -> None:

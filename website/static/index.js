@@ -10,25 +10,32 @@ const provider = new GoogleAuthProvider();
 const db = getDatabase();
 
 function userExists(uid) {
-    const dbRef = ref(getDatabase());
+    const url = "/get_user";
 
-    return get(child(dbRef, "Users/"))
-        .then((snapshot) => {
-            let userExists = false;
-            snapshot.forEach((childSnapshot) => {
-                const current_uid = childSnapshot.key;
-                if (uid === current_uid) {
-                    userExists = true;
-                    return true;
-                }
-            });
-            return userExists;
+    const data = {
+        uid: uid
+    };
+
+    return fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => response.json())
+        .then(data => {
+            if ("username" in data) {
+                return data.username !== "unregistered user";
+            }
+            return false;
         })
-        .catch((error) => {
+        .catch(error => {
             console.error(error);
             return false;
         });
 }
+
 
 
 
