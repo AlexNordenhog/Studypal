@@ -237,3 +237,7 @@ def get_user_documents_view():
     else:
         return jsonify([])  # Return an empty list if no documents are found
 
+
+@views.route("/upload_v2")
+def upload_v2():
+    return render_template("upload_v2.html")
