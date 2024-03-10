@@ -17,7 +17,7 @@ class Database:
         user = {
             uid:{
                 'username': username,
-                'creation_date': self._get_timestamp()['date'],
+                'creation_date': self._get_timestamp(),
                 'documents':[]
             }
         }
