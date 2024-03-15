@@ -10,7 +10,7 @@
   <!-- Combined Search Form -->
   <form action="/search" method="get" class="input-group my-3">
     <!-- University Dropdown -->
-    <select class="custom-select" id="university" name="university" onchange="dropDownMenu.updateSubjects(); dropDownMenu.updateCourses();">
+    <select class="custom-select" id="university" name="university" onchange="searchdropDownMenu.updateSubjects(); searchDropDownMenu.updateCourses();">
       <option selected>Choose a university...</option>
       {% for university in universities %}
       <option value="{{ university }}">{{ university }}</option>
@@ -18,7 +18,7 @@
     </select>
 
     <!-- Subject Dropdown -->
-    <select class="custom-select" id="subject" name="subject" onchange="dropDownMenu.updateUniversities(); dropDownMenu.updateCourses();">
+    <select class="custom-select" id="subject" name="subject" onchange="searchDropDownMenu.updateUniversities(); searchDropDownMenu.updateCourses();">
       <option selected>Choose a subject...</option>
       {% for subject in subjects %}
       <option value="{{ subject }}">{{ subject }}</option>
@@ -45,7 +45,7 @@
 </header>
 
 <script>
-class DropDownMenu {
+class SearchDropDownMenu {
     constructor() {
         this.initialUniversitiesHTML = document.getElementById('university').innerHTML;
         this.initialSubjectsHTML = document.getElementById('subject').innerHTML;
@@ -196,7 +196,7 @@ class DropDownMenu {
     }
 }
 
-var dropDownMenu = new DropDownMenu()
+var searchDropDownMenu = new SearchDropDownMenu()
 
 </script>
 

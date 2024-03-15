@@ -13,6 +13,93 @@
     frameborder="0"
   ></iframe>
 
+<!-- Document Type Dropdown-->
+<label for="documentType">Select the type of document that you have uploaded: </label>
+<select class="custom-select" id="documentType" name="documentType" onchange="categorizationDropDownMenu.updateDocCourses();">
+  <option selected>Choose a document type...</option>
+  {% for document_type in document_types %}
+  <option value="{{ document_type }}">{{ document_type }}</option>
+  {% endfor %}
+</select>
+
+<!-- University Dropdown-->
+<label for="documentUniversity">Select the university for your document: </label>
+<select class="custom-select" id="uploadUniversity" name="uploadUniversity" onchange="categorizationDropDownMenu.updateDocCourses();">
+  <option selected>Choose a university...</option>
+  {% for university in universities %}
+  <option value="{{ university }}">{{ university }}</option>
+  {% endfor %}
+</select>
+
+<!-- Subject Dropdown -->
+<label for="documentSubject">Select the subject for your document: </label>
+<select class="custom-select" id="uploadSubject" name="uploadSubject" onchange="categorizationDropDownMenu.updateDocCourses();">
+  <option selected>Choose a subject...</option>
+  {% for subject in subjects %}
+  <option value="{{ subject }}">{{ subject }}</option>
+  {% endfor %}
+</select>
+
+<!-- Courses Dropdown, initially disabled -->
+<label for="documentCourse">Select the course for your document: </label>
+<select class="custom-select" id="uploadCourse" name="uploadCourse" disabled>
+  <option selected>Choose a course...</option>
+  <!-- Course options will be populated based on the selected university and subject -->
+</select>
+
+<!-- Manual course entry if course not in database, initially disabled -->
+<label for="manualDocumentCourse">If the course does not appear in the dropdown menu, please enter the course code followed by the course name below: </label>
+<textarea class="custom-entry" id="manualDocumentCourse" placeholder="XY1234 Analys 1..." rows="1" cols="20" disabled></textarea>
+
+<script>
+  class CategorizationDropDownMenu {
+  
+      updateDocCourses() {
+          var universitySelect = document.getElementById('uploadUniversity');
+          var subjectSelect = document.getElementById('uploadSubject');
+          var documentSelect = document.getElementById('documentType')
+          var selectedUniversity = universitySelect.value;
+          var selectedSubject = subjectSelect.value;
+          var selectedDocument = documentSelect.value;
+  
+          setTimeout(() => {
+            if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
+                  (selectedSubject !== 'Choose a subject...' && selectedSubject) &&
+                  (selectedDocument !== 'Choose a document type...' && selectedDocument)) {
+                  fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
+                      .then(response => {
+                          if (!response.ok) {
+                              throw new Error('Failed to load courses'); // Error handling
+                          }
+                          return response.json();
+                      })
+                      .then(courses => {
+                          courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+                          courses.forEach(course => {
+                              var option = document.createElement('option');
+                              option.value = course;
+                              option.textContent = course; 
+                              courseSelect.appendChild(option);
+                          });
+                          courseSelect.disabled = false;
+                          courseEntry.disabled = false;
+                      })
+                      .catch(error => { // Error handling
+                          console.error('Failed to fetch courses:', error);
+                          alert('Failed to fetch courses. Please try again.');
+                      });
+              } else {
+                  courseSelect.innerHTML = '<option selected>Choose a course...</option>';
+                  courseSelect.disabled = true;
+                  courseEntry.disabled = true;
+              }
+          }, 50);
+      }
+  }
+
+  var categorizationDropDownMenu = new CategorizationDropDownMenu()
+</script>  
+
   <script type="module">
     // Firebase configuration and initialization
     import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
@@ -63,4 +150,16 @@
     }
   </script>
 </body>
+
+<style>
+  .custom-select {
+    width: 250px;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .custom-entry {
+      display: block;
+      margin-bottom: 10px;
+    }
+</style>
 {% endblock %}
