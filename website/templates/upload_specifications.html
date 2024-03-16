@@ -49,7 +49,7 @@
 
 <!-- Manual course entry if course not in database, initially disabled -->
 <label for="manualDocumentCourse">If the course does not appear in the dropdown menu, please enter the course code followed by the course name below: </label>
-<textarea class="custom-entry" id="manualDocumentCourse" placeholder="XY1234 Analys 1..." rows="1" cols="20" disabled></textarea>
+<textarea class="custom-entry" id="manualUploadCourse" placeholder="XY1234 Analys 1..." rows="1" cols="20" disabled></textarea>
 
 <script>
   class CategorizationDropDownMenu {
@@ -58,9 +58,13 @@
           var universitySelect = document.getElementById('uploadUniversity');
           var subjectSelect = document.getElementById('uploadSubject');
           var documentSelect = document.getElementById('documentType')
+          var courseSelect = document.getElementById('uploadCourse');
+          var courseEntry = document.getElementById('manualUploadCourse')
           var selectedUniversity = universitySelect.value;
           var selectedSubject = subjectSelect.value;
           var selectedDocument = documentSelect.value;
+          var selectedCourse = courseSelect.value;
+          var enteredCourse = courseEntry.value;
   
           setTimeout(() => {
             if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
