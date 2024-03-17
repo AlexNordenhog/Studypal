@@ -4,6 +4,33 @@ import datetime
 from pathlib import Path
 
 class Database:
+    universities = [
+        'Blekinge Institute of Technology', 'Chalmers University of Technology', 'Dalarna University', 'GIH - the Swedish School of Sport and Health Sciences', 'Halmstad University', 
+        'Jönköping University', 'KMH - Royal College of Music in Stockholm', 'KTH Royal Institute of Technology', 'Karlstad University', 'Karolinska Institutet', 'Konstfack', 
+        'Kristianstad University', 'Linköping University', 'Linneaus University', 'Luleå University of Technology', 'Lund University', 'Malmö University', 'Maria Cederschiöld University',
+        'Mid Sweden University', 'Mälardalen University', 'Royal Institute of Art', 'SLU - Swedish University of Agricultural Sciences', 'SMI - University College of Music Education in Stockholm', 
+        'Sophiahemmet University College', 'Stockholm School of Economics', 'Stockholm University', 'Stockholm University of the Arts', 'Swedish Defence University', 'Södertörn University', 
+        'The Swedish Red Cross University College', 'Umeå University', 'University College Stockholm', 'University West', 'University of Borås', 'University of Gothenburg', 
+        'University of Gävle', 'University of Skövde', 'Uppsala University', 'Örebro University'
+    ]
+    subjects = [
+        'Accounting', 'Aerospace Engineering', 'Anthropology', 'Archaeology', 'Art History', 'Astronomy', 'Bioengineering',
+        'Biology', 'Business Administration', 'Chemical Engineering', 'Chemistry', 'Civil Engineering', 'Civil Law',
+        'Classics', 'Communication Studies', 'Computer Science', 'Criminology', 'Culinary Arts', 'Curriculum and Instruction',
+        'Cybersecurity', 'Data Science', 'Dentistry', 'Economics', 'Educational Leadership', 'Educational Psychology',
+        'Electrical Engineering', 'English Literature', 'Entrepreneurship', 'Environmental Policy', 'Environmental Science',
+        'Fashion Design', 'Finance', 'Geographical Information Systems (GIS)', 'Geography', 'Geology', 'Graphic Design',
+        'History', 'Hotel Management', 'Human Resources', 'Information Systems', 'International Business', 'International Law',
+        'Languages and Linguistics', 'Law', 'Marine Biology', 'Marketing', 'Mathematics', 'Mechanical Engineering',
+        'Medicine', 'Music', 'Network Engineering', 'Nursing', 'Operations Management', 'Patent Law', 'Pharmacy',
+        'Philosophy', 'Photography', 'Physics', 'Political Science', 'Psychology', 'Public Health', 'Real Estate',
+        'Religious Studies', 'Software Development', 'Software Engineering', 'Special Education', 'Systems Engineering',
+        'Tax Law', 'Teaching and Learning', 'Theater and Performance Studies', 'Tourism Management', 'Veterinary Medicine', 'Visual Arts'
+    ]
+    document_types = ['Assignment', 'Exam', 'Graded Exam (not part of MVP)', 'Lecture Materials', 'Other Document']
+
+
+
     def __init__(self) -> None:
         db_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + '/cert.json')
         db_url = {'databaseURL':'https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/'}
@@ -429,7 +456,7 @@ class Database:
         new_id = max(id_lst) + 1
         return new_id
     
-    def _get_id_lst(self) -> list:
+    def _get_id_lst(self, is_validated=True) -> list:
         '''
         Returns a list containing all document id's.
         '''
@@ -450,9 +477,12 @@ class Database:
 
                         for document_type in document_types:
                             document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
-                        
+                            
                             for id in document_ids:
-                                id_lst_str.append(id)
+                                current_validation_status = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}/upload/validated').get()
+                                
+                                if current_validation_status == is_validated:
+                                    id_lst_str.append(id)
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
@@ -653,8 +683,6 @@ class FileStorage:
         return download_url
 
 d = Database()
-
-
 
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])

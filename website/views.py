@@ -249,6 +249,8 @@ def upload_temp_pdf():
 @views.route('upload/specifications/<temp_id>', methods=["GET"])
 def upload_specificatoins(temp_id):
     temp_url = d.get_temp_pdf(temp_id)
+
+    # added these to database aswell, update to fetch from d
     universities = [
         'Blekinge Institute of Technology', 'Chalmers University of Technology', 'Dalarna University', 'GIH - the Swedish School of Sport and Health Sciences', 'Halmstad University', 
         'Jönköping University', 'KMH - Royal College of Music in Stockholm', 'KTH Royal Institute of Technology', 'Karlstad University', 'Karolinska Institutet', 'Konstfack', 
@@ -278,3 +280,10 @@ def upload_specificatoins(temp_id):
                            universities=universities,
                            subjects=subjects,
                            document_types=document_types)
+
+@views.route("/document_approval")
+def get_waiting_documents():
+    document_ids = d._get_id_lst(is_validated=False)
+
+    return render_template("approval.html", 
+                           documents_ids=document_ids)
