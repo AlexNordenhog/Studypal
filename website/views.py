@@ -176,7 +176,7 @@ def get_user():
     user = d.get_user(uid)
 
     if user != None:
-        return jsonify({"username":user["username"],"creation_date":user["creation_date"]})
+        return jsonify({"username":user["username"],"creation_date":user["creation_date"],"role":user["role"]})
     else:
         return jsonify({"username":'unregistered user', "creation_date":"none"})
 
@@ -285,5 +285,10 @@ def upload_specificatoins(temp_id):
 def get_waiting_documents():
     document_ids = d._get_id_lst(is_validated=False)
 
-    return render_template("approval.html", 
+    return render_template("approval.html",
                            documents_ids=document_ids)
+
+@views.route("validate_document/<document_id>", methods=["POST"])
+def validate_document(document_id):
+    d.validate_document(document_id)
+    return 

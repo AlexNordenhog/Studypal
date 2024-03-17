@@ -45,7 +45,8 @@ class Database:
             uid:{
                 'username': username,
                 'creation_date': self._get_timestamp(),
-                'documents':[]
+                'documents':[],
+                'role':"student"
             }
         }
         ref.update(user)
@@ -213,13 +214,6 @@ class Database:
 
         return False
 
-    def get_user(self, uid):
-        
-        ref = db.reference(f'/Users/{uid}')
-        user = ref.get()
-        
-        return user
- 
     def get_document_votes(self, document_id: int) -> dict:
         '''
         Returns dict with document upvotes & downvotes.
@@ -645,7 +639,8 @@ class Database:
         
         return {
             'username':user['username'],
-            'creation_date':user['creation_date']['date']
+            'creation_date':user['creation_date']['date'],
+            'role':user['role']
         }
 
 class FileStorage:
