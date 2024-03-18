@@ -557,10 +557,21 @@ class Database:
         Other Documents : [13, 14, 15, ...]}
         '''
         course_documents_id_dict = {}
+        document_ids = []
         document_types = self._get_keys(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents')
         for document_type in document_types:
             document_ids = self._get_keys(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}')
-            course_documents_id_dict.update({document_type : document_ids})
+
+            for document_id in document_ids:
+                
+                is_validated = db.reference(f'/Universities/{course_university}/{course_subject}/{course_name}/Documents/{document_type}/{document_id}/upload/validated').get()
+                
+                if is_validated == None or is_validated == is_validated:
+                    document_ids.remove(document_id)
+
+            if document_ids:
+                course_documents_id_dict.update({document_type : document_ids})
+
         return course_documents_id_dict
 
     def _get_university_and_subject_for_course_name(self, course_name):
@@ -642,6 +653,8 @@ class Database:
             'creation_date':user['creation_date']['date'],
             'role':user['role']
         }
+    
+
 
 class FileStorage:
     def __init__(self) -> None:
