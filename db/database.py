@@ -67,17 +67,36 @@ class Database:
         
         return pdf_url
     
-    def validate_document(self, document_id):
+    def validate_document(self, document_id, approve):
         ref = self._get_document_ref(document_id)
-        ref = db.reference(f"{ref.path}/upload/")
 
-        ref.update({"validated":True})
+        try:
+            ref = db.reference(f"{ref.path}/upload/")
+
+            if approve:
+                ref.update({"validated":True})
+                
+                if ref.get()["validated"]:
+                    return True
+                
+                return False
+            
+            else:
+                status = self._delete_document(document_id)
+                return status
+        except:
+            return "404: Document not found error."
         
-        if ref.get()["validated"]:
-            return True
+    def _delete_document(self, document_id):
+        ref = self._get_document_ref(document_id)
         
-        return False
+        try:
+            ref.parent.update({document_id:None})
+        except:
+            return False
         
+        return True
+
 
     def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
@@ -697,7 +716,6 @@ class FileStorage:
         return download_url
 
 d = Database()
-
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])

@@ -290,8 +290,15 @@ def get_waiting_documents():
 
 @views.route("validate_document/<document_id>", methods=["POST"])
 def validate_document(document_id):
-    d.validate_document(document_id)
-    return ""
+    data = request.get_json()
+    approve = data.get("approve")
+
+    if approve not in [True, False]:
+        return "Error: Approve/Disapprove not provided."
+    else:
+        d.validate_document(document_id, approve)
+    
+    return jsonify({"status":"success"})
 
 @views.route("validation/<document_id>")
 def validation(document_id):
