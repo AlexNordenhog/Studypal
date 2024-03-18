@@ -291,4 +291,4 @@ def get_waiting_documents():
 @views.route("validate_document/<document_id>", methods=["POST"])
 def validate_document(document_id):
     d.validate_document(document_id)
-    return 
+    return ""
