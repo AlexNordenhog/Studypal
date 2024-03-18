@@ -67,6 +67,22 @@ class Database:
         
         return pdf_url
     
+    def validate_document(self, document_id):
+        ref = self._get_document_ref(document_id)
+        
+        validated = {
+            "upload":{
+                "validated":True
+            }
+        }
+        ref.update(validated)
+
+        if (ref.get()["upload"]["validated"]):
+            return True
+        
+        return False
+        
+
     def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
         Save a document to the database.
