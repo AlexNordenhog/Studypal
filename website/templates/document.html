@@ -116,11 +116,17 @@
           <div class="form-group">
             <label for="reportReason">Choose an reason</label>
             <select class="form-control" id="reportReason">
-              <option value="option1">Option 1</option>
-              <option value="option2">Option 2</option>
-              <option value="option3">Option 3</option>
-              <option value="option4">Option 4</option>
-              <option value="option5">Option 5</option>
+              <option value="inaccurateContent">
+                Inaccurate or Misleading Content
+              </option>
+              <option value="inappropriateMaterial">
+                Inappropriate or Offensive Material
+              </option>
+              <option value="plagiarism">
+                Plagiarism or Copyright Infringement
+              </option>
+              <option value="irrelevantContent">Irrelevant or Off-topic</option>
+              <option value="otherreason">Other Reason</option>
             </select>
           </div>
 
@@ -159,227 +165,256 @@
   </div>
   <!-- Display of comments -->
   <div class="comments-display">
-    <!-- Comments will be dynamically added here from our database -->
+    <!-- Comments will be dynamically added here from our firebase database -->
+    <!-- Display of comments -->
+    {% for comment in comments %}
+    <div class="comment">
+      <div class="comment-avatar">
+        <!-- If we want it later -->
+        <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
+      </div>
+      <div class="comment-content">
+        <div class="comment-author">User: {{ comment.uid }}</div>
+        <div class="comment-text">Comment: {{ comment.text }}</div>
+        <div class="comment-timestamp">
+          {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-</div>
 
-<style>
-  .banner {
-    background-color: #f8f9fa;
-    border-bottom: 2px solid #dee2e6; /* Adds a bottom border */
-  }
+  <style>
+    .banner {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6; /* Adds a bottom border */
+    }
 
-  .border-right {
-    border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
-  }
+    .border-right {
+      border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
+    }
 
-  .pdf_frame {
-    height: 100%;
-    width: 100%;
-  }
-  .pdf-viewer {
-    position: relative;
-    height: 500px; /* Or whatever size you prefer */
-    overflow: auto;
-  }
+    .pdf_frame {
+      height: 100%;
+      width: 100%;
+    }
+    .pdf-viewer {
+      position: relative;
+      height: 500px; /* Or whatever size you prefer */
+      overflow: auto;
+    }
 
-  #pdf-canvas {
-    width: 100%;
-    height: auto;
-    border: 1px solid #000; /* For visual separation */
-  }
+    #pdf-canvas {
+      width: 100%;
+      height: auto;
+      border: 1px solid #000; /* For visual separation */
+    }
 
-  .comment-section {
-    margin-top: 20px;
-  }
+    .comment-section {
+      margin-top: 20px;
+    }
 
-  .comment {
-    display: flex;
-    margin-top: 15px;
-  }
+    .comment {
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 15px;
+      padding: 10px 0;
+    }
 
-  .comment-avatar {
-    margin-right: 10px;
-  }
+    .comment-avatar {
+      margin-right: 10px;
+    }
 
-  .comment-avatar img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-  }
+    .comment-avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
 
-  .comment-content {
-    flex-grow: 1;
-  }
+    .comment-content {
+      flex-grow: 1;
+      margin-left: 50px;
+    }
 
-  .comment-author {
-    font-weight: bold;
-  }
+    .comment-author {
+      font-weight: bold;
+    }
 
-  .comment-text {
-    margin-top: 5px;
-  }
+    .comment-text {
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
 
-  .dislike {
-    background-color: red;
-  }
-</style>
+    .dislike {
+      background-color: red;
+    }
+  </style>
 
-<!-- Script for Firebase authentication and voting -->
-<script type="module">
-  // Firebase configuration and initialization
-  import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import {
-    getDatabase,
-    ref,
-    child,
-    get,
-    set,
-  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+  <!-- Script for Firebase authentication and voting -->
+  <script type="module">
+    // Firebase configuration and initialization
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import {
+      getDatabase,
+      ref,
+      child,
+      get,
+      set,
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const document_id = "{{document_dict['id']}}";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const document_id = "{{document_dict['id']}}";
 
-  // Function to check if user exists in the database
-  function userExists(uid) {
-    const dbRef = ref(getDatabase());
-    return get(child(dbRef, `Users/${uid}`))
-      .then((snapshot) => {
-        return snapshot.exists();
-      })
-      .catch((error) => {
-        console.error(error);
-        return false;
-      });
-  }
-
-  // Check if user is signed in and get user's UID
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      const uid = user.uid;
-      console.log("User is signed in with UID:", uid);
-
-      // Call your function here with UID if needed
-      document.getElementById("likeBtn").addEventListener("click", function () {
-        castVote(true, uid);
-      });
-
-      document
-        .getElementById("dislikeBtn")
-        .addEventListener("click", function () {
-          castVote(false, uid);
+    // Function to check if user exists in the database
+    function userExists(uid) {
+      const dbRef = ref(getDatabase());
+      return get(child(dbRef, `Users/${uid}`))
+        .then((snapshot) => {
+          return snapshot.exists();
+        })
+        .catch((error) => {
+          console.error(error);
+          return false;
         });
-    } else {
-      console.log("User is signed out");
-      // Redirect user to sign in page or handle the case where user is not signed in
     }
-  });
 
-  function validateDocument(documentId) {
-    fetch(`/validate_document/${documentId}`, {
-      method: "POST",
-      // Additional headers and body might be required depending on your server setup
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}), // Send an empty object or any required data
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.text();
-        } else {
-          throw new Error("Network response was not ok.");
-        }
-      })
-      .then((data) => {
-        console.log(data); // 'success'
-        alert(`Document ${documentId} validated successfully!`);
-        // Here, you might want to update the UI to reflect the validation
-      })
-      .catch((error) => {
-        console.error(
-          "There has been a problem with your fetch operation:",
-          error
-        );
-      });
-  }
+    // Check if user is signed in and get user's UID
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        console.log("User is signed in with UID:", uid);
 
-  function castVote(isUpvote, uid) {
-    var documentId = "{{ document_dict['id'] }}";
-    if (!documentId) {
-      alert("Document ID not available!");
-      return;
-    }
-    fetch("/vote_document", {
-      method: "POST",
-      body: JSON.stringify({
-        uid: uid,
-        document_id: documentId,
-        is_upvote: isUpvote,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Successfully added vote");
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  }
+        // Call your function here with UID if needed
+        document
+          .getElementById("likeBtn")
+          .addEventListener("click", function () {
+            castVote(true, uid);
+          });
 
-  document
-    .getElementById("submitComment")
-    .addEventListener("click", function () {
-      const commentInput = document.getElementById("commentInput");
-      const commentText = commentInput.value.trim();
-
-      if (commentText) {
-        // Create the comment element
-        const comment = document.createElement("div");
-        comment.classList.add("comment");
-
-        comment.innerHTML = `
-        <div class="comment-avatar">
-            <p>profilbild</p>
-        </div>
-        <div class="comment-content">
-            <div class="comment-author">Testnamn</div>
-            <div class="comment-text">${commentText}</div>
-        </div>
-    `;
-
-        // Append the new comment to the comments display area
-        document.querySelector(".comments-display").appendChild(comment);
-
-        // Clear the input field
-        commentInput.value = "";
+        document
+          .getElementById("dislikeBtn")
+          .addEventListener("click", function () {
+            castVote(false, uid);
+          });
+      } else {
+        console.log("User is signed out");
+        // Redirect user to sign in page or handle the case where user is not signed in
       }
     });
-</script>
 
-<!-- MVP (Måste göras om) Laddar om sidan vid like. Får göras dynamiskt när vi har tid -->
-<script>
-  function vote(action, documentId) {
-    const form = new FormData();
-    form.append("action", action);
-    form.append("document_id", documentId);
+    function validateDocument(documentId) {
+      fetch(`/validate_document/${documentId}`, {
+        method: "POST",
+        // Additional headers and body might be required depending on your server setup
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}), // Send an empty object or any required data
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error("Network response was not ok.");
+          }
+        })
+        .then((data) => {
+          console.log(data); // 'success'
+          alert(`Document ${documentId} validated successfully!`);
+          // Here, you might want to update the UI to reflect the validation
+        })
+        .catch((error) => {
+          console.error(
+            "There has been a problem with your fetch operation:",
+            error
+          );
+        });
+    }
 
-    fetch(`/vote/${action}/${documentId}`, { method: "POST", body: form }).then(
-      (response) => {
+    function castVote(isUpvote, uid) {
+      var documentId = "{{ document_dict['id'] }}";
+      if (!documentId) {
+        alert("Document ID not available!");
+        return;
+      }
+      fetch("/vote_document", {
+        method: "POST",
+        body: JSON.stringify({
+          uid: uid,
+          document_id: documentId,
+          is_upvote: isUpvote,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Successfully added vote");
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+
+    // <!-- Dynamic commentsection -->
+    document
+      .getElementById("submitComment")
+      .addEventListener("click", function () {
+        const commentInput = document.getElementById("commentInput");
+        const commentText = commentInput.value.trim();
+        const db = getDatabase();
+        const auth = getAuth();
+
+        if (commentText && auth.currentUser) {
+          fetch("/add_document_comment", {
+            method: "POST",
+            body: JSON.stringify({
+              uid: auth.currentUser.uid,
+              document_id: "{{ document_dict['id'] }}",
+              text: commentText,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log(data.message);
+              window.location.reload();
+              commentInput.value = "";
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        } else {
+          console.log("User is not signed in or comment is empty.");
+        }
+      });
+  </script>
+
+  <!-- MVP (Måste göras om) Laddar om sidan vid like. Får göras dynamiskt när vi har tid -->
+  <script>
+    function vote(action, documentId) {
+      const form = new FormData();
+      form.append("action", action);
+      form.append("document_id", documentId);
+
+      fetch(`/vote/${action}/${documentId}`, {
+        method: "POST",
+        body: form,
+      }).then((response) => {
         // Reload the page after the fetch completes
         window.location.reload();
-      }
-    );
-  }
-</script>
+      });
+    }
+  </script>
 
-{% endblock %}
+  {% endblock %}
+</div>
