@@ -69,6 +69,8 @@ def document(document_id):
     else:
         pass
 
+    comments = d.get_document_comments(document_id)
+    
     download_url = document_dict['upload']['pdf_url']
     
     # pdf id instead of download url
@@ -76,7 +78,7 @@ def document(document_id):
         file_storage = d.file_storage
         download_url = file_storage.generate_download_url(document_id)
 
-    return render_template("document.html", document_dict=document_dict, download_url=download_url)
+    return render_template("document.html", document_dict=document_dict, download_url=download_url, comments=comments)
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):

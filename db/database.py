@@ -268,23 +268,42 @@ class Database:
 
         return votes
     
+    # def get_document_comments(self, document_id: int):
+    #     '''
+    #     Returns dict with all post-upload document comments.
+    #     '''
+        
+    #     document_path = self._get_document_ref(document_id).path
+    #     ref = db.reference(f'{document_path}/comments/document_comments')
+        
+    #     comment_ids = [eval(key) for key in list(self._get_keys(document_path + '/comments/document_comments'))]
+
+    #     comments = {}
+        
+    #     for key in comment_ids:
+    #         comments[key] = ref.get()[key]
+
+    #     return comments
+
     def get_document_comments(self, document_id: int):
         '''
-        Returns dict with all post-upload document comments.
+        Returns a list of dicts, each representing a comment.
         '''
-        
+
         document_path = self._get_document_ref(document_id).path
         ref = db.reference(f'{document_path}/comments/document_comments')
-        
-        comment_ids = [eval(key) for key in list(self._get_keys(document_path + '/comments/document_comments'))]
 
-        comments = {}
-        
-        for key in comment_ids:
-            comments[key] = ref.get()[key]
+        comments_data = ref.get()
 
+        comments = []
+
+        if comments_data and isinstance(comments_data, list):
+            for comment in comments_data:
+
+                if comment is not None:
+                    comments.append(comment)
         return comments
-    
+
     def get_document_upload_comment(self, document_id: int):
         '''
         Returns dict with the upload comment only.
@@ -410,7 +429,7 @@ class Database:
                     all_subject_courses.extend(subject_courses)
 
         return all_subject_courses
-    
+
     def get_all_unique_subjects(self):
         '''
         Returns a list of all subjects in the database (no duplicates).
