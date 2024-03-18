@@ -95,8 +95,21 @@ class Database:
         except:
             return False
         
+        self._remove_document_from_user(document_id)
         return True
 
+    def _remove_document_from_user(self, document_id):
+        user_ids = self._get_keys("Users")
+        for uid in user_ids:
+            document_ids = db.reference(f"Users/{uid}/Documents").get()
+            
+            if document_ids:
+                for doc_id in document_ids:
+                    if doc_id == document_id:
+                        ref = db.reference(f"Users/{uid}/Documents")
+                        user_documents = ref.get()
+                        user_documents.remove(doc_id)
+                        ref.parent.update({"Documents":user_documents})
 
     def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
@@ -153,7 +166,7 @@ class Database:
         }
 
         # Check if Course exists, if not, create it
-        if len(self._get_keys(f'/Universities/{school}/{subject}/')) < 1:
+        if course not in self._get_keys(f'/Universities/{school}/{subject}/'):
             self.add_course(university=school, subject=subject, course_name=course)
 
         # Create db reference, then add to db
@@ -716,6 +729,7 @@ class FileStorage:
         return download_url
 
 d = Database()
+
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
