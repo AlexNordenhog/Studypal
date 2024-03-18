@@ -69,15 +69,11 @@ class Database:
     
     def validate_document(self, document_id):
         ref = self._get_document_ref(document_id)
-        
-        validated = {
-            "upload":{
-                "validated":True
-            }
-        }
-        ref.update(validated)
+        ref = db.reference(f"{ref.path}/upload/")
 
-        if (ref.get()["upload"]["validated"]):
+        ref.update({"validated":True})
+        
+        if ref.get()["validated"]:
             return True
         
         return False

@@ -284,11 +284,10 @@
   function validateDocument(documentId) {
     fetch(`/validate_document/${documentId}`, {
       method: "POST",
-      // Additional headers and body might be required depending on your server setup
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({}), // Send an empty object or any required data
+      body: JSON.stringify({}),
     })
       .then((response) => {
         if (response.ok) {
@@ -298,9 +297,8 @@
         }
       })
       .then((data) => {
-        console.log(data); // 'success'
-        alert(`Document ${documentId} validated successfully!`);
-        // Here, you might want to update the UI to reflect the validation
+        console.log(data);
+        //success
       })
       .catch((error) => {
         console.error(

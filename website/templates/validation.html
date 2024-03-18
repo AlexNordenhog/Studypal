@@ -1,0 +1,253 @@
+{% extends "base.html" %} {% block title %} {{ document_dict['upload']['header']
+}} {% endblock %} {% block content%}
+<div class="container my-5">
+  <!-- Banner -->
+  <div class="banner text-center py-3 mb-4 border-bottom">
+    <!-- FROM DATABASE -->
+    <h1>{{ document_dict['upload']['header'] }}</h1>
+  </div>
+
+  <!-- Three-column container -->
+  <div class="row">
+    <!-- First column -->
+    <div class="col border-right">
+      <!-- FROM DATABASE -->
+      <p>Author: <strong>{{ document_dict['upload']['author']}}</strong></p>
+    </div>
+    <!-- Second column -->
+    <div class="col border-right">
+      <!-- FROM DATABASE -->
+      <p>University: {{ document_dict['categorization']['school'] }}</p>
+      <p>Course: {{document_dict['categorization']['course']}}</p>
+      <p>Subject: {{document_dict['categorization']['subject']}}</p>
+    </div>
+    <!-- Third column -->
+    <div class="col">
+      <!-- FROM DATABASE -->
+      <p>
+        Comment from Author: {{document_dict['comments']['upload_comment']}}
+      </p>
+      <p>Uploaded: {{document_dict['timestamp']['date']}}</p>
+    </div>
+  </div>
+  <!-- Button bar -->
+  <div
+    class="button-bar py-2 border-top border-bottom d-flex justify-content-between"
+  >
+    <!-- Left-aligned button -->
+    <div>
+      <a
+        href="{{ download_url }}"
+        type="button"
+        class="btn btn-info"
+        download
+        target="_blank"
+      >
+        Download Document
+      </a>
+    </div>
+
+    <!-- Right-aligned buttons -->
+      <button
+        type="button"
+        class="btn btn-secondary mx-1"
+        data-toggle="modal"
+        data-target="#validateModal"
+      >
+        Approve/Disapprove
+      </button>
+    </div>
+  </div>
+
+  <!-- PDF Viewer -->
+  <div id="pdfViewer" class="pdf-viewer border-top py-2" style="display: block">
+    <iframe src="{{ download_url }}" frameborder="0" class="pdf_frame"></iframe>
+  </div>
+</div>
+
+<!-- Validate Modal with form -->
+<div
+  class="modal fade"
+  id="validateModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="modelTitleId"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Validate Document</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Form inside the modal -->
+        <form>
+          <div class="form-group">
+            <label for="validateType">Choose below</label>
+            <select class="form-control" id="validateType">
+              <option value="Approve">Approve</option>
+              <option value="Disapprove">Disapprove</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+        <button type="button" id="submit-validation" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .banner {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6; /* Adds a bottom border */
+  }
+
+  .border-right {
+    border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
+  }
+
+  .pdf_frame {
+    height: 100%;
+    width: 100%;
+  }
+  .pdf-viewer {
+    position: relative;
+    height: 500px; /* Or whatever size you prefer */
+    overflow: auto;
+  }
+
+  #pdf-canvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid #000; /* For visual separation */
+  }
+
+  .comment-section {
+    margin-top: 20px;
+  }
+
+  .comment {
+    display: flex;
+    margin-top: 15px;
+  }
+
+  .comment-avatar {
+    margin-right: 10px;
+  }
+
+  .comment-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .comment-content {
+    flex-grow: 1;
+  }
+
+  .comment-author {
+    font-weight: bold;
+  }
+
+  .comment-text {
+    margin-top: 5px;
+  }
+</style>
+
+<!-- Script for Firebase authentication and voting -->
+<script type="module">
+  // Import Firebase configuration and initialization modules
+  import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const documentId = "{{ document_dict['id'] }}";
+
+  // Function to submit document validation
+  function submitValidation() {
+    const validationType = document.getElementById('validateType').value;
+    if (validationType === 'Approve') {
+      validateDocument(documentId);
+    } else {
+      console.log("Document disapproved or other action taken.");
+      // Additional handling for disapproval or other actions
+    }
+  }
+
+  // Function to validate the document
+  function validateDocument(documentId) {
+    fetch(`/validate_document/${documentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    })
+    .then(response => {
+      if (response.ok) {
+        //alert('Document has been successfully validated.');
+        
+        window.location.href = "/documents_awaiting_validation"
+      } else {
+        throw new Error('Failed to validate document');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while trying to validate the document.');
+    });
+  }
+
+  // Check if the user is signed in and a moderator
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // Fetch user details to check if the user is a moderator
+      fetchUser(user.uid).then((userData) => {
+        if (userData && userData.role === "moderator") {
+          console.log("User is a moderator.");
+
+          // Add event listener to the "Submit" button for moderators
+          document.getElementById('submit-validation').addEventListener('click', submitValidation);
+        } else {
+          console.log("User is not a moderator.");
+        }
+      });
+    } else {
+      console.log("User is not signed in.");
+      // Handle not signed-in state
+    }
+  });
+
+  function fetchUser(uid) {
+    const url = "/get_user"; // Update this URL to match your Flask endpoint
+    const data = { uid: uid };
+
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .catch(error => {
+      console.error(error);
+      return null;
+    });
+  }
+</script>
+
+{% endblock %}
