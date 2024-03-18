@@ -71,6 +71,11 @@ def document(document_id):
 
     comments = d.get_document_comments(document_id)
     
+    for comment in comments:
+        if "uid" in comment.keys():
+            uid = comment["uid"]
+            comment["username"] = d.get_user(uid)["username"]
+        
     download_url = document_dict['upload']['pdf_url']
     
     # pdf id instead of download url

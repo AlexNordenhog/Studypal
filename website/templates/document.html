@@ -174,7 +174,7 @@
         <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
       </div>
       <div class="comment-content">
-        <div class="comment-author">User: {{ comment.uid }}</div>
+        <div class="comment-author">User: {{ comment.username }}</div>
         <div class="comment-text">Comment: {{ comment.text }}</div>
         <div class="comment-timestamp">
           {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
@@ -281,6 +281,27 @@
         .catch((error) => {
           console.error(error);
           return false;
+        });
+    }
+
+    function fetchUser(uid) {
+      const url = "/get_user"; // Update this URL to match your Flask endpoint
+
+      const data = {
+        uid: uid,
+      };
+
+      return fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .catch((error) => {
+          console.error(error);
+          return null;
         });
     }
 
