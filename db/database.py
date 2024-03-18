@@ -67,21 +67,49 @@ class Database:
         
         return pdf_url
     
-    def validate_document(self, document_id):
+    def validate_document(self, document_id, approve):
+        ref = self._get_document_ref(document_id)
+
+        try:
+            ref = db.reference(f"{ref.path}/upload/")
+
+            if approve:
+                ref.update({"validated":True})
+                
+                if ref.get()["validated"]:
+                    return True
+                
+                return False
+            
+            else:
+                status = self._delete_document(document_id)
+                return status
+        except:
+            return "404: Document not found error."
+        
+    def _delete_document(self, document_id):
         ref = self._get_document_ref(document_id)
         
-        validated = {
-            "upload":{
-                "validated":True
-            }
-        }
-        ref.update(validated)
+        try:
+            ref.parent.update({document_id:None})
+        except:
+            return False
+        
+        self._remove_document_from_user(document_id)
+        return True
 
-        if (ref.get()["upload"]["validated"]):
-            return True
-        
-        return False
-        
+    def _remove_document_from_user(self, document_id):
+        user_ids = self._get_keys("Users")
+        for uid in user_ids:
+            document_ids = db.reference(f"Users/{uid}/Documents").get()
+            
+            if document_ids:
+                for doc_id in document_ids:
+                    if doc_id == document_id:
+                        ref = db.reference(f"Users/{uid}/Documents")
+                        user_documents = ref.get()
+                        user_documents.remove(doc_id)
+                        ref.parent.update({"Documents":user_documents})
 
     def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
         '''
@@ -138,7 +166,7 @@ class Database:
         }
 
         # Check if Course exists, if not, create it
-        if len(self._get_keys(f'/Universities/{school}/{subject}/')) < 1:
+        if course not in self._get_keys(f'/Universities/{school}/{subject}/'):
             self.add_course(university=school, subject=subject, course_name=course)
 
         # Create db reference, then add to db

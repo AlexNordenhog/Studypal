@@ -27,7 +27,7 @@ content %}
     <div id="documentList">
       {% if documents_ids %} {% for document_id in documents_ids %}
       <div class="document-item">
-        <a href="/document/{{ document_id }}" class="document-link"
+        <a href="/validation/{{ document_id }}" class="document-link"
           >Document ID: {{ document_id }}</a
         >
       </div>
@@ -95,7 +95,7 @@ content %}
             documentList.forEach((document) => {
               documentListView += `
               <div class="document-item">
-                <a href="/document/${document.id}" class="document-link">${document.header}</a>
+                <a href="/validation/${document.id}" class="document-link">${document.header}</a>
                 <span class="document-date">${document.date}</span>
               </div>
             `;

@@ -283,14 +283,38 @@ def upload_specificatoins(temp_id):
                            subjects=subjects,
                            document_types=document_types)
 
-@views.route("/document_approval")
+@views.route("/documents_awaiting_validation")
 def get_waiting_documents():
     document_ids = d._get_id_lst(is_validated=False)
 
-    return render_template("approval.html",
+    return render_template("documents_awaiting_validation.html",
                            documents_ids=document_ids)
 
 @views.route("validate_document/<document_id>", methods=["POST"])
 def validate_document(document_id):
-    d.validate_document(document_id)
-    return ""
+    data = request.get_json()
+    approve = data.get("approve")
+
+    if approve not in [True, False]:
+        return "Error: Approve/Disapprove not provided."
+    else:
+        d.validate_document(document_id, approve)
+    
+    return jsonify({"status":"success"})
+
+@views.route("validation/<document_id>")
+def validation(document_id):
+    document_dict = d.get_document(document_id)
+    if document_dict is None:
+        return "Document dict doesnt work", 404
+    else:
+        pass
+
+    download_url = document_dict['upload']['pdf_url']
+    
+    # pdf id instead of download url
+    if 'https://' not in download_url:
+        file_storage = d.file_storage
+        download_url = file_storage.generate_download_url(document_id)
+
+    return render_template("validation.html", document_dict=document_dict, download_url=download_url)
