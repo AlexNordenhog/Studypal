@@ -703,14 +703,21 @@ class Database:
     
     def get_user(self, uid):
         ref = db.reference(f'/Users/{uid}/')
-        user = ref.get()
         
-        return {
-            'username':user['username'],
-            'creation_date':user['creation_date']['date'],
-            'role':user['role']
-        }
-    
+        try:
+            user = ref.get()
+            
+            return {
+                'username':user['username'],
+                'creation_date':user['creation_date']['date'],
+                'role':user['role']
+            }
+        except:
+            return {
+                "username":"404 unknown user",
+                "creation_date":"YYYY-MM-DD",
+                "role":"unknown"
+            }
 
 
 class FileStorage:
