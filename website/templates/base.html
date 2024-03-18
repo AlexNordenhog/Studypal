@@ -43,7 +43,6 @@
           >
           <a class="nav-item nav-link" id="course_page" href="/course_page"
             >Course page (temporär)</a -->
-          >
         </div>
       </div>
     </nav>
@@ -124,4 +123,106 @@
       }
     </style>
   </body>
+  <script type="module">
+    // Import Firebase configuration and initialization modules
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Function to submit document validation
+    function submitValidation() {
+      const validationType = document.getElementById("validateType").value;
+      if (validationType === "Approve") {
+        validateDocument(documentId, true);
+      } else {
+        validateDocument(documentId, false);
+        console.log("Document disapproved or other action taken.");
+        // Additional handling for disapproval or other actions
+      }
+    }
+
+    // Function to validate the document
+    function validateDocument(documentId, approve) {
+      fetch(`/validate_document/${documentId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ approve: approve }),
+      })
+        .then((response) => {
+          if (response.ok) {
+            if (approve) {
+              alert("Document was successfully validated.");
+            } else {
+              alert("Document was successfully removed.");
+            }
+
+            window.location.href = "/documents_awaiting_validation";
+          } else {
+            throw new Error("Failed to validate document");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred while trying to validate the document.");
+        });
+    }
+
+    // Check if the user is signed in and a moderator
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Fetch user details to check if the user is a moderator
+        fetchUser(user.uid).then((userData) => {
+          if (userData && userData.role === "moderator") {
+            console.log("User is a moderator.");
+
+            // Make and add btn if user is a moderator
+            const documentValidationBtn = document.createElement("a");
+            documentValidationBtn.className = "nav-item nav-link";
+            documentValidationBtn.href = "/documents_awaiting_validation";
+            documentValidationBtn.innerText = "Document Validation";
+            const navbarDiv = document.querySelector("#navbar .navbar-nav");
+            if (navbarDiv) {
+              navbarDiv.appendChild(documentValidationBtn);
+            }
+
+            // Add event listener to the "Submit" button
+            document
+              .getElementById("submit-validation")
+              .addEventListener("click", submitValidation);
+          } else {
+            console.log("User is not a moderator.");
+            window.location.href = "/";
+          }
+        });
+      } else {
+        console.log("User is not signed in.");
+        // Handle not signed-in state
+        window.location.href = "/login";
+      }
+    });
+
+    function fetchUser(uid) {
+      const url = "/get_user"; // Update this URL to match your Flask endpoint
+      const data = { uid: uid };
+
+      return fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .catch((error) => {
+          console.error(error);
+          return null;
+        });
+    }
+  </script>
 </html>
