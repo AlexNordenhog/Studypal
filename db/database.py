@@ -224,6 +224,36 @@ class Database:
         json_comment = ref.get()
         
         return True if json_comment == comment_content else False
+    
+    def add_course_comment(self, course_name, uid, text):
+        '''
+        Add a comment to a document
+        '''
+
+        course_path = self._get_course_ref(course_name).path
+        comments_path = f'{course_path}/Comments/'
+        
+        # generate new comment id
+        comment_id_lst = list(eval(str_id) for str_id in (self._get_keys(comments_path)))
+        if len(comment_id_lst) == 0:
+            comment_id = 1
+        else:
+            comment_id = max(comment_id_lst) + 1
+
+        # Compile comment 
+        comment_content = {
+            'text':text,
+            'uid':uid,
+            'timestamp':self._get_timestamp()
+        }
+
+        ref = db.reference(f'{comments_path}/{comment_id}')
+        ref.update(comment_content)
+
+        # Check if comment was added to db
+        json_comment = ref.get()
+        
+        return True if json_comment == comment_content else False
 
     def add_document_vote(self, document_id: int, uid: str, upvote: bool) -> bool:
         '''
@@ -577,10 +607,25 @@ class Database:
                                 return db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}')
         print(f"Document with ID {id} not found.")
         return None
-
+    
     def _get_course_ref(self, course_name):
         '''
         Returns course firebase reference.
+        '''
+        universities = self._get_keys(f'/Universities/')
+        for university in universities:
+            subjects = self._get_keys(f'/Universities/{university}')
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{university}/{subject}')
+                for course in courses:
+                    if course == course_name:
+                        return db.reference(f'/Universities/{university}/{subject}/{course}')
+        print(f"Course ({course_name}) not found.")
+        return None
+
+    def _get_course_path(self, course_name):
+        '''
+        Returns course firebase path.
         '''
         found = False
         course_ref = None
@@ -639,7 +684,7 @@ class Database:
         all_courses = self.get_all_courses()
         for c in all_courses:
             if c == course_name:
-                course_ref = self._get_course_ref(course_name)
+                course_ref = self._get_course_path(course_name)
                 university_name = db.reference(course_ref).get()['University']
                 subject_name = db.reference(course_ref).get()['Subject']
                 break
@@ -755,7 +800,7 @@ class FileStorage:
         return download_url
 
 d = Database()
-
+d.add_course_comment("MA1444", "testuuid", "ah")
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
