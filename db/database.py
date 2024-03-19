@@ -383,7 +383,25 @@ class Database:
                 if comment is not None:
                     comments.append(comment)
         return comments
-    
+
+    def get_document_reports(self, document_id):
+        '''
+        Returns a list of dicts, each representing a report.
+        '''
+
+        document_path = self._get_document_ref(document_id).path
+        ref = db.reference(f'{document_path}/Reports')
+
+        report_data = ref.get()
+
+        reports = []
+
+        if report_data and isinstance(report_data, list):
+            for report in report_data:
+
+                if report is not None:
+                    reports.append(report)
+        return reports
 
     def get_document_upload_comment(self, document_id: int):
         '''
