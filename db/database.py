@@ -111,7 +111,7 @@ class Database:
                         user_documents.remove(doc_id)
                         ref.parent.update({"Documents":user_documents})
 
-    def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list) -> bool:
+    def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list, grade=None) -> bool:
         '''
         Save a document to the database.
         
@@ -136,7 +136,8 @@ class Database:
                         'pdf_url': pdf_url,
                         'author':username,
                         'header':header,
-                        'validated':False
+                        'validated':False,
+                        'grade':grade
                 },
 
                 'timestamp':self._get_timestamp(),

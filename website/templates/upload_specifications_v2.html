@@ -5,22 +5,21 @@
 </head>
 <body>
   <h1>Upload Specifications</h1>
-
   <!-- PDF Preview -->
   <iframe
     id="pdfPreview"
     style="width: 100%; height: 500px"
     frameborder="0"
   ></iframe>
-  <form id="specificationsForm" name="specificationsForm">
+  <form id="uploadSpecifications">
     <!-- Document Type Dropdown-->
     <label for="documentType"
       >Select the type of document that you have uploaded:
     </label>
     <select
       class="custom-select"
-      id="documentType"
-      name="documentType"
+      id="type_of_document"
+      name="type_of_document"
       onchange="categorizationDropDownMenu.updateDocCourses();"
     >
       <option selected>Choose a document type...</option>
@@ -44,7 +43,7 @@
     <!-- Grade Dropdown, initially hidden -->
     <div id="gradeDropdown" style="display: none">
       <label for="documentGrade">Select the grade:</label>
-      <select class="custom-select" id="documentGrade" name="documentGrade">
+      <select class="custom-select" id="grade" name="grade">
         <!-- Options will be dynamically added based on the grading system selected -->
       </select>
     </div>
@@ -63,8 +62,8 @@
     <!-- Optional Comment Input -->
     <label for="documentComment">Comment about your document (optional):</label>
     <textarea
-      id="documentComment"
-      name="documentComment"
+      id="upload_comment"
+      name="upload_comment"
       rows="4"
       cols="50"
       class="custom-entry"
@@ -77,8 +76,8 @@
     </label>
     <select
       class="custom-select"
-      id="uploadUniversity"
-      name="uploadUniversity"
+      id="school"
+      name="school"
       onchange="categorizationDropDownMenu.updateDocCourses();"
     >
       <option selected>Choose a university...</option>
@@ -91,8 +90,8 @@
     <label for="documentSubject">Select the subject for your document: </label>
     <select
       class="custom-select"
-      id="uploadSubject"
-      name="uploadSubject"
+      id="subject"
+      name="subject"
       onchange="categorizationDropDownMenu.updateDocCourses();"
     >
       <option selected>Choose a subject...</option>
@@ -103,12 +102,7 @@
 
     <!-- Courses Dropdown, initially disabled -->
     <label for="documentCourse">Select the course for your document: </label>
-    <select
-      class="custom-select"
-      id="uploadCourse"
-      name="uploadCourse"
-      disabled
-    >
+    <select class="custom-select" id="course" name="course" disabled>
       <option selected>Choose a course...</option>
       <!-- Course options will be populated based on the selected university and subject -->
     </select>
@@ -131,8 +125,9 @@
     <!-- Submit button -->
     <button type="submit" id="submitBtn" class="submit-button">Submit</button>
 
-    <!-- Including tempurl -->
+    <!-- Including tempurl and uid in form-->
     <input type="hidden" name="tempURL" value="{{ url }}" />
+    <input type="hidden" name="uid" value="{{ uid }}" />
   </form>
 
   <script>
@@ -245,10 +240,9 @@
           if (documentType === "Graded Exam") {
             alert("Graded Exam coming soon!");
           }
-
-          event.preventDefault(); // Prevent form submission
         });
     });
+
     //Code for updating grading system
     document.addEventListener("DOMContentLoaded", function () {
       var documentTypeSelect = document.getElementById("documentType");
@@ -321,44 +315,17 @@
           if (exists) {
             // Retrieve the tempURL parameter from the template context
             const tempURL = "{{ url }}";
+            var formData = new FormData(
+              document.getElementById("uploadSpecifications")
+            );
+            formData.append("downloadURL", "{{url}}");
+            formData.append("uid", uid);
+            formData.append("header", "none");
 
             document
               .getElementById("submitBtn")
-              .addEventListener("click", function (event) {
-                var documentType =
-                  document.getElementById("documentType").value;
-                var documentDate =
-                  document.getElementById("documentDate").value;
-                var university =
-                  document.getElementById("uploadUniversity").value;
-                var subject = document.getElementById("uploadSubject").value;
-                var course = document.getElementById("uploadCourse").value;
-                var manualCourse = document
-                  .getElementById("manualUploadCourse")
-                  .value.trim();
-                var gradingSystem =
-                  document.getElementById("gradingSystem").value;
-                var documentGrade =
-                  document.getElementById("documentGrade").value;
-
-                if (
-                  !documentType ||
-                  documentType === "Choose a document type..." ||
-                  !documentDate ||
-                  !university ||
-                  university === "Choose a university..." ||
-                  !subject ||
-                  subject === "Choose a subject..." ||
-                  (course === "Choose a course..." && manualCourse === "")
-                ) {
-                  // do nothing, info is not filled
-                } else {
-                  var formData = new FormData(
-                    document.getElementById("specificationsForm")
-                  );
-                  formData.append("uid", uid);
-                  submitForm(formData);
-                }
+              .addEventListener("click", () => {
+                submitForm(formData);
               });
 
             // Call the previewPDF function with the tempURL parameter
@@ -385,8 +352,7 @@
     }
 
     function submitForm(formData) {
-      // Submit the form with all data, including the downloadURL
-      fetch("/upload_document_v2", {
+      fetch("/upload_document", {
         method: "POST",
         body: formData,
       })
