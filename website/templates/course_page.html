@@ -70,6 +70,22 @@
         <!-- Display of comments -->
         <div class="comments-display">
           <!-- Comments will be dynamically added here from our database -->
+              <!-- Display of comments -->
+            {% for comment in comments %}
+            <div class="comment">
+              <div class="comment-avatar">
+                <!-- If we want it later -->
+                <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
+              </div>
+              <div class="comment-content">
+                <div class="comment-author">User: {{ comment.username }}</div>
+                <div class="comment-text">Comment: {{ comment.text }}</div>
+                <div class="comment-timestamp">
+                  {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
         </div>
       </div>
     </div>
@@ -95,8 +111,9 @@
     margin-top: 20px;
   }
   .comment {
-    display: flex;
-    margin-top: 15px;
+    border-top: 1px solid #ccc;
+    margin-bottom: 15px;
+    padding: 10px 0;
   }
   .comment-avatar {
     margin-right: 10px;
@@ -108,12 +125,14 @@
   }
   .comment-content {
     flex-grow: 1;
+    margin-left: 50px;
   }
   .comment-author {
     font-weight: bold;
   }
   .comment-text {
     margin-top: 5px;
+    margin-bottom: 5px;
   }
   .documentList {
     list-style-type: none;
@@ -158,7 +177,40 @@
 }
 </style>
 
-<script>
+<script type="module">
+    // Firebase configuration and initialization
+  import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import {
+    getDatabase,
+    ref,
+    child,
+    get,
+    set,
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const course_name = "{{course_page_dict['course_name']}}";
+
+  // Function to check if user exists in the database
+  function userExists(uid) {
+    const dbRef = ref(getDatabase());
+    return get(child(dbRef, `Users/${uid}`))
+      .then((snapshot) => {
+        return snapshot.exists();
+      })
+      .catch((error) => {
+        console.error(error);
+        return false;
+      });
+  }
+
+
   // Button documents page
   document.getElementById("btnContent1").addEventListener("click", function () {
     document.getElementById("content1").style.display = "block";
@@ -209,36 +261,61 @@
       });
   });
 
-  // Add comments visually
-  document.addEventListener("DOMContentLoaded", function () {
-    document
-      .getElementById("submitComment")
-      .addEventListener("click", function () {
-        const commentInput = document.getElementById("commentInput");
-        const commentText = commentInput.value.trim();
+  // <!-- Dynamic commentsection -->
+  document
+    .getElementById("submitComment")
+    .addEventListener("click", function () {
+      const commentInput = document.getElementById("commentInput");
+      const commentText = commentInput.value.trim();
+      const db = getDatabase();
+      const auth = getAuth();
 
-        if (commentText) {
-          // Create the comment element
-          const comment = document.createElement("div");
-          comment.classList.add("comment");
-
-          comment.innerHTML = `
-            <div class="comment-avatar">
-                <p>profilbild</p>
-            </div>
-            <div class="comment-content">
-                <div class="comment-author">Testnamn</div>
-                <div class="comment-text">${commentText}</div>
-            </div>
-        `;
-
-          // Append the new comment to the comments display area
-          document.querySelector(".comments-display").appendChild(comment);
-
-          // Clear the input field
-          commentInput.value = "";
-        }
-      });
+      if (commentText && auth.currentUser) {
+        fetch("/add_course_comment", {
+          method: "POST",
+          body: JSON.stringify({
+            uid: auth.currentUser.uid,
+            course_name: "{{ course_page_dict['course_name'] }}",
+            text: commentText,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data.message);
+            window.location.reload();
+            commentInput.value = "";
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      } else {
+        console.log("User is not signed in or comment is empty.");
+      }
   });
+
+  function fetchUser(uid) {
+      const url = "/get_user"; // Update this URL to match your Flask endpoint
+
+      const data = {
+        uid: uid,
+      };
+
+      return fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .catch((error) => {
+          console.error(error);
+          return null;
+        });
+    }
+
 </script>
 {% endblock %}

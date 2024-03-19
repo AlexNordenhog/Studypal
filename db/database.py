@@ -334,6 +334,26 @@ class Database:
                     comments.append(comment)
         return comments
 
+    def get_course_comments(self, course_name: str):
+        '''
+        Returns a list of dicts, each representing a comment.
+        '''
+
+        course_path = self._get_course_ref(course_name).path
+        ref = db.reference(f'{course_path}/Comments')
+
+        comments_data = ref.get()
+
+        comments = []
+
+        if comments_data and isinstance(comments_data, list):
+            for comment in comments_data:
+
+                if comment is not None:
+                    comments.append(comment)
+        return comments
+    
+
     def get_document_upload_comment(self, document_id: int):
         '''
         Returns dict with the upload comment only.
@@ -815,7 +835,6 @@ class FileStorage:
         return download_url
 
 d = Database()
-d.add_course_comment("MA1444", "testuuid", "ah")
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
