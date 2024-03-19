@@ -88,7 +88,15 @@ def document(document_id):
 @views.route('course_page/<course_name>')
 def course_page(course_name):
     course_page_dict = d.get_course_data(course_name)
-    return render_template("course_page.html", course_page_dict=course_page_dict)
+
+    comments = d.get_course_comments(course_name)
+    
+    for comment in comments:
+        if "uid" in comment.keys():
+            uid = comment["uid"]
+            comment["username"] = d.get_user(uid)["username"]    
+
+    return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
 
 @views.app_errorhandler(SearchError)
 def handle_search_error(error):
