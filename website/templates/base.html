@@ -180,23 +180,21 @@
       if (user) {
         // Fetch user details to check if the user is a moderator
         fetchUser(user.uid).then((userData) => {
-          if (userData && userData.role === "moderator") {
-            console.log("User is a moderator.");
+          if (userData) {
+            if (userData.role === "moderator") {
+              console.log("User is a moderator.");
 
-            // Make and add btn if user is a moderator
-            const documentValidationBtn = document.createElement("a");
-            documentValidationBtn.className = "nav-item nav-link";
-            documentValidationBtn.href = "/documents_awaiting_validation";
-            documentValidationBtn.innerText = "Document Validation";
-            const navbarDiv = document.querySelector("#navbar .navbar-nav");
-            if (navbarDiv) {
-              navbarDiv.appendChild(documentValidationBtn);
+              // Make and add btn if user is a moderator
+              const documentValidationBtn = document.createElement("a");
+              documentValidationBtn.className = "nav-item nav-link";
+              documentValidationBtn.href = "/documents_awaiting_validation";
+              documentValidationBtn.innerText = "Document Validation";
+              const navbarDiv = document.querySelector("#navbar .navbar-nav");
+              if (navbarDiv) {
+                navbarDiv.appendChild(documentValidationBtn);
+              }
             }
-
-            // Add event listener to the "Submit" button
-            document
-              .getElementById("submit-validation")
-              .addEventListener("click", submitValidation);
+            console.log("Not moderator");
           } else {
             console.log("User is not a moderator.");
             window.location.href = "/";
@@ -205,7 +203,7 @@
       } else {
         console.log("User is not signed in.");
         // Handle not signed-in state
-        window.location.href = "/login";
+        //window.location.href = "/login";
       }
     });
 
