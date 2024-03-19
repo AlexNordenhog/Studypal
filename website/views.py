@@ -167,6 +167,18 @@ def add_document_comment():
     
     return jsonify({"message": "Comment added to document successfully"})
 
+@views.route("/add_document_report", methods=["POST"])
+def add_document_report():
+    data = request.json
+    uid = data.get("uid")
+    document_id = data.get("document_id")
+    text = data.get("text")
+    reason = data.get("reason")
+
+    d.add_document_report(document_id, uid, reason, text)
+
+    return jsonify({"message": "Comment added to document successfully"})
+
 @views.route("/add_course_comment", methods=["POST"])
 def add_course_comment():
     data = request.json

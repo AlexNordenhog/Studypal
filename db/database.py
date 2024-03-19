@@ -194,6 +194,37 @@ class Database:
         ref.update(course_info)
         
         return
+    
+    def add_document_report(self, document_id, uid, reason, text):
+        '''
+        Add report to a document
+        '''    
+
+        document_path = self._get_document_ref(document_id).path
+        report_path = f'{document_path}/Reports'
+
+        # generate new comment id
+        report_id_lst = list(eval(str_id) for str_id in (self._get_keys(report_path)))
+        if len(report_id_lst) == 0:
+            report_id = 1
+        else:
+            report_id = max(report_id_lst) + 1
+
+        # Compile report 
+        report_content = {
+            'text':text,
+            'uid':uid,
+            'timestamp':self._get_timestamp(),
+            'reason':reason
+        }
+
+        ref = db.reference(f'{report_path}/{report_id}')
+        ref.update(report_content)
+
+        # Check if comment was added to db
+        json_report = ref.get()
+        
+        return True if json_report == report_content else False
 
     def add_document_comment(self, document_id, uid, text):
         '''
