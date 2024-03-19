@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, jsonify
 from .search import s, SearchError
 from db.database import d
+from .categorization import c
 
 views = Blueprint("views", __name__)
 
@@ -277,7 +278,6 @@ def upload_temp_pdf():
 def upload_specificatoins(temp_id):
     temp_url = d.get_temp_pdf(temp_id)
 
-    # added these to database aswell, update to fetch from d
     universities = [
         'Blekinge Institute of Technology', 'Chalmers University of Technology', 'Dalarna University', 'GIH - the Swedish School of Sport and Health Sciences', 'Halmstad University', 
         'Jönköping University', 'KMH - Royal College of Music in Stockholm', 'KTH Royal Institute of Technology', 'Karlstad University', 'Karolinska Institutet', 'Konstfack', 
@@ -307,6 +307,27 @@ def upload_specificatoins(temp_id):
                            universities=universities,
                            subjects=subjects,
                            document_types=document_types)
+
+@views.route('/submit-document', methods=['POST'])
+def submit_document():
+    pdf_url = request.form.get('tempURL')
+    uid = int(0)
+    document_type = request.form.get('documentType')
+    document_date = request.form.get('documentDate')
+    university = request.form.get('uploadUniversity')
+    subject = request.form.get('uploadSubject')
+    course = request.form.get('uploadCourse')
+    if course == 'Choose a course...':
+        course = request.form.get('manualUploadCourse')
+    comment = request.form.get('documentComment', '')
+    if document_type == 'Assignment':
+        grading_system = request.form.get('gradingSystem', '')
+        document_grade = request.form.get('documentGrade', '')
+        c.categorize(pdf_url, uid, document_type, document_date, university, subject, course, comment)
+    else:
+        c.categorize(pdf_url, uid, document_type, document_date, university, subject, course, comment)
+
+    return render_template("thank_you.html")
 
 @views.route("/documents_awaiting_validation")
 def get_waiting_documents():

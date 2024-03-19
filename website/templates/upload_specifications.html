@@ -12,7 +12,7 @@
     style="width: 100%; height: 500px"
     frameborder="0"
   ></iframe>
-
+  <form action="/submit-document" method="post">
   <!-- Document Type Dropdown-->
   <label for="documentType"
     >Select the type of document that you have uploaded:
@@ -103,15 +103,20 @@
   <textarea
     class="custom-entry"
     id="manualUploadCourse"
+    name="manualUploadCourse"
     placeholder="XY1234 Analys 1..."
     rows="1"
     cols="20"
     disabled
   ></textarea>
 
-  <!-- Submit button -->
+<!-- Submit button -->
   <button type="submit" id="submitBtn" class="submit-button">Submit</button>
 
+  <!-- Including tempurl and uid in form-->
+  <input type="hidden" name="tempURL" value="{{ url }}">
+  <input type="hidden" name="uid" value="{{ uid }}">
+</form>
 
   <script>
     class CategorizationDropDownMenu {
@@ -206,15 +211,9 @@
             }
         }
 
-        if (documentType === "Assignment") {
-            alert(documentType)
-        } if (documentType === "Graded Exam") {
-            alert('Graded Exam coming soon!')
-        } else {
-            alert(documentType)
-        }
-        
-
+        if (documentType === "Graded Exam") {
+           alert('Graded Exam coming soon!')
+        } 
     });
 });
 
