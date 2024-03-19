@@ -428,3 +428,9 @@ def validation(document_id):
         download_url = file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
+
+
+@views.route("/get_document_reports/<document_id>")
+def get_document_reports(document_id):
+    reports = d.get_document_reports(document_id)
+    return jsonify(reports)
