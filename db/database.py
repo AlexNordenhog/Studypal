@@ -111,7 +111,7 @@ class Database:
                         user_documents.remove(doc_id)
                         ref.parent.update({"Documents":user_documents})
 
-    def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list, grade=None) -> bool:
+    def add_document(self, pdf_url, course: str, school: str, upload_comment: str, subject: str, uid: str, header: str, type_of_document: str, tags: list, grade=None, document_date=None) -> bool:
         '''
         Save a document to the database.
         
@@ -119,7 +119,11 @@ class Database:
         '''
 
         # Test change in naming convention
-        date = self._get_timestamp()['date']
+        if document_date != None:
+            date = document_date
+        else:
+            date = self._get_timestamp()['date']
+            
         header = f'{course}_{type_of_document}_{date}'
         
         # Compile document

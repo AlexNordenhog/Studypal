@@ -269,7 +269,7 @@ def upload_document():
         tags=request.form.getlist('tags')
     )
     
-    return render_template("thank_you.html", "Document uploaded successfully")
+    return "Document uploaded successfully"
 
 @views.route('/upload_document_v2', methods=['POST'])
 def upload_document_v2():
@@ -281,22 +281,26 @@ def upload_document_v2():
     # Check if the file is selected
     #if pdf_file.filename == '':
     #    return "No selected file"
+    course = request.form["uploadCourse"]
+    if course == "Choose a course...":
+        course = request.form["manualUploadCourse"]
 
     # Add document to db
-    print(d.add_document(
+    status = (
+        d.add_document(
         pdf_url=request.form['tempURL'],
-        course=request.form['uploadCourse'],
+        course=course,
         school=request.form['uploadUniversity'],
         upload_comment=request.form['documentComment'],
         subject=request.form['uploadSubject'],
         uid=request.form['uid'],
         header='none',
         type_of_document=request.form['documentType'],
-        tags=[]
+        tags=[],
+        document_date=request.form["documentDate"]
     ))
 
-    
-    return render_template("thank_you.html", "Document uploaded successfully")
+    return "Document uploaded successfully" if status else "Error, not saved"
 
 @views.route("/get_user_documents", methods=["POST"])
 def get_user_documents_view():
