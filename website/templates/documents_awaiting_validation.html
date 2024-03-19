@@ -33,11 +33,16 @@ content %}
       <div id="reportlist" class="report_list">
         {% if reported_ids %} {% for document_id in reported_ids %}
         <div class="list_item">
-          <a href="#" class="item-link"> Document ID: {{ document_id }}</a>
+          <a href="/document/{{ document_id }}" class="item-link">
+            Document ID: {{ document_id }}</a
+          >
+          <div id="reports-for-{{ document_id }}">
+            <!-- Report for each document printed here -->
+          </div>
         </div>
         {% endfor %} {% else %}
         <p class="no-documents-message">
-          No Documents awaiting validation at the moment.
+          No reports awaiting validation at the moment.
         </p>
         {% endif %}
       </div>
@@ -60,6 +65,7 @@ content %}
   .item-link {
     color: #007bff;
     text-decoration: none;
+    border-bottom: 2px #000;
   }
 
   .no-documents-message {
@@ -122,11 +128,11 @@ content %}
         if (documentList.length > 0) {
           documentList.forEach((document) => {
             documentListView += `
-            <div class="document-item">
-              <a href="/validation/${document.id}" class="document-link">${document.header}</a>
-              <span class="document-date">${document.date}</span>
-            </div>
-          `;
+             <div class="document-item">
+               <a href="/validation/${document.id}" class="document-link">${document.header}</a>
+               <span class="document-date">${document.date}</span>
+             </div>
+           `;
           });
         } else {
           documentListView =
@@ -159,6 +165,37 @@ content %}
       // Not signed in
     }
   });
+
+  // reports
+  document.addEventListener("DOMContentLoaded", async () => {
+    {% for document_id in reported_ids %}
+    await loadReports("{{ document_id }}");
+    {% endfor %}
+  });
+
+  async function loadReports(documentId) {
+    try {
+      const response = await fetch(`/get_document_reports/${documentId}`);
+      const reports = await response.json();
+
+
+      const reportsContainer = document.getElementById(`reports-for-${documentId}`);
+      reportsContainer.innerHTML = '';
+
+      if (reports && reports.length > 0) {
+
+        reports.forEach(report => {
+          const reportElement = document.createElement('p');
+          reportElement.textContent = `Reason: ${report.reason}, Comment: ${report.text}`;
+          reportsContainer.appendChild(reportElement);
+        });
+      } else {
+        reportsContainer.innerHTML = '<p>No reports for this document.</p>';
+      }
+    } catch (error) {
+      console.error('Error loading reports:', error);
+    }
+  }
 </script>
 
 {% endblock %}
