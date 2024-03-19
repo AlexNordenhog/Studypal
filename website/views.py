@@ -438,3 +438,19 @@ def validation(document_id):
 def get_document_reports(document_id):
     reports = d.get_document_reports(document_id)
     return jsonify(reports)
+
+@views.route('/status')
+def status_view():
+    return render_template('status.html')
+
+@views.route('/team')
+def team_view():
+    return render_template('team.html')
+
+@views.route('/developement_perspective')
+def developement_perspective_view():
+    return render_template('developement_perspective.html')
+
+@views.route('/timeline')
+def timeline_view():
+    return render_template('timeline.html')

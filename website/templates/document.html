@@ -459,6 +459,39 @@
           console.error("Error:", error);
         });
     });
+
+  // Check if the user is signed in and a moderator
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // Fetch user details to check if the user is a moderator
+      fetchUser(user.uid).then((userData) => {
+        if (userData && userData.role === "moderator") {
+          console.log("User is a moderator.");
+
+          // Make a button beside the like counter if user is a moderator
+          const moderatorMenuBtn = document.createElement("button");
+          moderatorMenuBtn.className = "btn btn-primary";
+          moderatorMenuBtn.type = "button";
+          moderatorMenuBtn.innerText = "Mod Menu";
+
+          const buttonBar = document.querySelector(".button-bar");
+
+          if (buttonBar) {
+            buttonBar.appendChild(moderatorMenuBtn);
+          } else {
+            console.error("Button bar not found");
+          }
+        } else {
+          console.log("User is not a moderator.");
+          window.location.href = "/";
+        }
+      });
+    } else {
+      console.log("User is not signed in.");
+      // Handle not signed-in state
+      window.location.href = "/login";
+    }
+  });
 </script>
 
 <!-- MVP (Måste göras om) Laddar om sidan vid like. Får göras dynamiskt när vi har tid -->
