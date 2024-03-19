@@ -45,10 +45,10 @@
       <a class="navbar-brand nav-link" href="/" id="home">StudyPal</a>
       <div class="collapse navbar-collapse" id="navbar">
         <div class="navbar-nav">
-          <a class="nav-item nav-link" id="login" href="/login">Login</a>
+          <!-- a class="nav-item nav-link" id="login" href="/login">Login</a -->
           <!-- <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a> -->
-          <a class="nav-item nav-link" id="upload" href="/upload_v2">Upload</a>
-          <a class="nav-item nav-link" id="profile" href="/profile">Profile</a>
+          <!-- a class="nav-item nav-link" id="upload" href="/upload_v2">Upload</a -->
+          <!-- a class="nav-item nav-link" id="profile" href="/profile">Profile</a -->
           <!-- <a class="nav-item nav-link" id="document" href="/document"
             >Document (temporär)</a
           >
@@ -190,34 +190,43 @@
     // Check if the user is signed in and a moderator
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Fetch user details to check if the user is a moderator
+        // User is signed in, add profile and upload button
+        addButtonToNavbar("Profile", "/profile");
+        addButtonToNavbar("Upload", "/upload_v2");
+
+        // Fetch user details to check user role
         fetchUser(user.uid).then((userData) => {
           if (userData) {
+            // User is signed in
             if (userData.role === "moderator") {
               console.log("User is a moderator.");
 
-              // Make and add btn if user is a moderator
-              const documentValidationBtn = document.createElement("a");
-              documentValidationBtn.className = "nav-item nav-link";
-              documentValidationBtn.href = "/documents_awaiting_validation";
-              documentValidationBtn.innerText = "Document Validation";
-              const navbarDiv = document.querySelector("#navbar .navbar-nav");
-              if (navbarDiv) {
-                navbarDiv.appendChild(documentValidationBtn);
-              }
+              // Moderator Panel
+              addButtonToNavbar(
+                "Moderator Panel",
+                "/documents_awaiting_validation"
+              );
+            } else {
             }
-            console.log("Not moderator");
-          } else {
-            console.log("User is not a moderator.");
-            window.location.href = "/";
           }
         });
       } else {
         console.log("User is not signed in.");
-        // Handle not signed-in state
-        //window.location.href = "/login";
+        addButtonToNavbar("Login", "/login");
       }
     });
+
+    function addButtonToNavbar(text, href) {
+      const button = document.createElement("a");
+      button.className = "nav-item nav-link";
+      button.href = href;
+      button.innerText = text;
+
+      const navbarDiv = document.querySelector("#navbar .navbar-nav");
+      if (navbarDiv) {
+        navbarDiv.appendChild(button);
+      }
+    }
 
     function fetchUser(uid) {
       const url = "/get_user"; // Update this URL to match your Flask endpoint
