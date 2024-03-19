@@ -31,9 +31,15 @@ content %}
     <div class="col-md-5">
       <h2>Flagged Documents</h2>
       <div id="reportlist" class="report_list">
+        {% if reported_ids %} {% for document_id in reported_ids %}
         <div class="list_item">
-          <a href="/report/{{ report_id }}" class="item-link"> Test</a>
+          <a href="" class="item-link"> Document ID: {{ document_id }}</a>
         </div>
+        {% endfor %} {% else %}
+        <p class="no-documents-message">
+          No Documents awaiting validation at the moment.
+        </p>
+        {% endif %}
       </div>
     </div>
   </div>

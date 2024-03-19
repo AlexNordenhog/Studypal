@@ -346,9 +346,10 @@ def upload_specificatoins(temp_id):
 @views.route("/documents_awaiting_validation")
 def get_waiting_documents():
     document_ids = d._get_id_lst(is_validated=False)
+    reported_ids = d.get_reported_document_ids()
 
     return render_template("documents_awaiting_validation.html",
-                           documents_ids=document_ids)
+                           documents_ids=document_ids, reported_ids=reported_ids)
 
 
 @views.route("validate_document/<document_id>", methods=["POST"])
@@ -380,9 +381,3 @@ def validation(document_id):
         download_url = file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
-
-
-@views.route("report/<report_id>")
-def report(report_id):
-
-    return None

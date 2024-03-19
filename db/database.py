@@ -586,6 +586,36 @@ class Database:
                     all_subject_courses.extend(subject_courses)
         return all_subject_courses
 
+    def get_reported_document_ids(self) -> list:
+        '''
+        Returns a list containing all document ids that have a "Reports" folder, 
+        regardless of whether the folder is empty or not.
+        '''
+        reported_ids = []
+
+        schools = self._get_keys('/Universities/')
+
+        for school in schools:
+            subjects = self._get_keys(f'/Universities/{school}')
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                for course in courses:
+                    if 'Documents' in self._get_keys(f'/Universities/{school}/{subject}/{course}'):
+                        document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
+                        for document_type in document_types:
+                            document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
+
+                            for id in document_ids:
+                                reports_path = f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}/Reports'
+                                reports_exist = db.reference(reports_path).get(shallow=True) is not None
+                                # If reports_exist is True, the "Reports" folder exists for the document
+                                if reports_exist:
+                                    reported_ids.append(id)
+
+        reported_ids_int = list(set([int(id) for id in reported_ids]))
+
+        return reported_ids_int
+
     def _get_new_id(self) -> int:
         '''
         Generates the next document id.
