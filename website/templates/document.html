@@ -187,6 +187,75 @@
   </div>
 </div>
 
+<!-- Mod Menu Modal -->
+<div
+  class="modal fade"
+  id="modMenuModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="modMenuModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modMenuModalLabel">Mod Menu</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Form inside the modal -->
+        <form>
+          <div class="form-group">
+            <label for="reportReason">Choose an reason</label>
+            <select class="form-control" id="reportReason">
+              <option value="inaccurateContent">
+                Inaccurate or Misleading Content
+              </option>
+              <option value="inappropriateMaterial">
+                Inappropriate or Offensive Material
+              </option>
+              <option value="plagiarism">
+                Plagiarism or Copyright Infringement
+              </option>
+              <option value="irrelevantContent">Irrelevant or Off-topic</option>
+              <option value="otherreason">Other Reason</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="deleteText">Comment</label>
+            <textarea
+              class="form-control"
+              id="deleteText"
+              rows="3"
+              placeholder="Your Comment"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary dislike"
+          id="deleteDocument"
+        >
+          Delete Document
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   .banner {
     background-color: #f8f9fa;
@@ -473,6 +542,8 @@
           moderatorMenuBtn.className = "btn btn-primary";
           moderatorMenuBtn.type = "button";
           moderatorMenuBtn.innerText = "Mod Menu";
+          moderatorMenuBtn.setAttribute("data-toggle", "modal");
+          moderatorMenuBtn.setAttribute("data-target", "#modMenuModal");
 
           const buttonBar = document.querySelector(".button-bar");
 

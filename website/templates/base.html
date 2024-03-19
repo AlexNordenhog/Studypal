@@ -19,6 +19,9 @@
       rel="stylesheet"
     />
 
+    <!-- Bootstrap JS for Bootstrap 5 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <title>{% block title %}Home{% endblock %}</title>
     <style>
       .box-card {
@@ -28,7 +31,6 @@
         background-color: #d70000; /* Set your desired background color here */
       }
     </style>
-    
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -85,16 +87,20 @@
       <footer class="py-3 my-4">
         <ul class="nav justify-content-center border-bottom pb-3 mb-3">
           <li class="nav-item">
-            <a  class="nav-link px-2 text-muted" href="/status">Status</a>
+            <a class="nav-link px-2 text-muted" href="/status">Status</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link px-2 text-muted" href="/team" >The StudyPal Team</a>
+            <a class="nav-link px-2 text-muted" href="/team"
+              >The StudyPal Team</a
+            >
           </li>
           <li class="nav-item">
-            <a  class="nav-link px-2 text-muted" href="/developement_perspective">Developement Perspective</a>
+            <a class="nav-link px-2 text-muted" href="/developement_perspective"
+              >Developement Perspective</a
+            >
           </li>
           <li class="nav-item">
-            <a class="nav-link px-2 text-muted" href="/timeline" > Timeline</a>
+            <a class="nav-link px-2 text-muted" href="/timeline"> Timeline</a>
           </li>
         </ul>
         <p class="text-center text-muted">© 2024 StudyPal AB</p>
