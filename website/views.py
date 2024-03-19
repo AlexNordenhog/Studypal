@@ -343,3 +343,8 @@ def validation(document_id):
         download_url = file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
+
+@views.route("report/<report_id>")
+def report(report_id):
+
+    return None

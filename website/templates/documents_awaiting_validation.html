@@ -1,136 +1,158 @@
-<!-- This is the moderator page where unvalidated documents appear -->
-{% extends "base.html" %} {% block title %}Profile{% endblock %} {% block
+<!-- This is the moderator page where unvalidated documents and reports appear -->
+{% extends "base.html" %} {% block title %}Moderator view{% endblock %} {% block
 content %}
-<!DOCTYPE html>
-<html lang="en">
-  <style>
-    .document-item {
-      margin-bottom: 10px;
-    }
 
-    .document-link {
-      color: #007bff;
-      text-decoration: none;
-    }
-
-    .no-documents-message {
-      color: #888;
-    }
-  </style>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document Approval</title>
-  </head>
-  <body>
-    <h1>Documents Waiting for Validation</h1>
-    <div id="documentList">
-      {% if documents_ids %} {% for document_id in documents_ids %}
-      <div class="document-item">
-        <a href="/validation/{{ document_id }}" class="document-link"
-          >Document ID: {{ document_id }}</a
-        >
+<div class="container my-5">
+  <div class="row">
+    <!-- Column for documents awaiting validation -->
+    <div class="col-md-6">
+      <h2>Awaiting Validation</h2>
+      <div id="documentList" class="document_list">
+        {% if documents_ids %} {% for document_id in documents_ids %}
+        <div class="list-item">
+          <a href="/validation/{{ document_id }}" class="item-link"
+            >Document ID: {{ document_id }}</a
+          >
+        </div>
+        {% endfor %} {% else %}
+        <p class="no-documents-message">
+          No Documents awaiting validation at the moment.
+        </p>
+        {% endif %}
       </div>
-      {% endfor %} {% else %}
-      <p class="no-documents-message">
-        No Documents awaiting validation at the moment.
-      </p>
-      {% endif %}
     </div>
-  </body>
 
-  <script type="module">
-    // Import necessary Firebase modules
-    import {
-      GoogleAuthProvider,
-      getAuth,
-      signInWithPopup,
-      onAuthStateChanged,
-      updateProfile,
-    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import {
-      getDatabase,
-      ref,
-      get,
-      child,
-      set,
-    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-    import { app, auth, userExists } from "../static/index.js";
+    <!-- Vertical Divider -->
+    <div class="col-md-1 d-none d-md-block">
+      <div class="divider"></div>
+    </div>
 
-    function fetchUser(uid) {
-      const url = "/get_user"; // Update this URL to match your Flask endpoint
+    <!-- Column for flagged documents -->
+    <div class="col-md-5">
+      <h2>Flagged Documents</h2>
+      <div id="reportlist" class="report_list">
+        <div class="list_item">
+          <a href="/report/{{ report_id }}" class="item-link"> Test</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-      const data = {
-        uid: uid,
-      };
+<style>
+  .divider {
+    height: 100%;
+    width: 1px;
+    background-color: #000;
+    margin-right: -15px;
+  }
 
-      return fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+  .list-item {
+    margin-bottom: 10px;
+  }
+
+  .item-link {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  .no-documents-message {
+    color: #888;
+  }
+</style>
+
+<script type="module">
+  // Import necessary Firebase modules
+  import {
+    GoogleAuthProvider,
+    getAuth,
+    signInWithPopup,
+    onAuthStateChanged,
+    updateProfile,
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import {
+    getDatabase,
+    ref,
+    get,
+    child,
+    set,
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+  import { app, auth, userExists } from "../static/index.js";
+
+  function fetchUser(uid) {
+    const url = "/get_user"; // Update this URL to match your Flask endpoint
+
+    const data = {
+      uid: uid,
+    };
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        console.error(error);
+        return null;
+      });
+  }
+
+  // Display document list with clickable links
+  function displayDocumentList(uid) {
+    fetch("/get_user_documents", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ uid: uid }),
+    })
+      .then((response) => response.json())
+      .then((documentList) => {
+        let documentListView = "";
+
+        if (documentList.length > 0) {
+          documentList.forEach((document) => {
+            documentListView += `
+            <div class="document-item">
+              <a href="/validation/${document.id}" class="document-link">${document.header}</a>
+              <span class="document-date">${document.date}</span>
+            </div>
+          `;
+          });
+        } else {
+          documentListView =
+            '<p class="no-documents-message">No uploads yet. <a href="/upload" class="upload-link">Upload your first document</a>.</p>';
+        }
+
+        document.getElementById("documentList").innerHTML = documentListView;
       })
-        .then((response) => response.json())
-        .catch((error) => {
-          console.error(error);
-          return null;
-        });
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  // Checking authentication state, including moderator role
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const uid = user.uid;
+
+      // Example of checking if the user is a moderator
+      // This requires your user data to include a role property or similar
+      fetchUser(uid).then((userData) => {
+        if (userData && userData.role === "moderator") {
+          console.log("User is a moderator.");
+        } else {
+          console.log("User is not a moderator.");
+          window.location.href = "/";
+        }
+      });
+    } else {
+      // Not signed in
     }
+  });
+</script>
 
-    // Display document list with clickable links
-    function displayDocumentList(uid) {
-      fetch("/get_user_documents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uid: uid }),
-      })
-        .then((response) => response.json())
-        .then((documentList) => {
-          let documentListView = "";
-
-          if (documentList.length > 0) {
-            documentList.forEach((document) => {
-              documentListView += `
-              <div class="document-item">
-                <a href="/validation/${document.id}" class="document-link">${document.header}</a>
-                <span class="document-date">${document.date}</span>
-              </div>
-            `;
-            });
-          } else {
-            documentListView =
-              '<p class="no-documents-message">No uploads yet. <a href="/upload" class="upload-link">Upload your first document</a>.</p>';
-          }
-
-          document.getElementById("documentList").innerHTML = documentListView;
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-    }
-
-    // Checking authentication state, including moderator role
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const uid = user.uid;
-
-        // Example of checking if the user is a moderator
-        // This requires your user data to include a role property or similar
-        fetchUser(uid).then((userData) => {
-          if (userData && userData.role === "moderator") {
-            console.log("User is a moderator.");
-          } else {
-            console.log("User is not a moderator.");
-            window.location.href = "/";
-          }
-        });
-      } else {
-        // Not signed in
-      }
-    });
-  </script>
-</html>
 {% endblock %}
