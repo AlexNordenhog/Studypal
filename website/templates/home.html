@@ -3,9 +3,12 @@
 
 <!-- Header Section -->
 <header class="text-center my-5">
-  <h1 class="display-3">StudyPal</h1>
+  <h1 class="display-3">
+    <span style="color: rgb(201, 0, 0);">Study</span><span style="color: rgb(0, 0, 173);">Pal</span>
+  </h1>
   <small>
     <h2>The easiest way to better grades!</h2>
+    <br>
   </small>
   <!-- Combined Search Form -->
   <form action="/search" method="get" class="input-group my-3">
@@ -199,30 +202,37 @@ var searchDropDownMenu = new SearchDropDownMenu()
 </script>
 
 <section class="text-center my-5">
+  <br>
+  
   <div class="container">
     <div class="row">
       <!-- Stats Item -->
       <div class="col">
-        <div class="card">
+        <div class="card box-card">
           <div class="card-body">
-            <h5 class="card-title">50+</h5>
-            <p class="card-text">University</p>
+            <h5 class="card-title">40+</h5>
+            <p class="card-text">Universities</p>
             <p class="card-text">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit
-              delectus dignissimos.
+              <i>
+              StudyPal allows students from more than 40 universities in Sweden 
+              to upload materials such as exams, assignments, and lecture notes!
+            </i>
             </p>
           </div>
         </div>
       </div>
       <!-- Stats Item -->
       <div class="col">
-        <div class="card">
+        <div class="card box-card">
           <div class="card-body">
             <h5 class="card-title">450K+</h5>
             <p class="card-text">Students</p>
             <p class="card-text">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit
-              delectus dignissimos.
+              <i>
+              More than 450,000 students in Sweden could benefit from utilizing 
+              StudyPal for more efficient studying by accessing materials shared by other students!
+              <br>
+              </i>
             </p>
           </div>
         </div>
@@ -234,15 +244,23 @@ var searchDropDownMenu = new SearchDropDownMenu()
 
 <!-- About Section -->
 <section class="my-5">
-  <div class="container">
+  <br>
+  <br>
+  <div class="container text-center">
     <h2 class="text-center">ABOUT STUDYPAL</h2>
-    <p>
-      Lorem, ipsum dolor sit amet consectetur adipisicing elit. Commodi neque
-      illum dolore quidem architecto ratione quod perferendis minima cupiditate
-      facere a suscipit numquam eligendi molestiae eos esse dolores,
-      voluptatibus officiis!
-    </p>
+    <div class="text-center">
+      <i>
+        StudyPal is a platform where students can access materials uploaded by other students, 
+        such as old exams, assignments, and lecture notes. Additionally, StudyPal generates answers to exams that do not have provided solutions.
+      </i>
+
     <!-- Add more content about STUDYPAL here -->
+      <p class="text-center"> 
+        <br><br><br>
+        <img src="{{ url_for('static', filename='pictures/User_view.png') }}" alt="StudyPal Logo" width="700" height="250">
+        <br><br>
+      </p>
+    </div>
   </div>
 </section>
 
