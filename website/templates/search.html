@@ -3,7 +3,9 @@
   %}
 
 <div class="container my-5">
+  {% if query %}
   <h2 class="simonsheader">Search Results for "{{ query }}"</h2>
+  {% endif %}
   <ul class="searchList">
     {% for result in results %}
     <li class="searchResult"><a href="{{ url_for('views.course_page', course_name=result) }}">{{ result }}</a></li>
