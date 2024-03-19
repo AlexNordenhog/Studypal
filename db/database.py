@@ -638,7 +638,7 @@ class Database:
         '''
         Generates the next document id.
         '''
-        id_lst = self._get_id_lst()
+        id_lst = self._get_id_lst(is_validated=False)
         new_id = max(id_lst) + 1
         return new_id
     
@@ -914,6 +914,7 @@ class FileStorage:
         return download_url
 
 d = Database()
+
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
