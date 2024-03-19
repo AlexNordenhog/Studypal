@@ -710,6 +710,19 @@ class Database:
                 document_names_for_document_type.append(document_name)
             course_documents_name_dict.update({document_type : document_names_for_document_type})
         return course_documents_name_dict
+    
+    def _get_document_votes_for_course(self, course_documents_id_dict):
+        '''
+        Takes a course_documents_id_dict and returns a list of dictionaries with document votes.
+        '''
+        course_documents_votes_dict = {}
+        for document_type, ids in course_documents_id_dict.items():
+            for id in ids:
+                votes_dict = self.get_document_votes(id)
+                upvotes = votes_dict.get('upvotes')
+                downvotes = votes_dict.get('downvotes')
+                course_documents_votes_dict.update({id : [upvotes, downvotes]})
+        return course_documents_votes_dict
 
     def get_course_data(self, course_name):
         course_university_and_subject = self._get_university_and_subject_for_course_name(course_name)
@@ -717,12 +730,14 @@ class Database:
         course_subject = course_university_and_subject[1]
         course_documents_id_dict = self._get_document_ids_for_course(course_university, course_subject, course_name)
         course_documents_name_dict = self._get_document_names_for_course(course_university, course_subject, course_name, course_documents_id_dict)
+        course_documents_votes_dict = self._get_document_votes_for_course(course_documents_id_dict)
         course_data_dict = {
             "course_name": course_name,
             "course_university": course_university,
             "course_subject": course_subject,
             "course_documents_id_dict": course_documents_id_dict,
             "course_documents_name_dict": course_documents_name_dict,
+            "course_documents_votes_dict": course_documents_votes_dict,
         }
         return course_data_dict
 
