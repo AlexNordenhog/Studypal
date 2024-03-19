@@ -29,6 +29,35 @@
     {% endfor %}
   </select>
 
+  <!-- Grading System Dropdown, initially hidden -->
+<div id="gradingSystemDropdown" style="display: none;">
+  <label for="gradingSystem">Select the grading system used:</label>
+  <select class="custom-select" id="gradingSystem" name="gradingSystem">
+    <option selected>Choose a grading system...</option>
+    <option value="G/U">G/U</option>
+    <option value="A-F">A-F</option>
+    <option value="VG/U/G">VG/U/G</option>
+    <option value="1-5">1-5</option>
+  </select>
+</div>
+
+<!-- Grade Dropdown, initially hidden -->
+<div id="gradeDropdown" style="display: none;">
+  <label for="documentGrade">Select the grade:</label>
+  <select class="custom-select" id="documentGrade" name="documentGrade">
+    <!-- Options will be dynamically added based on the grading system selected -->
+  </select>
+</div>
+
+<!-- Document Date Selection-->
+<label for="documentDate">Select the date for your document:</label>
+<input type="date" id="documentDate" name="documentDate" class="custom-select" required onchange="categorizationDropDownMenu.updateDocCourses()">
+
+<!-- Optional Comment Input -->
+<label for="documentComment">Comment about your document (optional):</label>
+<textarea id="documentComment" name="documentComment" rows="4" cols="50" class="custom-entry" placeholder="Enter your comment here..."></textarea>
+
+
   <!-- University Dropdown-->
   <label for="documentUniversity"
     >Select the university for your document:
@@ -80,20 +109,25 @@
     disabled
   ></textarea>
 
+  <!-- Submit button -->
+  <button type="submit" id="submitBtn" class="submit-button">Submit</button>
+
+
   <script>
     class CategorizationDropDownMenu {
       updateDocCourses() {
         var universitySelect = document.getElementById("uploadUniversity");
         var subjectSelect = document.getElementById("uploadSubject");
         var documentSelect = document.getElementById("documentType");
+        var dateSelect = document.getElementById("documentDate")
         var courseSelect = document.getElementById("uploadCourse");
         var courseEntry = document.getElementById("manualUploadCourse");
         var selectedUniversity = universitySelect.value;
         var selectedSubject = subjectSelect.value;
         var selectedDocument = documentSelect.value;
+        var selectedDate = dateSelect.value;
         var selectedCourse = courseSelect.value;
         var enteredCourse = courseEntry.value;
-
         setTimeout(() => {
           if (
             selectedUniversity !== "Choose a university..." &&
@@ -101,7 +135,8 @@
             selectedSubject !== "Choose a subject..." &&
             selectedSubject &&
             selectedDocument !== "Choose a document type..." &&
-            selectedDocument
+            selectedDocument &&
+            selectedDate
           ) {
             fetch(
               `/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`
@@ -140,6 +175,92 @@
     }
 
     var categorizationDropDownMenu = new CategorizationDropDownMenu();
+
+    //Code for checking that input has been made in all menus and checking documentType
+    document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('submitBtn').addEventListener('click', function(event) {
+        var documentType = document.getElementById('documentType').value;
+        var documentDate = document.getElementById('documentDate').value;
+        var university = document.getElementById('uploadUniversity').value;
+        var subject = document.getElementById('uploadSubject').value;
+        var course = document.getElementById('uploadCourse').value;
+        var manualCourse = document.getElementById('manualUploadCourse').value.trim();
+        var gradingSystem = document.getElementById('gradingSystem').value;
+        var documentGrade = document.getElementById('documentGrade').value;
+
+        if (!documentType || documentType === "Choose a document type..." ||
+            !documentDate ||
+            !university || university === "Choose a university..." ||
+            !subject || subject === "Choose a subject..." ||
+            (course === "Choose a course..." && manualCourse === "")) {
+            alert("Please make a selection in all required fields.");
+            event.preventDefault(); 
+            return false;
+        }
+        //If documentType = Assignment, check that a grade has been chosen
+        if (documentType === "Assignment") {
+            if (gradingSystem === "Choose a grading system..." || !documentGrade) {
+                alert("Please select a grading system and a grade for your assignment.");
+                event.preventDefault(); // Prevent form submission
+                return false;
+            }
+        }
+
+        if (documentType === "Assignment") {
+            alert(documentType)
+        } if (documentType === "Graded Exam") {
+            alert('Graded Exam coming soon!')
+        } else {
+            alert(documentType)
+        }
+        
+
+    });
+});
+
+//Code for updating grading system
+document.addEventListener('DOMContentLoaded', function() {
+    var documentTypeSelect = document.getElementById('documentType');
+    var gradingSystemDropdown = document.getElementById('gradingSystemDropdown');
+    var gradeDropdown = document.getElementById('gradeDropdown');
+    var gradingSystemSelect = document.getElementById('gradingSystem');
+    var gradeSelect = document.getElementById('documentGrade');
+
+    function showHideDropdowns(show) {
+        if (show) {
+            gradingSystemDropdown.style.display = 'block';
+            gradeDropdown.style.display = 'block';
+        } else {
+            gradingSystemDropdown.style.display = 'none';
+            gradeDropdown.style.display = 'none';
+        }
+    }
+
+    function updateGradeOptions() {
+        var gradingSystem = gradingSystemSelect.value;
+        gradeSelect.innerHTML = ''; // Clear existing options
+        var grades = [];
+        if (gradingSystem === 'G/U') grades = ['G', 'U'];
+        else if (gradingSystem === 'A-F') grades = ['A', 'B', 'C', 'D', 'E', 'F'];
+        else if (gradingSystem === 'VG/U/G') grades = ['VG', 'G', 'U'];
+        else if (gradingSystem === '1-5') grades = ['1', '2', '3', '4', '5'];
+
+        grades.forEach(function(grade) {
+            var option = new Option(grade, grade);
+            gradeSelect.options.add(option);
+        });
+    }
+
+    documentTypeSelect.addEventListener('change', function() {
+        var isAssignment = documentTypeSelect.value === 'Assignment';
+        showHideDropdowns(isAssignment);
+        // Reset grading system and grade dropdowns when document type changes
+        gradingSystemSelect.value = 'Choose a grading system...';
+        gradeSelect.innerHTML = '';
+    });
+
+    gradingSystemSelect.addEventListener('change', updateGradeOptions);
+});
   </script>
 
   <script type="module">
