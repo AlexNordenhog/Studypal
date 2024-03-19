@@ -5,6 +5,7 @@ from .categorization import c
 
 views = Blueprint("views", __name__)
 
+
 @views.route("/")
 def home():
     universities = d.get_all_universities()
@@ -12,7 +13,8 @@ def home():
     return render_template("home.html",
                            universities=universities,
                            subjects=subjects)
-                           
+
+
 @views.route("/search")
 def search_results():
     if request.args.get('university') != 'Choose a university...':
@@ -32,17 +34,20 @@ def search_results():
     results = s.search(query, university, subject, course)  
     return render_template('search.html', query=query, results=results)
 
+
 @views.route("/upload")
 def upload():
     universities = d.get_all_universities()
     subjects = d.get_all_unique_subjects()
     return render_template("upload.html", universities=universities, subjects=subjects)
 
+
 @views.route("/profile")
 def profile():
     
     return render_template("profile.html")
-    
+
+
 @views.route('/get-courses')
 def get_courses():
     university = request.args.get('university')
@@ -50,17 +55,20 @@ def get_courses():
     courses = d.get_courses_from_subject_at_university(university, subject)
     return jsonify(courses)
 
+
 @views.route('/get-subjects')
 def get_subjects():
     university = request.args.get('university')
     uni_subjects = d.get_all_subjects_from_university(university)
     return jsonify(uni_subjects)
-    
+
+
 @views.route('/get-universities')
 def get_universities():
     subject = request.args.get('subject')
     subject_unis = d.get_subject_universities(subject)
     return jsonify(subject_unis)
+
 
 @views.route("document/<document_id>")
 def document(document_id):
@@ -86,6 +94,7 @@ def document(document_id):
 
     return render_template("document.html", document_dict=document_dict, download_url=download_url, comments=comments)
 
+
 @views.route('course_page/<course_name>')
 def course_page(course_name):
     course_page_dict = d.get_course_data(course_name)
@@ -99,6 +108,7 @@ def course_page(course_name):
 
     return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
 
+
 @views.app_errorhandler(SearchError)
 def handle_search_error(error):
     '''
@@ -106,6 +116,7 @@ def handle_search_error(error):
     executing the search() function when they press on the search button.
     '''
     return render_template('search_error.html')
+
 
 @views.route("/add_user", methods=["POST"])
 def add_user():
@@ -118,9 +129,11 @@ def add_user():
     
     return jsonify({"message": "User added successfully"})
 
+
 @views.route("/create_profile")
 def create_profile():
     return render_template("create_profile.html")
+
 
 @views.route("/get_document", methods=["POST"])
 def get_document():
@@ -156,17 +169,32 @@ def get_document():
     else:
         return jsonify({"error": "Document not found"})
 
+
 @views.route("/add_document_comment", methods=["POST"])
 def add_document_comment():
     data = request.json
     uid = data.get("uid")
     document_id = data.get("document_id")
     text = data.get("text")
-    
+
     # Add the comment to the document in the database
     d.add_document_comment(document_id, uid, text)
-    
+
     return jsonify({"message": "Comment added to document successfully"})
+
+
+@views.route("/add_document_report", methods=["POST"])
+def add_document_report():
+    data = request.json
+    uid = data.get("uid")
+    document_id = data.get("document_id")
+    text = data.get("text")
+    reason = data.get("reason")
+
+    d.add_document_report(document_id, uid, reason, text)
+
+    return jsonify({"message": "Comment added to document successfully"})
+
 
 @views.route("/add_course_comment", methods=["POST"])
 def add_course_comment():
@@ -180,9 +208,11 @@ def add_course_comment():
     
     return jsonify({"message": "Comment added to document successfully"})
 
+
 @views.route("/test-comment")
 def comment():
     return render_template("test-comment.html")
+
 
 @views.route("/vote_document", methods=["POST"])
 def vote_document():
@@ -196,6 +226,7 @@ def vote_document():
     
     return jsonify({"message": "Vote added successfully"})
 
+
 @views.route("/get_user", methods=["POST"])
 def get_user():
     data = request.json
@@ -208,9 +239,11 @@ def get_user():
     else:
         return jsonify({"username":'unregistered user', "creation_date":"none"})
 
+
 @views.route("/test-vote")
 def test_comment():
     return render_template("/test-vote.html")
+
 
 @views.route('/upload_document', methods=['POST'])
 def upload_document():
@@ -238,6 +271,7 @@ def upload_document():
     
     return "Document uploaded successfully"
 
+
 @views.route("/get_user_documents", methods=["POST"])
 def get_user_documents_view():
     data = request.json
@@ -260,6 +294,7 @@ def get_user_documents_view():
 def upload_v2():
     return render_template("upload_v2.html")
 
+
 @views.route("/upload/temp", methods=["POST"])
 def upload_temp_pdf():
     temp_url = request.json.get('temp_url')
@@ -271,7 +306,6 @@ def upload_temp_pdf():
         return "Success"
     else:
         return "Missing parameters", 400
-
 
 
 @views.route('upload/specifications/<temp_id>', methods=["GET"])
@@ -329,12 +363,15 @@ def submit_document():
 
     return render_template("thank_you.html")
 
+
 @views.route("/documents_awaiting_validation")
 def get_waiting_documents():
     document_ids = d._get_id_lst(is_validated=False)
+    reported_ids = d.get_reported_document_ids()
 
     return render_template("documents_awaiting_validation.html",
-                           documents_ids=document_ids)
+                           documents_ids=document_ids, reported_ids=reported_ids)
+
 
 @views.route("validate_document/<document_id>", methods=["POST"])
 def validate_document(document_id):
@@ -347,6 +384,7 @@ def validate_document(document_id):
         d.validate_document(document_id, approve)
     
     return jsonify({"status":"success"})
+
 
 @views.route("validation/<document_id>")
 def validation(document_id):
@@ -364,8 +402,3 @@ def validation(document_id):
         download_url = file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
-
-@views.route("report/<report_id>")
-def report(report_id):
-
-    return None

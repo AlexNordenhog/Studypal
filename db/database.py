@@ -194,6 +194,37 @@ class Database:
         ref.update(course_info)
         
         return
+    
+    def add_document_report(self, document_id, uid, reason, text):
+        '''
+        Add report to a document
+        '''    
+
+        document_path = self._get_document_ref(document_id).path
+        report_path = f'{document_path}/Reports'
+
+        # generate new comment id
+        report_id_lst = list(eval(str_id) for str_id in (self._get_keys(report_path)))
+        if len(report_id_lst) == 0:
+            report_id = 1
+        else:
+            report_id = max(report_id_lst) + 1
+
+        # Compile report 
+        report_content = {
+            'text':text,
+            'uid':uid,
+            'timestamp':self._get_timestamp(),
+            'reason':reason
+        }
+
+        ref = db.reference(f'{report_path}/{report_id}')
+        ref.update(report_content)
+
+        # Check if comment was added to db
+        json_report = ref.get()
+        
+        return True if json_report == report_content else False
 
     def add_document_comment(self, document_id, uid, text):
         '''
@@ -554,6 +585,36 @@ class Database:
                     subject_courses = self.get_courses_from_subject_at_university(u, s)
                     all_subject_courses.extend(subject_courses)
         return all_subject_courses
+
+    def get_reported_document_ids(self) -> list:
+        '''
+        Returns a list containing all document ids that have a "Reports" folder, 
+        regardless of whether the folder is empty or not.
+        '''
+        reported_ids = []
+
+        schools = self._get_keys('/Universities/')
+
+        for school in schools:
+            subjects = self._get_keys(f'/Universities/{school}')
+            for subject in subjects:
+                courses = self._get_keys(f'/Universities/{school}/{subject}')
+                for course in courses:
+                    if 'Documents' in self._get_keys(f'/Universities/{school}/{subject}/{course}'):
+                        document_types = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents')
+                        for document_type in document_types:
+                            document_ids = self._get_keys(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}')
+
+                            for id in document_ids:
+                                reports_path = f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}/Reports'
+                                reports_exist = db.reference(reports_path).get(shallow=True) is not None
+                                # If reports_exist is True, the "Reports" folder exists for the document
+                                if reports_exist:
+                                    reported_ids.append(id)
+
+        reported_ids_int = list(set([int(id) for id in reported_ids]))
+
+        return reported_ids_int
 
     def _get_new_id(self) -> int:
         '''
