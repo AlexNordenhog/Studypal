@@ -124,7 +124,7 @@ class Database:
         else:
             date = self._get_timestamp()['date']
             
-        header = f'{course}_{type_of_document}_{date}'
+        header = f'{course} {type_of_document} {date}'
         
         # Compile document
         id = self._get_new_id()
@@ -161,11 +161,6 @@ class Database:
                 'comments':{
                         'upload_comment':upload_comment,
                         'document_comments':{
-                                1:{
-                                    'username':'simon',
-                                    'comment':'omg what',
-                                    'timestamp':self._get_timestamp()
-                                }
                         }
                 }
         }
