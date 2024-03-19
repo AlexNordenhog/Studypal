@@ -38,6 +38,15 @@
             <li class="documentResult">
                 {% set doc_id = course_page_dict['course_documents_id_dict'][doc_type][loop.index0] %}
                 <a href="{{ url_for('views.document', document_id=doc_id) }}">{{ doc_name }}</a>
+                <div class="vote-counters">
+                  {% if doc_id in course_page_dict['course_documents_votes_dict'] %}
+                  <span class="badge bg-success mx-1">{{ course_page_dict['course_documents_votes_dict'][doc_id][0] }}</span>
+                  <span class="badge bg-danger mx-1">{{ course_page_dict['course_documents_votes_dict'][doc_id][1] }}</span>
+                  {% else %}
+                  <span class="badge bg-success mx-1">0</span>
+                  <span class="badge bg-danger mx-1">0</span>
+                  {% endif %}
+              </div>
             </li>
             {% endfor %}
         </ul>
@@ -135,7 +144,11 @@
     padding: 10px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
+
   .documentResult:hover {
     background-color: #e9e9e9;
   }
@@ -146,6 +159,22 @@
   .documentResult a:hover {
     text-decoration: underline;
   }
+  .votes {
+    float: right; /* Aligns the vote counts to the right */
+}
+
+.upvotes {
+    color: green; /* Green color for upvotes */
+    margin-right: 10px; /* Adds some spacing between upvotes and downvotes */
+}
+
+.downvotes {
+    color: red; /* Red color for downvotes */
+}
+.vote-counters {
+    display: flex;
+    justify-content: flex-end;
+}
 </style>
 
 <script type="module">
