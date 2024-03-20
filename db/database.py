@@ -92,10 +92,10 @@ class Database:
         
         try:
             ref.parent.update({document_id:None})
+            self._remove_document_from_user(document_id)
         except:
             return False
         
-        self._remove_document_from_user(document_id)
         return True
 
     def _remove_document_from_user(self, document_id):
