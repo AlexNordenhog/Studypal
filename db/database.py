@@ -671,8 +671,9 @@ class Database:
                             for id in document_ids:
                                 current_validation_status = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}/upload/validated').get()
                                 
-                                if current_validation_status == is_validated:
-                                    id_lst_str.append(id)
+                                if is_validated:
+                                    if current_validation_status:
+                                        id_lst_str.append(id)
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
