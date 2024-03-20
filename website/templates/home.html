@@ -4,16 +4,22 @@
 <!-- Header Section -->
 <header class="text-center my-5">
   <h1 class="display-3">
-    <span style="color: rgb(201, 0, 0);">Study</span><span style="color: rgb(0, 0, 173);">Pal</span>
+    <span style="color: rgb(201, 0, 0)">Study</span
+    ><span style="color: rgb(0, 0, 173)">Pal</span>
   </h1>
   <small>
     <h2>The easiest way to better grades!</h2>
-    <br>
+    <br />
   </small>
   <!-- Combined Search Form -->
   <form action="/search" method="get" class="input-group my-3">
     <!-- University Dropdown -->
-    <select class="custom-select" id="university" name="university" onchange="searchDropDownMenu.updateSubjects(); searchDropDownMenu.updateCourses();">
+    <select
+      class="custom-select"
+      id="university"
+      name="university"
+      onchange="searchDropDownMenu.updateSubjects(); searchDropDownMenu.updateCourses();"
+    >
       <option selected>Choose a university...</option>
       {% for university in universities %}
       <option value="{{ university }}">{{ university }}</option>
@@ -21,7 +27,12 @@
     </select>
 
     <!-- Subject Dropdown -->
-    <select class="custom-select" id="subject" name="subject" onchange="searchDropDownMenu.updateUniversities(); searchDropDownMenu.updateCourses();">
+    <select
+      class="custom-select"
+      id="subject"
+      name="subject"
+      onchange="searchDropDownMenu.updateUniversities(); searchDropDownMenu.updateCourses();"
+    >
       <option selected>Choose a subject...</option>
       {% for subject in subjects %}
       <option value="{{ subject }}">{{ subject }}</option>
@@ -48,190 +59,222 @@
 </header>
 
 <script>
-class SearchDropDownMenu {
+  class SearchDropDownMenu {
     constructor() {
-        this.initialUniversitiesHTML = document.getElementById('university').innerHTML;
-        this.initialSubjectsHTML = document.getElementById('subject').innerHTML;
-        this.universitySelected = 0;
-        this.subjectSelected = 0;
+      this.initialUniversitiesHTML =
+        document.getElementById("university").innerHTML;
+      this.initialSubjectsHTML = document.getElementById("subject").innerHTML;
+      this.universitySelected = 0;
+      this.subjectSelected = 0;
     }
 
     updateCourses() {
-        var universitySelect = document.getElementById('university');
-        var subjectSelect = document.getElementById('subject');
-        var courseSelect = document.getElementById('course');
-        var selectedUniversity = universitySelect.value;
-        var selectedSubject = subjectSelect.value;
-        setTimeout(() => {
-          if ((selectedUniversity !== 'Choose a university...' && selectedUniversity) &&
-                (selectedSubject !== 'Choose a subject...' && selectedSubject) &&
-                (this.universitySelected === 1) &&
-                (this.subjectSelected === 1)) {
-                fetch(`/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Failed to load courses'); // Error handling
-                        }
-                        return response.json();
-                    })
-                    .then(courses => {
-                        courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-                        courses.forEach(course => {
-                            var option = document.createElement('option');
-                            option.value = course;
-                            option.textContent = course; 
-                            courseSelect.appendChild(option);
-                        });
-                        courseSelect.disabled = false;
-                    })
-                    .catch(error => { // Error handling
-                        console.error('Failed to fetch courses:', error);
-                        alert('Failed to fetch courses. Please try again.');
-                    });
-            } else {
-                courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-                courseSelect.disabled = true;
-            }
-        }, 50);
+      var universitySelect = document.getElementById("university");
+      var subjectSelect = document.getElementById("subject");
+      var courseSelect = document.getElementById("course");
+      var selectedUniversity = universitySelect.value;
+      var selectedSubject = subjectSelect.value;
+      setTimeout(() => {
+        if (
+          selectedUniversity !== "Choose a university..." &&
+          selectedUniversity &&
+          selectedSubject !== "Choose a subject..." &&
+          selectedSubject &&
+          this.universitySelected === 1 &&
+          this.subjectSelected === 1
+        ) {
+          fetch(
+            `/get-courses?university=${selectedUniversity}&subject=${selectedSubject}`
+          )
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Failed to load courses"); // Error handling
+              }
+              return response.json();
+            })
+            .then((courses) => {
+              courseSelect.innerHTML =
+                "<option selected>Choose a course...</option>";
+              courses.forEach((course) => {
+                var option = document.createElement("option");
+                option.value = course;
+                option.textContent = course;
+                courseSelect.appendChild(option);
+              });
+              courseSelect.disabled = false;
+            })
+            .catch((error) => {
+              // Error handling
+              console.error("Failed to fetch courses:", error);
+              alert("Failed to fetch courses. Please try again.");
+            });
+        } else {
+          courseSelect.innerHTML =
+            "<option selected>Choose a course...</option>";
+          courseSelect.disabled = true;
+        }
+      }, 50);
     }
 
     updateSubjects() {
-        var universitySelect = document.getElementById('university');
-        var subjectSelect = document.getElementById('subject');
-        var courseSelect = document.getElementById('course');
-        var selectedSubject = subjectSelect.value;
-        var selectedUniversity = universitySelect.value;
-        if ((selectedUniversity && selectedUniversity !== 'Choose a university...') &&
-            (this.subjectSelected === 0)) {
-            this.universitySelected = 1;
-            fetch(`/get-subjects?university=${selectedUniversity}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to load subjects.'); // Error handling
-                    }
-                    return response.json();
-                })
-                .then(subjects => {
-                    subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';
-                    subjects.forEach(subject => {
-                        var option = document.createElement('option');
-                        option.value = subject;
-                        option.textContent = subject;
-                        subjectSelect.appendChild(option);
-                    });
+      var universitySelect = document.getElementById("university");
+      var subjectSelect = document.getElementById("subject");
+      var courseSelect = document.getElementById("course");
+      var selectedSubject = subjectSelect.value;
+      var selectedUniversity = universitySelect.value;
+      if (
+        selectedUniversity &&
+        selectedUniversity !== "Choose a university..." &&
+        this.subjectSelected === 0
+      ) {
+        this.universitySelected = 1;
+        fetch(`/get-subjects?university=${selectedUniversity}`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to load subjects."); // Error handling
+            }
+            return response.json();
+          })
+          .then((subjects) => {
+            subjectSelect.innerHTML =
+              "<option selected>Choose a subject...</option>";
+            subjects.forEach((subject) => {
+              var option = document.createElement("option");
+              option.value = subject;
+              option.textContent = subject;
+              subjectSelect.appendChild(option);
+            });
 
-                    courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-                    courseSelect.disabled = true;
-                })
-                .catch(error => { // Error handling
-                    console.error('Failed to fetch subjects:', error);
-                    alert('Failed to fetch subjects. Please try again.');
-                });
-        } else if ((selectedUniversity && selectedUniversity !== 'Choose a university...') &&
-                  (selectedSubject && selectedSubject !== 'Choose a subject') &&
-                  (this.universitySelected === 1) &&
-                  (this.subjectSelected === 1)) {
-            this.subjectSelected = 0;
-            fetch(`/get-subjects?university=${selectedUniversity}`)
-                .then(response => response.json())
-                .then(subjects => {
-                    subjectSelect.innerHTML = '<option selected>Choose a subject...</option>';
-                    subjects.forEach(subject => {
-                        var option = document.createElement('option');
-                        option.value = subject;
-                        option.textContent = subject;
-                        subjectSelect.appendChild(option);
-                    });
+            courseSelect.innerHTML =
+              "<option selected>Choose a course...</option>";
+            courseSelect.disabled = true;
+          })
+          .catch((error) => {
+            // Error handling
+            console.error("Failed to fetch subjects:", error);
+            alert("Failed to fetch subjects. Please try again.");
+          });
+      } else if (
+        selectedUniversity &&
+        selectedUniversity !== "Choose a university..." &&
+        selectedSubject &&
+        selectedSubject !== "Choose a subject" &&
+        this.universitySelected === 1 &&
+        this.subjectSelected === 1
+      ) {
+        this.subjectSelected = 0;
+        fetch(`/get-subjects?university=${selectedUniversity}`)
+          .then((response) => response.json())
+          .then((subjects) => {
+            subjectSelect.innerHTML =
+              "<option selected>Choose a subject...</option>";
+            subjects.forEach((subject) => {
+              var option = document.createElement("option");
+              option.value = subject;
+              option.textContent = subject;
+              subjectSelect.appendChild(option);
+            });
 
-                    courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-                    courseSelect.disabled = true;
-                });
-        } else if (selectedUniversity && selectedUniversity !== 'Choose a university...') {
-            this.universitySelected = 1;
-        } else {
-            this.universitySelected = 0;
-            this.subjectSelected = 0;
-            subjectSelect.innerHTML = this.initialSubjectsHTML;
-        }
+            courseSelect.innerHTML =
+              "<option selected>Choose a course...</option>";
+            courseSelect.disabled = true;
+          });
+      } else if (
+        selectedUniversity &&
+        selectedUniversity !== "Choose a university..."
+      ) {
+        this.universitySelected = 1;
+      } else {
+        this.universitySelected = 0;
+        this.subjectSelected = 0;
+        subjectSelect.innerHTML = this.initialSubjectsHTML;
+      }
     }
 
     updateUniversities() {
-        var universitySelect = document.getElementById('university');
-        var subjectSelect = document.getElementById('subject');
-        var courseSelect = document.getElementById('course');
-        var selectedUniversity = universitySelect.value;
-        var selectedSubject = subjectSelect.value;
-        if ((selectedSubject && selectedSubject !== 'Choose a subject...') &&
-            (this.universitySelected === 0)) {
-            this.subjectSelected = 1;
-            fetch(`/get-universities?subject=${selectedSubject}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to load universities.'); // Error handling
-                    }
-                    return response.json();
-                })
-                .then(universities => {
-                    universitySelect.innerHTML = '<option selected>Choose a university...</option>';
-                    universities.forEach(university => {
-                        var option = document.createElement('option');
-                        option.value = university;
-                        option.textContent = university;
-                        universitySelect.appendChild(option);
-                    });
+      var universitySelect = document.getElementById("university");
+      var subjectSelect = document.getElementById("subject");
+      var courseSelect = document.getElementById("course");
+      var selectedUniversity = universitySelect.value;
+      var selectedSubject = subjectSelect.value;
+      if (
+        selectedSubject &&
+        selectedSubject !== "Choose a subject..." &&
+        this.universitySelected === 0
+      ) {
+        this.subjectSelected = 1;
+        fetch(`/get-universities?subject=${selectedSubject}`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to load universities."); // Error handling
+            }
+            return response.json();
+          })
+          .then((universities) => {
+            universitySelect.innerHTML =
+              "<option selected>Choose a university...</option>";
+            universities.forEach((university) => {
+              var option = document.createElement("option");
+              option.value = university;
+              option.textContent = university;
+              universitySelect.appendChild(option);
+            });
 
-                    courseSelect.innerHTML = '<option selected>Choose a course...</option>';
-                    courseSelect.disabled = true;
-                })
-                .catch(error => { // Error handling
-                    console.error('Failed to fetch universities:', error);
-                    alert('Failed to fetch subjects. Please try again.');
-                });
-        } else if (selectedSubject && selectedSubject !== 'Choose a subject...') {
-            this.subjectSelected = 1;
-        } else {
-            this.universitySelected = 0;
-            this.subjectSelected = 0;
-            universitySelect.innerHTML = this.initialUniversitiesHTML;
-        }
+            courseSelect.innerHTML =
+              "<option selected>Choose a course...</option>";
+            courseSelect.disabled = true;
+          })
+          .catch((error) => {
+            // Error handling
+            console.error("Failed to fetch universities:", error);
+            alert("Failed to fetch subjects. Please try again.");
+          });
+      } else if (selectedSubject && selectedSubject !== "Choose a subject...") {
+        this.subjectSelected = 1;
+      } else {
+        this.universitySelected = 0;
+        this.subjectSelected = 0;
+        universitySelect.innerHTML = this.initialUniversitiesHTML;
+      }
     }
-}
+  }
 
-var searchDropDownMenu = new SearchDropDownMenu()
-
+  var searchDropDownMenu = new SearchDropDownMenu();
 </script>
 
 <section class="text-center my-5">
-  <br>
-  
+  <br />
+
   <div class="container">
     <div class="row">
       <!-- Stats Item -->
       <div class="col">
-        <div class="card box-card">
+        <div class="card box-card1">
           <div class="card-body">
             <h5 class="card-title">40+</h5>
-            <p class="card-text">Universities</p>
+            <p class="card-text"><strong>Universities</strong></p>
             <p class="card-text">
               <i>
-              StudyPal allows students from more than 40 universities in Sweden 
-              to upload materials such as exams, assignments, and lecture notes!
-            </i>
+                StudyPal allows students from more than 40 universities in
+                Sweden to upload materials such as exams, assignments, and
+                lecture notes!
+              </i>
             </p>
           </div>
         </div>
       </div>
       <!-- Stats Item -->
       <div class="col">
-        <div class="card box-card">
+        <div class="card box-card2">
           <div class="card-body">
             <h5 class="card-title">450K+</h5>
-            <p class="card-text">Students</p>
+            <p class="card-text"><strong>Students</strong></p>
             <p class="card-text">
               <i>
-              More than 450,000 students in Sweden could benefit from utilizing 
-              StudyPal for more efficient studying by accessing materials shared by other students!
-              <br>
+                More than 450,000 students in Sweden could benefit from
+                utilizing StudyPal for more efficient studying by accessing
+                materials shared by other students!
+                <br />
               </i>
             </p>
           </div>
@@ -244,24 +287,88 @@ var searchDropDownMenu = new SearchDropDownMenu()
 
 <!-- About Section -->
 <section class="my-5">
-  <br>
-  <br>
+  <br />
+  <br />
   <div class="container text-center">
     <h2 class="text-center">ABOUT STUDYPAL</h2>
     <div class="text-center">
       <i>
-        StudyPal is a platform where students can access materials uploaded by other students, 
-        such as old exams, assignments, and lecture notes. Additionally, StudyPal generates answers to exams that do not have provided solutions.
+        StudyPal is a platform where students can access materials uploaded by
+        other students, such as old exams, assignments, and lecture notes.
+        Additionally, StudyPal generates answers to exams that do not have
+        provided solutions.
       </i>
 
-    <!-- Add more content about STUDYPAL here -->
-      <p class="text-center"> 
-        <br><br><br>
-        <img src="{{ url_for('static', filename='pictures/User_view.png') }}" alt="StudyPal Logo" width="700" height="250">
-        <br><br>
+      <!-- Add more content about STUDYPAL here -->
+      <p class="text-center">
+        <br /><br /><br />
+        <img
+          src="{{ url_for('static', filename='pictures/User_view.png') }}"
+          alt="StudyPal Logo"
+          width="700"
+          height="250"
+        />
+        <br /><br />
       </p>
     </div>
   </div>
 </section>
+
+<style>
+  .box-card1 {
+    background-image: url("{{ url_for('static', filename='pictures/University.png') }}");
+    background-size: cover;
+    background-position: center;
+    color: white;
+    position: relative;
+    height: 400px;
+  }
+
+  .card-body {
+    position: relative;
+    z-index: 2;
+  }
+
+  .box-card1::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+
+  .box-card2 {
+    background-image: url("{{ url_for('static', filename='pictures/Student.png') }}");
+    background-size: cover;
+    background-position: center;
+    color: white;
+    position: relative;
+    height: 400px;
+  }
+
+  .card-body {
+    display: flex; /* Enable Flexbox */
+    flex-direction: column; /* Stack children vertically */
+    justify-content: center; /* Center vertically */
+    align-items: center; /* Center horizontally */
+    position: relative; /* Keeps it above the ::before pseudo-element */
+    z-index: 2; /* Ensures it's above the overlay */
+    height: 100%; /* Take full height of parent */
+    text-align: center; /* Ensure text is centered */
+  }
+  .box-card2::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+</style>
 
 {% endblock %}
