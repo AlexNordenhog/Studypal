@@ -674,6 +674,8 @@ class Database:
                                 if is_validated:
                                     if current_validation_status:
                                         id_lst_str.append(id)
+                                else:
+                                    id_lst_str.append(id)
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
@@ -919,7 +921,7 @@ class FileStorage:
         return download_url
 
 d = Database()
-
+print(d._get_new_id())
 
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My first document', 'Exams', ['this is a tag', 'this is another tag'])
 #d.add_documet(os.path.dirname(os.path.abspath(__file__)) + '/test.pdf', 'MA1444', 'Blekinge Institute of Technology', 'This is it', 'Mathematics', 'vIFFzQ6MEBXOdsV7095oLUmnriF2', 'My second document', 'Exams', ['this is a tag', 'this is another tag'])
