@@ -25,16 +25,18 @@ function userExists(uid) {
     })
         .then(response => response.json())
         .then(data => {
-            if ("username" in data) {
-                return data.username !== "unregistered user";
+            // check if the username is not equal to this value.
+            if (data.username && data.username !== "404 unknown user") {
+                return true; // User exists
             }
-            return false;
+            return false; // User does not exist
         })
         .catch(error => {
             console.error(error);
-            return false;
+            return false; // Assume user does not exist if there's an error
         });
 }
+
 
 
 

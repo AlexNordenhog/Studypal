@@ -90,14 +90,16 @@
 
       if (userExists(uid)) {
         // move on as usual
+        //console.log("exists");
+        window.location.href = "/profile";
       } else {
+        //console.log("not");
         window.location.href = "/create_profile";
       }
 
       //uname = get(ref(database), 'Users/' + uid)
       //alert(uname)
 
-      window.location.href = "/profile";
       // ...
     } else {
       //window.location.href = '/create_profile'

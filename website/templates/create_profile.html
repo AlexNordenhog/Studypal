@@ -79,7 +79,7 @@ content %}
 
       userExists(uid).then((exists) => {
         if (exists) {
-          window.location.href = "/login";
+          console.log("already");
         } else {
           document
             .getElementById("profileForm")
