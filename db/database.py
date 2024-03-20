@@ -646,9 +646,12 @@ class Database:
         
         return new_id
     
-    def _get_id_lst(self, is_validated=True) -> list:
+    def _get_id_lst(self, is_validated=True, waiting=False) -> list:
         '''
         Returns a list containing all document id's.
+
+        is_validated, returns only validated documents, if False, returns all document ids.
+        waiting, returns only waiting documents.
         '''
         
         id_lst_str = []
@@ -671,11 +674,15 @@ class Database:
                             for id in document_ids:
                                 current_validation_status = db.reference(f'/Universities/{school}/{subject}/{course}/Documents/{document_type}/{id}/upload/validated').get()
                                 
-                                if is_validated:
-                                    if current_validation_status:
+                                if waiting:
+                                    if current_validation_status == False:
                                         id_lst_str.append(id)
                                 else:
-                                    id_lst_str.append(id)
+                                    if is_validated:
+                                        if current_validation_status:
+                                            id_lst_str.append(id)
+                                    else:
+                                        id_lst_str.append(id)
 
         # Parse id's to int
         id_lst_int = [eval(id) for id in id_lst_str]
