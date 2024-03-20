@@ -300,7 +300,7 @@ def upload_document_v2():
         document_date=request.form["documentDate"]
     ))
 
-    return "Document uploaded successfully" if status else "Error, not saved"
+    return render_template("thank_you.html")
 
 @views.route("/get_user_documents", methods=["POST"])
 def get_user_documents_view():
