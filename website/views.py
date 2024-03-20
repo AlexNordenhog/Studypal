@@ -396,7 +396,7 @@ def submit_document():
 
 @views.route("/documents_awaiting_validation")
 def get_waiting_documents():
-    document_ids = d._get_id_lst(is_validated=False)
+    document_ids = d._get_id_lst(waiting=True)
     reported_ids = d.get_reported_document_ids()
 
     return render_template("documents_awaiting_validation.html",

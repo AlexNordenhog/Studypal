@@ -112,40 +112,6 @@ content %}
       });
   }
 
-  // Display document list with clickable links
-  function displayDocumentList(uid) {
-    fetch("/get_user_documents", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ uid: uid }),
-    })
-      .then((response) => response.json())
-      .then((documentList) => {
-        let documentListView = "";
-
-        if (documentList.length > 0) {
-          documentList.forEach((document) => {
-            documentListView += `
-             <div class="document-item">
-               <a href="/validation/${document.id}" class="document-link">${document.header}</a>
-               <span class="document-date">${document.date}</span>
-             </div>
-           `;
-          });
-        } else {
-          documentListView =
-            '<p class="no-documents-message">No uploads yet. <a href="/upload" class="upload-link">Upload your first document</a>.</p>';
-        }
-
-        document.getElementById("documentList").innerHTML = documentListView;
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
-
   // Checking authentication state, including moderator role
   onAuthStateChanged(auth, (user) => {
     if (user) {
