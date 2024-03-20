@@ -639,7 +639,11 @@ class Database:
         Generates the next document id.
         '''
         id_lst = self._get_id_lst(is_validated=False)
-        new_id = max(id_lst) + 1
+        if id_lst:
+            new_id = max(id_lst) + 1
+        else:
+            return 1
+        
         return new_id
     
     def _get_id_lst(self, is_validated=True) -> list:
