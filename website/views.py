@@ -365,7 +365,7 @@ def upload_specificatoins(temp_id):
         'Religious Studies', 'Software Development', 'Software Engineering', 'Special Education', 'Systems Engineering',
         'Tax Law', 'Teaching and Learning', 'Theater and Performance Studies', 'Tourism Management', 'Veterinary Medicine', 'Visual Arts'
     ]
-    document_types = ['Assignment', 'Exam', 'Graded Exam (not part of MVP)', 'Lecture Materials', 'Other Document']
+    document_types = ['Assignment', 'Exam', 'Graded Exam', 'Lecture Materials', 'Other Document']
 
     return render_template("upload_specifications.html", url=temp_url, 
                            universities=universities,

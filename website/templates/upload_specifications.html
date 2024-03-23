@@ -49,6 +49,16 @@
       </select>
     </div>
 
+<!-- Exam Tasks Section, initially hidden -->
+<div id="examTasksSection" style="display: none">
+  <label for="examTasksSection">Specify the tasks and how your exam was graded:</label>
+  <div id="examTasksContainer">
+    <!-- Dynamic exam tasks will be appended here -->
+  </div>
+  <button type="button" id="addExamTask">Add Another Question</button>
+</div>
+
+
     <!-- Document Date Selection-->
     <label for="documentDate">Select the date for your document:</label>
     <input
@@ -295,6 +305,78 @@
 
       gradingSystemSelect.addEventListener("change", updateGradeOptions);
     });
+
+//Code to handle task specification
+document.addEventListener("DOMContentLoaded", function () {
+  var documentTypeSelect = document.getElementById("documentType");
+  var examTasksSection = document.getElementById("examTasksSection");
+  var examTasksContainer = document.getElementById("examTasksContainer");
+  var addExamTaskButton = document.getElementById("addExamTask");
+
+  // Function to add a new exam task set
+  function addExamTask() {
+    var taskRow = document.createElement("div");
+    taskRow.className = "exam-task-row";
+    var taskHTML = `
+      <div class="custom-select-container"><select class="custom-select task-number-select"></select></div>
+      <div class="custom-select-container"><select class="custom-select task-letter-select"></select></div>
+      <div class="custom-select-container"><select class="custom-select max-points-select"></select></div>
+      <div class="custom-select-container"><select class="custom-select received-points-select"></select></div>
+    `;
+    taskRow.innerHTML = taskHTML;
+    populateDropdown(taskRow.querySelector(".task-number-select"), 1, 20, "Task");
+    populateDropdown(taskRow.querySelector(".task-letter-select"), 'a', 'z', "Sub-task", true);
+    populateDropdown(taskRow.querySelector(".max-points-select"), 1, 20, "Max Points");
+    populateDropdown(taskRow.querySelector(".received-points-select"), 1, 20, "Received Points");
+    examTasksContainer.appendChild(taskRow);
+  }
+
+// Generic function to populate dropdowns, corrected for letter generation
+function populateDropdown(dropdown, start, end, label, isLetter = false) {
+    var chooseOption = document.createElement("option");
+    chooseOption.textContent = `Choose ${label}...`;
+    chooseOption.disabled = true;
+    chooseOption.selected = true;
+    dropdown.appendChild(chooseOption);
+
+    if (isLetter) {
+        // Handle letter generation correctly
+        for (let charCode = start.charCodeAt(0); charCode <= end.charCodeAt(0); charCode++) {
+            let option = document.createElement("option");
+            option.value = String.fromCharCode(charCode);
+            option.textContent = String.fromCharCode(charCode);
+            dropdown.appendChild(option);
+        }
+    } else {
+        // Handle number generation
+        for (let i = start; i <= end; i++) {
+            let option = document.createElement("option");
+            option.value = i;
+            option.textContent = i;
+            dropdown.appendChild(option);
+        }
+    }
+}
+
+  // Event listener for adding new exam task
+  addExamTaskButton.addEventListener("click", function () {
+    addExamTask();
+  });
+
+  // Show/hide exam tasks section based on document type selection
+  documentTypeSelect.addEventListener("change", function () {
+    if (documentTypeSelect.value === "Graded Exam") {
+      examTasksSection.style.display = "flex";
+      examTasksSection.style.flexDirection = "column";
+      addExamTask(); // Add the first set of inputs when "Graded Exam" is selected
+    } else {
+      examTasksSection.style.display = "none";
+      examTasksContainer.innerHTML = ""; // Clear existing tasks
+    }
+  });
+});
+
+
   </script>
 
   <script type="module">
@@ -408,14 +490,28 @@
 </body>
 
 <style>
-  .custom-select {
+.custom-select {
     width: 250px;
     display: block;
     margin-bottom: 10px;
   }
-  .custom-entry {
+.custom-entry {
     display: block;
     margin-bottom: 10px;
   }
+.exam-task-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.custom-select-container {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.custom-select-container:last-child {
+  margin-right: 0;
+}
 </style>
 {% endblock %}
