@@ -76,7 +76,7 @@ class CommentSection():
 class Comment:
     _vote_dir = VoteDirectory()
     _db_ref = None
-    _comment_id = uuid.uuid4().hex
+    comment_id = uuid.uuid4().hex
 
     def __init__(self, user_id, text, reply_to = None):
         """
@@ -122,7 +122,7 @@ class Comment:
         return self._vote_dir.get()
 
     def get_id(self):
-        return self._comment_id
+        return self.comment_id
 
 class Document:
 
@@ -152,8 +152,8 @@ class Document:
     def get_id(self) -> int:
         return self._id
 
-    def get():
-        return
+    def get(self):
+        return self
 
     def get_header(self) -> str:
         return self._header()
@@ -221,36 +221,49 @@ class GradedExam(Document):
         super().__init__(pdf_url, header, document_id, user_id, grade)
 
 class Course:
-    _documents = {}
-    _comments = {}
-    _course_id = uuid.uuid4().hex
-    _validated = False
-    
-    def __init__(self, course_name, university) -> None:
+    '''
+    A course.
+    '''
+    def __init__(self, course_name, university, subject) -> None:
+        self.course_name = course_name
         self._university = university
-        self._course_name = course_name
+        self._subject = subject
+        self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
+        self._comments = {}
+        self._validated = False
 
-    def change_validation_status(self, approve):
-        self._validated = approve
+    def approve_course(self):
+        '''
+        Approves the course by changing _validated to True.
+        '''
+        self._validated = True
 
-    def get_id(self) -> str:
-        return self._course_id
+    def get_course_name(self) -> str:
+        '''
+        Returns the course name.
+        '''
+        return self.course_name
 
-    def add(self, subject, document: Document):
-        
-        # sorting without subject
-        #self.documents[document.id] = document
-        
-        # with subject
+    def add_document(self, document_type, document: Document):
+        '''
+        Adds a document to the _documents dict.
+        '''
+        try:
+            self._documents[document_type].append(document)
+        except:
+            print('Could not add document.')
 
-        # Add subject
-        if subject not in self.documents.keys():
-            self.documents[subject] = {}
+    def add_comment(self, comment):
+        '''
+        Adds a comment to the _comments dict.
+        '''
+        self._comments.update({comment.comment_id : comment})
 
-        self.documents[subject][document.id] = document
-
-    def get(self, document_id: int, subject: str):
-        return self.documents[subject][document_id]
+    def get_course_data(self):
+        # Kommer vi behöva denna?
+        '''
+        Returns a dictionary containing all the information needed to display the course in UI.
+        '''
 
 class User:
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=Timestamp().timestamp) -> None:
@@ -301,18 +314,39 @@ class Directory:
         pass
 
 class CourseDirectory(Directory):
-    
-    _pending_courses = {}
-    _courses = {}
+    '''
+    A directory containing courses.
+    '''
+    def __init__(self):
+        self._pending_courses = {}
+        self._courses = {}
 
     def get_course_names(self) -> list:
-        pass
+        '''
+        Returns a list of all the course names for all courses in the course directory.
+        '''
+        return self._courses.keys()
 
     def get(self, course_name):
-        return self._courses[course_name]
+        '''
+        Returns the course object for a certain course name.
+        '''
+        try:
+            return self._courses[course_name]
+        except:
+            print('Could not get course for: ', course_name)
 
-    def add(self, course: Course):
-        self._courses[course.course_name] = course
+    def add_course(self, course: Course):
+        '''
+        Takes a course object and adds it to the course dictionary.
+        '''
+        self._courses.update({course.course_name : course})
+
+    def add_pending_course(self, course: Course):
+        '''
+        Takes a course object and adds it to the pending course dictionary.
+        '''
+        self._pending_courses.update({course.course_name : course})
 
 class UserDirectory(Directory):
     _users = {}
