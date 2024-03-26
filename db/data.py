@@ -3,6 +3,7 @@ from firebase_admin import db, credentials, storage
 import datetime
 from pathlib import Path
 import uuid
+import difflib
 #import json
 
 class IDHandler:
@@ -259,6 +260,18 @@ class Course:
         '''
         self._comments.update({comment.comment_id : comment})
 
+    def get_university(self):
+        '''
+        Returns the university for the course.
+        '''
+        return self._university
+    
+    def get_subject(self):
+        '''
+        Returns the subject for the course.
+        '''
+        return self._subject
+
     def get_course_data(self):
         # Kommer vi behöva denna?
         '''
@@ -327,14 +340,20 @@ class CourseDirectory(Directory):
         '''
         return self._courses.keys()
 
+    def get_courses(self):
+        '''
+        Returns the _courses dict.
+        '''
+        return self._courses
+
     def get(self, course_name):
         '''
         Returns the course object for a certain course name.
         '''
         try:
             return self._courses[course_name]
-        except:
-            print('Could not get course for: ', course_name)
+        except KeyError:
+            raise ValueError(f'Could not get course for: {course_name}')
 
     def add_course(self, course: Course):
         '''
@@ -394,8 +413,72 @@ class SearchController:
     def __init__(self) -> None:
         pass
 
-    def search(self):
-        pass
+    def search(self, query, university=None, subject=None, course=None):
+        '''
+        Search function to search for courses in the database.
+        
+        Parameters:
+        - query: Search keyword provided by the user. Can be empty, meaning no keyword search.
+        - university: Selected university.
+        - subject: Selected subject.
+        - course: Selected course.
+
+        Returns a list of matching courses based on the search criteria.
+        '''
+        filtered_courses = []
+        all_courses = course_directory.get_courses().values()
+
+        if university and subject and course:
+            for c in all_courses:
+                course_university = c.get_university()
+                course_subject = c.get_subject()
+                course_name = c.get_course_name()
+                if course_university == university and course_subject == subject and course_name == course:
+                    filtered_courses.append(c)
+                    break
+
+        elif university and subject and not course:
+            for c in all_courses:
+                course_university = c.get_university()
+                course_subject = c.get_subject()
+                if course_university == university and course_subject == subject:
+                    filtered_courses.append(c)
+
+        elif university and not subject and not course:
+            for c in all_courses:
+                course_university = c.get_university()
+                if course_university == university:
+                    filtered_courses.append(c)
+
+        elif not university and subject and not course:
+            for c in all_courses:
+                course_subject = c.get_subject()
+                if course_subject == subject:
+                    filtered_courses.append(c)
+
+        elif not university and not subject and not course:
+            filtered_courses.extend(all_courses)
+
+        matching_courses = []
+        if query:
+            lower_filtered_course_names = []
+            filtered_course_names = []
+            for c in filtered_courses:
+                lower_course_name = c.get_course_name().lower()
+                course_name = c.get_course_name()
+                lower_filtered_course_names.append(lower_course_name)
+                filtered_course_names.append(course_name)
+            n_matches = max(1, len(filtered_courses))
+            if filtered_courses:
+                close_matches = difflib.get_close_matches(query.lower(), lower_filtered_course_names, n=n_matches, cutoff=0.5)
+                matching_course_names = [filtered_course_names[lower_filtered_course_names.index(match)] for match in close_matches]
+                for course_name in matching_course_names:
+                    course = course_directory.get(course_name)
+                    matching_courses.append(course)
+        else:
+            matching_courses = filtered_courses
+
+        return matching_courses
 
 class Firebase:
     _firebase = None
@@ -568,3 +651,20 @@ class Main:
 
         for user in users:
             self._user_dir.add(users[user])
+
+# Testing testing
+course_directory = CourseDirectory()
+search_controller = SearchController()
+analys1 = Course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
+industriell_marknadsföring = Course('Industriell Marknadsföring', 'Blekinge Institute of Technology', 'Marketing')
+inledande_matematisk_analys = Course('Inledande Matematisk Analys', 'Chalmers Institute of Technology', 'Mathematics')
+course_directory.add_course(analys1)
+course_directory.add_course(industriell_marknadsföring)
+course_directory.add_course(inledande_matematisk_analys)
+search_results = search_controller.search('', 'Blekinge Institute of Technology', 'Mathematics')
+
+if search_results:
+    for result in search_results:
+        print(result.get_course_name())
+else:
+    print('No search results.')
