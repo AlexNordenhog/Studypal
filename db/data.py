@@ -2,7 +2,22 @@ import firebase_admin, os
 from firebase_admin import db, credentials, storage
 import datetime
 from pathlib import Path
+import uuid
 #import json
+
+class IDHandler:
+    #_used_ids = []
+    _id_handler = None
+
+    def __new__(cls):
+        if cls._id_handler == None:
+            cls._id_handler = super(IDHandler, cls).__new__(cls)
+        return cls._id_handler
+    
+    def get_new_id(self) -> str:
+        id = uuid.uuid4().hex
+        #self._used_ids.append(id)
+        return id
 
 class Timestamp:
     def __init__(self) -> None:
@@ -12,10 +27,64 @@ class Timestamp:
             "time":datetime_now.strftime("%H:%M:%S")
         }
 
+class VoteDirectory():
+    _votes = {}
+
+    def get(self) -> dict:
+        
+        upvotes = sum(vote for vote in self._votes.values())
+        downvotes = len(self._votes) - upvotes
+        
+        votes = {
+            "upvotes":upvotes,
+            "downvotes":downvotes
+        }
+
+        return votes
+
+    def add(self, user_id, upvote):
+        
+        try:
+            old_vote = self._votes[user_id]
+
+            if old_vote == upvote:
+                return "User vote already stored"
+            else:
+                self._votes[user_id] = upvote
+                return "User vote updated"
+        except:
+            self._votes[user_id] = upvote
+            return "User vote stored"
+
+class CommentSection():
+    _comments = {}
+    _comment_section_id = uuid.uuid4().hex
+
+    def add_comment(self, user_id:str, text:str, reply_to=None):
+        comment = Comment(user_id=user_id, text=text, reply_to=reply_to)
+        ref = self._get_new_comment_ref()
+        self._comments[ref] = comment
+
+    def _get_new_comment_ref(self) -> int:
+        try:
+            ref = max(self._comments.keys())
+        except:
+            ref = 1
+        
+        return ref
+
 class Comment:
-    def __init__(self, user_id, text) -> None:
+    _vote_dir = VoteDirectory()
+    _db_ref = None
+    _comment_id = uuid.uuid4().hex
+
+    def __init__(self, user_id, text, reply_to = None):
+        """
+        :reply_to: id of the parent document
+        """
         self._user_id = user_id
         self._text = text
+        self._parent = reply_to # comment id
         self._timestamp = Timestamp().timestamp
 
     def get_json(self) -> str:
@@ -26,16 +95,50 @@ class Comment:
         }
         return json
 
+    def get_content(self):
+        """
+        Returns a json string with 
+
+        user_id,
+        text,
+        timestamp,
+        parent
+        """
+
+        json = {
+            "user_id": self._user_id,
+            "text":self._text,
+            "timestamp":self._timestamp,
+            "parent":self._parent
+        }
+
+    def get_parent(self):
+        return self._parent
+
+    def add_vote(self, user_id, upvote):
+        return self._vote_dir.add(user_id=user_id, upvote=upvote)
+
+    def get_votes(self) -> dict:
+        return self._vote_dir.get()
+
+    def get_id(self):
+        return self._comment_id
+
 class Document:
-    def __init__(self, pdf_url, header, document_id, user_id, categorization) -> None:
+
+    _document_id = uuid.uuid4().hex
+    _validated = False
+    _comments = {}
+    _votes = {}
+
+    def __init__(self, pdf_url, header, document_id, user_id) -> None:
+        
+        # document content
         self._header = header
-        self._user_id = user_id
         self._pdf_url = pdf_url
-        self._id = document_id
-        self._categorization = categorization
-        self._validated = False
-        self._comments = {}
-        self._votes = {}
+        
+        # ids
+        self._user_id = user_id
         self._timestamp = Timestamp().timestamp
     
     def add_vote(self, user_id, upvote):
@@ -46,10 +149,19 @@ class Document:
         comment = Comment(user_id, text)
         self.comments.append(comment)
 
+    def get_id(self) -> int:
+        return self._id
+
     def get():
         return
 
-    def _to_json(self):
+    def get_header(self) -> str:
+        return self._header()
+
+    def get_validation(self) -> bool:
+        return self._validated
+
+    def to_json(self):
         json = {
             self.document_id:{
                 "upload":{
@@ -104,13 +216,25 @@ class Document:
     def get_comments(self):
         return self.comments
 
+class GradedExam(Document):
+    def __init__(self, pdf_url, header, document_id, user_id, grade) -> None:
+        super().__init__(pdf_url, header, document_id, user_id, grade)
+
 class Course:
+    _documents = {}
+    _comments = {}
+    _course_id = uuid.uuid4().hex
+    _validated = False
+    
     def __init__(self, course_name, university) -> None:
-        self.documents = {}
-        self.comments = {}
-        self.university = university
-        #self.course_id = course_id
-        self.course_name = course_name
+        self._university = university
+        self._course_name = course_name
+
+    def change_validation_status(self, approve):
+        self._validated = approve
+
+    def get_id(self) -> str:
+        return self._course_id
 
     def add(self, subject, document: Document):
         
@@ -129,10 +253,12 @@ class Course:
         return self.documents[subject][document_id]
 
 class User:
-    def __init__(self, user_id, username, sign_up_timestamp=Timestamp().timestamp) -> None:
+    def __init__(self, user_id, username, role = "student", sign_up_timestamp=Timestamp().timestamp) -> None:
         self._id = user_id
         self._username = username
         self._sign_up_timestamp = sign_up_timestamp
+        self._documents = {}
+        self._role = role
 
     def get_username(self):
         return self._username
@@ -140,7 +266,7 @@ class User:
     def get_id(self):
         return self._id
 
-    def _to_json(self) -> str:
+    def to_json(self) -> str:
         json = {
             self._user_id:{
                 "username":self._username,
@@ -149,6 +275,14 @@ class User:
         }
 
         return json
+
+    def add_document_link(self, document: Document):
+        document_id = document.get_id()
+        document_name = document.get_header()
+        document_validated = document.get_validation()
+        
+        #append
+        #self._documents[document_id] = 
 
 class Moderator(User):
     def __init__(self, user_id, username) -> None:
@@ -168,16 +302,20 @@ class Directory:
 
 class CourseDirectory(Directory):
     
+    _pending_courses = {}
+    _courses = {}
+
+    def get_course_names(self) -> list:
+        pass
+
     def get(self, course_name):
-        return self.courses[course_name]
+        return self._courses[course_name]
 
     def add(self, course: Course):
-        self.courses[course.course_name] = course
+        self._courses[course.course_name] = course
 
 class UserDirectory(Directory):
-
-    def __init__(self) -> None:
-        self._users = {} # UID : User
+    _users = {}
     
     def add(self, user: User) -> bool:
         """
@@ -371,8 +509,8 @@ class FirebaseManager:
         if add_to_db:
             self._add_to_db(ref="/Users/", json=user.to_json())
 
-    def add_document(self, user_id, document_id, course_id, pdf_url, header, categorization, add_to_db=True):
-        pass
+    def add_document(self, document: Document, user: User, course: Course):
+        document.to_json()
 
     def add_course(self, course_id, university):
         self.course_directory.add()
@@ -396,7 +534,3 @@ class Main:
 
         for user in users:
             self._user_dir.add(users[user])
-
-d = FirebaseManager()
-e = FirebaseManager()
-f = FirebaseManager()
