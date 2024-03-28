@@ -41,7 +41,7 @@
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
       <button
         class="navbar-toggler"
         type="button"
@@ -52,17 +52,20 @@
       </button>
       <a class="navbar-brand nav-link" href="/" id="home">StudyPal</a>
       <div class="collapse navbar-collapse" id="navbar">
-        <div class="navbar-nav">
-          <!-- a class="nav-item nav-link" id="login" href="/login">Login</a -->
-          <!-- <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a> -->
-          <!-- a class="nav-item nav-link" id="upload" href="/upload_v2">Upload</a -->
-          <!-- a class="nav-item nav-link" id="profile" href="/profile">Profile</a -->
-          <!-- <a class="nav-item nav-link" id="document" href="/document"
-            >Document (temporär)</a
-          >
-          <a class="nav-item nav-link" id="course_page" href="/course_page"
-            >Course page (temporär)</a -->
-        </div>
+        <div class="navbar-nav"></div>
+        <!-- Search in all pages maybe? Om vi vill imlementera det-->
+        <form class="form-inline ml-auto" action="/search" method="GET">
+          <input
+            class="form-control mr-sm-2"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+            name="query"
+          />
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
+            Search
+          </button>
+        </form>
       </div>
     </nav>
 
@@ -85,8 +88,16 @@
     {% endif %} {% endfor %} {% endif %} {% endwith %}
 
     <!-- Our content in all templates -->
-    <div>{% block content %} {% endblock %}</div>
+    <div class="global">{% block content %} {% endblock %}</div>
 
+    <style>
+      .global {
+        font-family: "montserrat", sans-serif;
+      }
+      body {
+        padding-top: 60px;
+      }
+    </style>
     <!-- Added a divider to make it look more clean -->
     <div class="divider"></div>
 
@@ -140,6 +151,13 @@
     <style>
       .divider {
         height: 100px;
+      }
+      .navbar {
+        font-family: "montserrat", sans-serif;
+        font-size: 20px;
+      }
+      .navbar-brand {
+        font-size: 28px;
       }
     </style>
   </body>
