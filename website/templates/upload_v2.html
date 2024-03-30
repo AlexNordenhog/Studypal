@@ -24,10 +24,12 @@
         text-align: center;
         width: 100%; /* Adjust this to the width you want */
         max-width: 600px; /* Example max-width */
+        margin: auto;
       }
   
       #drop-area {
-        border: 2px dashed #ccc;
+        border: 2px dashed #583737;
+        background-color: #f2f2f2;
         border-radius: 20px;
         padding: 20px;
         width: 80%;
@@ -41,7 +43,7 @@
   
       .button {
         display: inline-block;
-        padding: 8px 16px;
+        padding: 16px px;
         margin-top: 8px;
         background-color: #f0f0f0;
         cursor: pointer;
@@ -58,19 +60,23 @@
     <div class="centered-content">
       <div id="uploadForm">
         <h1>Upload Document</h1>
+        <br>
         <div id="drop-area">
   
   
-          <form class="my-form">
-            <p>Upload your file here</p>
-            <input
-              type="file"
-              id="pdf_file"
-              name="pdf_file"
-              accept=".pdf, image/png, image/jpeg, image/jpg, image/HEIC"
-              onchange="previewPDF()"
-              required
+          <form class="center-align">
+            <p style="font-weight: bold; text-decoration: underline;">Upload your file here</p>
+            <div class="centered-content">
+              <input
+                type="file"
+                id="pdf_file"
+                name="pdf_file"
+                accept=".pdf, image/png, image/jpeg, image/jpg, image/HEIC"
+                onchange="previewPDF()"
+                required
             /><br /><br />
+            </div>
+
     
             <div type="my-form" id="previewContainer" class="center-align">
               <iframe
@@ -136,14 +142,20 @@
       onAuthStateChanged(auth, (user) => {
         if (user) {
           const uid = user.uid;
-  
+
           userExists(uid).then((exists) => {
             if (exists) {
-              document
-                .getElementById("submitUploadBtn")
-                .addEventListener("click", () => {
-                  uploadDocument(uid);
-                });
+              document.getElementById("submitUploadBtn").addEventListener("click", function(event) {
+                var fileInput = document.getElementById("pdf_file");
+                if (fileInput.files.length === 0) {
+                  alert("Please add a document before continuing.");
+                  // Prevent the default form submission if no file is selected
+                  event.preventDefault();
+                } else {
+                  // File is chosen, proceed with the upload
+                  uploadDocument(uid); // Make sure that 'uid' is defined in this context
+                }
+              });
             } else {
               window.location.href = "/create_profile";
             }
