@@ -2,17 +2,81 @@
 {% block content %}
 <head>
   <title>Upload Specifications</title>
+  <br><br>
+  <style>
+    body {
+        font-family: Arial, sans-serif; /* Improves readability */
+      }
+      .container {
+        max-width: 1200px;
+        margin: 20px auto; /* Centers the content with some margin */
+        padding: 0 20px; /* Ensures content doesn't touch the sides */
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .flex-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap; /* Ensures responsiveness */
+      }
+      .pdf-preview-container, .comments-container {
+        flex: 1; /* Allows both containers to share the available width */
+        margin-right: 10px; /* Adds spacing between the elements */
+        min-width: 300px; /* Ensures a usable minimum width */
+      }
+      .pdf-preview-container iframe {
+        width: 100%;
+        height: 450px;
+        border: 1px solid #ccc;
+      }
+      .form-container {
+        margin-top: 20px;
+      }
+      .custom-select, .custom-entry, .submit-button {
+        width: 100%;
+        margin-bottom: 10px; /* Consistent spacing */
+        padding: 8px; /* Enhances touch targets */
+      }
+      .submit-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .submit-button:hover {
+        background-color: #0056b3; /* Visual feedback on hover */
+      }
+  </style>
 </head>
 <body>
-  <h1>Upload Specifications</h1>
+  <div class="container">
+    <h1 style="text-align: center;">Upload Specifications</h1>
+    <br><br>
+    <div class="flex-container">
+      <!-- PDF Preview -->
+      <div class="pdf-preview-container">
+        <iframe
+          id="pdfPreview"
+          style="width: 100%; height: 450px; border: 1px solid #ccc;"
+          frameborder="0"
+        ></iframe>
+      </div>
 
-  <!-- PDF Preview -->
-  <iframe
-    id="pdfPreview"
-    style="width: 100%; height: 500px"
-    frameborder="0"
-  ></iframe>
-  <form id="specificationsForm" name="specificationsForm">
+      <!-- Optional Comment Input -->
+      <div class="comments-container">
+        <label for="documentComment">Comment about your document (optional):</label>
+        <textarea
+          id="documentComment"
+          name="documentComment"
+          rows="4"
+          cols="50"
+          class="custom-entry"
+          placeholder="Enter your comment here..."
+        ></textarea>
+      </div>
+    </div>
     <!-- Document Type Dropdown-->
     <label for="documentType"
       >Select the type of document that you have uploaded:
@@ -60,16 +124,6 @@
       onchange="categorizationDropDownMenu.updateDocCourses()"
     />
 
-    <!-- Optional Comment Input -->
-    <label for="documentComment">Comment about your document (optional):</label>
-    <textarea
-      id="documentComment"
-      name="documentComment"
-      rows="4"
-      cols="50"
-      class="custom-entry"
-      placeholder="Enter your comment here..."
-    ></textarea>
 
     <!-- University Dropdown-->
     <label for="documentUniversity"
@@ -376,7 +430,8 @@
     function previewPDF(tempURL) {
       const pdfPreview = document.getElementById("pdfPreview");
       if (tempURL) {
-        pdfPreview.src = tempURL;
+        // Assuming 'zoom' is a recognized query parameter by your PDF viewer
+        pdfPreview.src = tempURL + "#zoom=50";
       } else {
         // Handle case when tempURL is not provided
         pdfPreview.style.display = "none";
