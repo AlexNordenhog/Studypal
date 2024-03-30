@@ -2,53 +2,122 @@
 %}
 
 <head>
+  <br><br>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload Document</title>
+  <style>
+    /* Add custom CSS styles */
+    /* Add custom CSS styles */
+
+
+    .centered-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: flex;
+      font-family: Arial, sans-serif; /* Example font */
+    }
+
+    #uploadForm {
+      text-align: center;
+      width: flex;
+    }
+
+    #drop-area {
+      border: 2px dashed #ccc;
+      border-radius: 20px;
+      padding: 20px;
+      width: 80%;
+      margin: auto;
+    }
+
+    .my-form p {
+      margin-top: 0;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 8px 16px;
+      margin-top: 8px;
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    /* Hide the default file input */
+    #fileElem {
+      display: none;
+    }
+
+  </style>
 </head>
 <body>
-  <h1>Upload Document</h1>
-  <form id="uploadForm">
-    <label for="pdf_file">Select PDF file:</label><br />
-    <input
-      type="file"
-      id="pdf_file"
-      name="pdf_file"
-      accept=".pdf"
-      onchange="previewPDF()"
-      required
-    /><br /><br />
+  <div class="centered-content">
+    <div id="uploadForm">
+      <h1>Upload Document</h1>
+      <div id="drop-area">
 
-    <div id="previewContainer" class="center-align">
-      <iframe
-        id="pdfPreview"
-        style="display: none; width: 100%; height: 500px"
-        frameborder="0"
-      ></iframe>
+
+        <form class="my-form">
+          <p>Upload your file here</p>
+          <input
+            type="file"
+            id="pdf_file"
+            name="pdf_file"
+            accept=".pdf, image/png, image/jpeg, image/jpg, image/HEIC"
+            onchange="previewPDF()"
+            required
+          /><br /><br />
+  
+          <div id="previewContainer" class="center-align">
+            <iframe
+              id="pdfPreview"
+              style="display: none; width: 100%; height: 500px"
+              frameborder="0"
+            ></iframe>
+          </div>
+          <br>
+          <button type="button" id="submitUploadBtn">Continue</button>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <button type="button" id="submitUploadBtn">Continue</button>
-  </form>
+    <script>
+      function previewPDF() {
+        var file = document.getElementById("pdf_file").files[0];
+        var previewContainer = document.getElementById("previewContainer");
 
-  <script>
-    function previewPDF() {
-      var file = document.getElementById("pdf_file").files[0];
-      var pdfPreview = document.getElementById("pdfPreview");
+        // Töm tidigare innehåll i förhandsgranskningsbehållaren
+        previewContainer.innerHTML = '';
 
-      // Hide the preview initially
-      pdfPreview.style.display = "none";
+        if (file) {
+          var blobUrl = URL.createObjectURL(file);
 
-      if (file) {
-        var blobUrl = URL.createObjectURL(file);
-
-        if (file.type === "application/pdf") {
-          // Handle PDF files
-          pdfPreview.src = blobUrl;
-          pdfPreview.style.display = "block";
+          if (file.type === "application/pdf") {
+            // Skapar en ny iframe för PDF
+            var iframe = document.createElement('iframe');
+            iframe.style.width = '100%';
+            iframe.style.height = '500px';
+            iframe.src = blobUrl;
+            previewContainer.appendChild(iframe);
+            iframe.style.display = "block";
+          } else if (file.type.match('image.*')) {
+            // Skapar ett nytt img-element för bilder
+            var img = document.createElement('img');
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.src = blobUrl;
+            previewContainer.appendChild(img);
+            img.style.display = "block";
+          }
         }
       }
-    }
-  </script>
+
+ 
+</script>
+
 
   <script type="module">
     // Firebase configuration and initialization
@@ -183,6 +252,7 @@
 
       return uuid;
     }
+    
   </script>
 </body>
 {% endblock %}
