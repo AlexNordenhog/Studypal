@@ -40,16 +40,22 @@
         margin-top: 0;
         text-align: center;
       }
-  
-      .button {
-        display: inline-block;
-        padding: 16px px;
-        margin-top: 8px;
-        background-color: #f0f0f0;
+      .submit-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
         cursor: pointer;
+        text-align: center;
+        width: 30%;
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 10px;
       }
-  
-      /* Hide the default file input */
+
+      .submit-button:hover {
+        background-color: #0056b3;
+      }
+
       #fileElem {
         display: none;
       }
@@ -86,7 +92,7 @@
               ></iframe>
             </div>
             <br>
-            <button type="button" id="submitUploadBtn">Continue</button>
+            <button  type="button" id="submitUploadBtn" class="submit-button">Continue</button>
           </form>
         </div>
       </div>
