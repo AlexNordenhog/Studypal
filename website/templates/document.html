@@ -1,8 +1,21 @@
 {% extends "base.html" %} {% block title %} {{ document_dict['upload']['header']
-}} {% endblock %} {% block content%}
+}} {% endblock %} {% block content %}
 
 <div class="grid">
-  <div class="blankTop"></div>
+  <div class="blankTop">
+    <!-- Ska bara synas om man är moderator -->
+    <div id="moderatorMenu">
+      <button id="moderatorBtn1">Något?</button>
+      <button id="moderatorBtn2">Något?</button>
+      <button
+        id="moderatorBtn3"
+        data-toggle="modal"
+        data-target="#modMenuModal"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
   <div class="leftInfo">
     <h1 class="courseName">{{document_dict['categorization']['course']}}</h1>
     <h3>{{ document_dict['upload']['header'] }}</h3>
@@ -17,20 +30,45 @@
     <div class="infoBarBox">
       <div class="content1">
         <!-- Koppla så när jag klickar på ämnet kommer jag till söksidan för ämnet? -->
-        Subject: {{document_dict['categorization']['subject']}}
+        <strong> Subject: &nbsp;</strong
+        >{{document_dict['categorization']['subject']}}
       </div>
       <div class="verticalDivider1"></div>
       <div class="content2">
-        Rating: {{ document_dict['votes']['upvotes'] -
-        document_dict['votes']['upvotes'] }}
+        <strong> Rating: &nbsp;</strong> {{ (document_dict['votes']['upvotes'] -
+        document_dict['votes']['downvotes']) }}
       </div>
       <div class="verticalDivider2"></div>
       <div class="content3">
-        Comment: {{ document_dict['comments']['upload_comment:']}}
+        <strong> Comment: &nbsp;</strong> {{
+        document_dict['comments']['upload_comment']}}
       </div>
     </div>
   </div>
   <div class="infoBlankBottom"></div>
+  <div class="documentView">
+    <div class="buttonBar">
+      <i
+        id="downloadIcon"
+        class="bi bi-download"
+        onclick="downloadPDF('{{ download_url }}')"
+      ></i>
+      <!-- Man ska bara kunna gilla ett dokument en gång -->
+      <div class="hands">
+        <div id="likes">{{document_dict['votes']['upvotes']}}</div>
+        <i id="likeBtn" class="bi bi-hand-thumbs-up"></i>
+        <i id="dislikeBtn" class="bi bi-hand-thumbs-down"></i>
+        <div id="dislikes">{{document_dict['votes']['downvotes']}}</div>
+      </div>
+      <i
+        id="flagIcon"
+        class="bi bi-flag"
+        data-toggle="modal"
+        data-target="#reportModal"
+      ></i>
+    </div>
+    <iframe src="{{ download_url }}#toolbar=0" frameborder="0"></iframe>
+  </div>
   <div class="commentView">
     <div class="commentViewBox">
       <h3>Document Comments</h3>
@@ -44,6 +82,7 @@
       </div>
       <div class="comments-display">
         <!-- Comments will be dynamically added here from our firebase database -->
+        <!-- Som moderator ska man kunna gå in på en användares profil samt ta bort kommentarer... -->
         <!-- Display of comments -->
         {% for comment in comments %}
         <div class="comment">
@@ -61,32 +100,19 @@
             <div class="comment-timestamp">
               {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
             </div>
+            <div class="commentButtons">
+              <i id="commentLike" class="bi bi-hand-thumbs-up"></i>
+              <i id="commentDislike" class="bi bi-hand-thumbs-down"></i>
+              <i id="commentReply" class="bi bi-reply"></i>
+              <i id="commentFlag" class="bi bi-flag"></i>
+            </div>
           </div>
           {% endfor %}
         </div>
       </div>
     </div>
   </div>
-  <div class="documentView">
-    <div class="buttonBar">
-      <i
-        id="downloadIcon"
-        class="bi bi-download"
-        onclick="downloadPDF('{{ download_url }}')"
-      ></i>
-      <div class="hands">
-        <i id="handIcon" class="bi bi-hand-thumbs-up"></i>
-        <i id="handIcon" class="bi bi-hand-thumbs-down"></i>
-      </div>
-      <i
-        id="flagIcon"
-        class="bi bi-flag"
-        data-toggle="modal"
-        data-target="#reportModal"
-      ></i>
-    </div>
-    <iframe src="{{ download_url }}#toolbar=0" frameborder="0"></iframe>
-  </div>
+  <div class="blankFooter"></div>
 </div>
 
 <!-- Report Modal with form -->
@@ -150,40 +176,6 @@
           Submit Report
         </button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Comment form -->
-<div id="commentSection" class="container mt-5">
-  <h3>Comments</h3>
-  <div class="comment-submit-form">
-    <textarea
-      id="commentInput"
-      class="form-control mb-2"
-      placeholder="Add a comment..."
-      rows="3"
-    ></textarea>
-    <button id="submitComment" class="btn btn-primary">Comment</button>
-  </div>
-  <!-- Display of comments -->
-  <div class="comments-display">
-    <!-- Comments will be dynamically added here from our firebase database -->
-    <!-- Display of comments -->
-    {% for comment in comments %}
-    <div class="comment">
-      <div class="comment-avatar">
-        <!-- If we want it later -->
-        <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
-      </div>
-      <div class="comment-content">
-        <div class="comment-author">User: {{ comment.username }}</div>
-        <div class="comment-text">Comment: {{ comment.text }}</div>
-        <div class="comment-timestamp">
-          {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
-        </div>
-      </div>
-      {% endfor %}
     </div>
   </div>
 </div>
@@ -261,14 +253,23 @@
   .grid {
     display: grid;
     grid-template-columns: 1.76fr 1fr;
-    grid-template-rows: 50px 200px 100px 100px auto;
+    grid-template-rows: 60px 200px 100px 100px auto 100px;
+
     /* Vilken font vill vi ha??? */
     font-family: "montserrat", sans-serif;
   }
+  .blankFooter {
+    grid-column: 1 / span 2;
+    grid-row: 6;
+  }
+
   .blankTop {
     grid-row: 1;
     grid-column: 1 / span 2;
-    background-color: #efefef;
+    /* background-color: #efefef; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .leftInfo,
@@ -357,7 +358,7 @@
   }
 
   .documentView {
-    grid-column: 1;
+    grid-column: 1/2;
     grid-row: 5;
     background-color: #efefef;
     margin-left: 10px;
@@ -379,7 +380,8 @@
     padding: 10px;
   }
 
-  .buttonBar i {
+  #downloadIcon,
+  #flagIcon {
     cursor: pointer;
     transition: transform 0.3s ease;
     font-size: 24px;
@@ -402,24 +404,31 @@
   .hands {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 40px;
     flex-grow: 2;
   }
 
+  #likes {
+    color: rgb(1, 200, 1);
+  }
+
+  #dislikes {
+    color: red;
+  }
   .commentView {
-    grid-column: 2;
+    grid-column: 2 / 2;
     grid-row: 5;
-    display: flex;
-    justify-content: center;
-    align-items: top;
-    height: auto;
+    min-height: 500px;
+    /* overflow-y: auto; */
   }
   .commentViewBox {
     border: 2px solid #e4e4e4;
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    height: 100%;
+    height: 800px;
     width: 95%;
+    overflow-y: auto;
   }
 
   .commentViewBox h3 {
@@ -464,32 +473,35 @@
     background-color: #0056b3; /* Darker blue on hover for interactive feedback */
   }
 
+  #likeBtn,
+  #dislikeBtn {
+    font-size: 24px;
+  }
+
   #likeBtn {
     cursor: pointer;
     transition: 0.5s;
   }
-  .courseName {
-    font-weight: bold;
-    color: #333333;
-  }
 
-  #likeBtn:hover {
+  #likeBtn:hover,
+  #commentLike:hover {
     color: rgb(65, 240, 79);
     transform: scale(1.09);
   }
 
   #dislikeBtn {
-    display: block;
-    position: relative;
-    float: right;
     cursor: pointer;
     transition: 0.5s;
-    padding-left: 10px;
   }
 
-  #dislikeBtn:hover {
+  #dislikeBtn:hover,
+  #commentDislike:hover {
     color: red;
     transform: scale(1.09);
+  }
+  .courseName {
+    font-weight: bold;
+    color: #333333;
   }
 
   #greenhand {
@@ -534,10 +546,11 @@
   }
 
   .comment {
-    margin: 15px;
-    padding: 5px 0;
-    border: 2px solid #efefef;
-    border-radius: 20px;
+    padding: 10px 0;
+    /* border: 2px solid #efefef; */
+    /* border-bottom: 1px solid #ccc; */
+    /* border-radius: 20px; */
+    margin-bottom: 15px;
   }
 
   .comment-avatar {
@@ -553,114 +566,77 @@
   .comment-content {
     flex-grow: 1;
     margin-left: 20px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-right: 20px;
+    border: 2px solid #efefef;
+    border-radius: 10px;
     font-size: 14px;
   }
 
   .comment-text {
-    margin-top: 5px;
-    margin-bottom: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
 
-  .heartbeat {
-    -webkit-animation: heartbeat 1.5s ease-in-out both;
-    animation: heartbeat 1.5s ease-in-out both;
+  .commentButtons {
+    display: flex;
+    justify-content: space-evenly;
+    margin-left: 50%;
+    font-size: 18px;
   }
 
-  @-webkit-keyframes heartbeat {
-    from {
-      -webkit-transform: scale(1);
-      transform: scale(1);
-      -webkit-transform-origin: center center;
-      transform-origin: center center;
-      -webkit-animation-timing-function: ease-out;
-      animation-timing-function: ease-out;
-    }
-
-    10% {
-      -webkit-transform: scale(0.8);
-      transform: scale(0.8);
-      -webkit-animation-timing-function: ease-in;
-      animation-timing-function: ease-in;
-    }
-
-    17% {
-      -webkit-transform: scale(1.3);
-      transform: scale(1.3);
-      -webkit-animation-timing-function: ease-out;
-      animation-timing-function: ease-out;
-    }
-
-    33% {
-      -webkit-transform: scale(0.8);
-      transform: scale(0.8);
-      -webkit-animation-timing-function: ease-in;
-      animation-timing-function: ease-in;
-    }
-
-    45% {
-      -webkit-transform: scale(1);
-      transform: scale(1);
-      -webkit-animation-timing-function: ease-out;
-      animation-timing-function: ease-out;
-    }
+  .commentButtons i:hover {
+    transform: scale(1.2);
   }
 
-  @keyframes heartbeat {
-    from {
-      -webkit-transform: scale(1);
-      transform: scale(1);
-      -webkit-transform-origin: center center;
-      transform-origin: center center;
-      -webkit-animation-timing-function: ease-out;
-      animation-timing-function: ease-out;
-    }
+  .commentButtons i {
+    cursor: pointer;
+  }
 
-    10% {
-      -webkit-transform: scale(0.8);
-      transform: scale(0.8);
-      -webkit-animation-timing-function: ease-in;
-      animation-timing-function: ease-in;
-    }
+  #commentFlag {
+    color: red;
+  }
+  #commentReply {
+    color: rgb(1, 111, 255);
+    font-size: 18px;
+  }
 
-    17% {
-      -webkit-transform: scale(1.3);
-      transform: scale(1.3);
-      -webkit-animation-timing-function: ease-out;
-      animation-timing-function: ease-out;
-    }
+  #moderatorMenu {
+    text-align: center; /* Center-align the buttons */
+    padding: 20px; /* Add some padding around the buttons for spacing */
+    /* background-color: #f5f5f5; Light grey background for a subtle look */
+  }
 
-    33% {
-      -webkit-transform: scale(0.8);
-      transform: scale(0.8);
-      -webkit-animation-timing-function: ease-in;
-      animation-timing-function: ease-in;
-    }
+  #moderatorBtn1,
+  #moderatorBtn2 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: #333333; /* Dark text color for contrast */
+    border: 1px solid #ddd; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover effect */
+  }
+  #moderatorBtn3 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: red; /* Dark text color for contrast */
+    border: 1px solid red; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s;
+  }
 
-    45% {
-      -webkit-transform: scale(1);
-      transform: scale(1);
-      -webkit-animation-timing-function: ease-out;
-      animation-timing-function: ease-out;
-    }
+  #moderatorBtn1:hover,
+  #moderatorBtn2:hover,
+  #moderatorBtn3:hover {
+    background-color: #e9ecef; /* Slightly darker background on hover */
+    cursor: pointer; /* Change cursor to pointer to indicate clickable */
   }
 </style>
 
-<!-- Funkar inte om man ska använda functionen direkt? -->
-<!-- <script
-  type="module"
-  src="{{url_for('static', filename='document.js') }}"
-></script> -->
-
-<!-- Easy download function -->
-<script>
-  function downloadPDF(documentUrl) {
-    window.open(documentUrl, "_blank");
-  }
-</script>
-
-<script>
+<script type="module">
   // Firebase configuration and initialization
   import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -867,51 +843,6 @@
         });
     });
 
-  // Check if the user is signed in and a moderator
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // Fetch user details to check if the user is a moderator
-      fetchUser(user.uid).then((userData) => {
-        if (userData && userData.role === "moderator") {
-          console.log("User is a moderator.");
-
-          // Make a button beside the like counter if user is a moderator
-          const moderatorMenuBtn = document.createElement("button");
-          moderatorMenuBtn.className = "btn btn-primary";
-          moderatorMenuBtn.type = "button";
-          moderatorMenuBtn.innerText = "Mod Menu";
-          moderatorMenuBtn.setAttribute("data-toggle", "modal");
-          moderatorMenuBtn.setAttribute("data-target", "#modMenuModal");
-
-          const buttonBar = document.querySelector(".button-bar");
-
-          if (buttonBar) {
-            buttonBar.appendChild(moderatorMenuBtn);
-          } else {
-            console.error("Button bar not found");
-          }
-        } else {
-          console.log("User is not a moderator.");
-        }
-      });
-    } else {
-      console.log("User is not signed in.");
-      // Handle not signed-in state
-      window.location.href = "/login";
-    }
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
-    // Event listener for when the Mod Menu Modal is fully shown
-    $("#modMenuModal").on("shown.bs.modal", function (event) {
-      const deleteButton = document.getElementById("deleteDocument");
-      deleteButton.onclick = function () {
-        const documentId = '{{ document_dict["id"] }}';
-        deleteDocument(documentId);
-      };
-    });
-  });
-
   function deleteDocument(document_id) {
     fetch(`/validate_document/${document_id}`, {
       method: "POST",
@@ -934,77 +865,8 @@
       });
   }
 
-  // Gamla like/dislike functionen
-  // function vote(action, documentId) {
-  //     const form = new FormData();
-  //     form.append("action", action);
-  //     form.append("document_id", documentId);
-
-  //     fetch(`/vote/${action}/${documentId}`, {
-  //       method: "POST",
-  //       body: form,
-  //     }).then((response) => {
-  //       // Reload the page after the fetch completes
-  //       window.location.reload();
-  //     });
-  //   }
-
-  // Allt nedan kommer behöva kopplas till riktig data från databasen
-  // Define variables
-  const hand_button = document.getElementById("likeBtn");
-  const hand_button_dislike = document.getElementById("dislikeBtn");
-  const thumb_up_icon = document.getElementById("thumbUpIcon");
-  const thumb_down_icon = document.getElementById("thumbDownIcon");
-  // const total_likes = document.getElementById("totalLikes")
-
-  // Liking function
-  function add_like() {
-    hand_button.setAttribute("class", "heartbeat greenHand");
-    hand_button_dislike.setAttribute("class", "heartbeat redHand");
-    thumb_up_icon.setAttribute("class", "bi bi-hand-thumbs-up-fill");
-    // thumb_up_icon.setAttribute("id", "liked")
-    thumb_down_icon.setAttribute("class", "bi bi-hand-thumbs-down-fill");
-    // thumb_up_icon.setAttribute("id", "liked")
-    // total_likes.innerHTML = parseInt(total_likes.innerHTML) + 1
+  function downloadPDF(documentUrl) {
+    window.open(documentUrl, "_blank");
   }
-
-  // Unliking function
-  function remove_like() {
-    hand_button.setAttribute("class", "blackHand");
-    hand_button_dislike.setAttribute("class", "blackHand");
-    thumb_up_icon.setAttribute("class", "bi bi-hand-thumbs-up");
-    // thumb_up_icon.setAttribute("id", "not-liked")
-    thumb_down_icon.setAttribute("class", "bi bi-hand-thumbs-down");
-    // thumb_up_icon.setAttribute("id", "not-liked")
-    // total_likes.innerHTML = parseInt(total_likes.innerHTML) - 1
-  }
-
-  // Remove heartbeat animation
-  function remove_heartbeat() {
-    hand_button.setAttribute("class", "greenHand");
-    hand_button_dislike.setAttribute("class", "redHand");
-  }
-
-  // When like button clicked
-  hand_button.onclick = function () {
-    const like_checker = document.getElementById("liked");
-    if (like_checker == null) {
-      add_like();
-      setTimeout(remove_heartbeat, 1000);
-    } else {
-      remove_like();
-    }
-  };
-
-  // When dislike button clicked
-  hand_button_dislike.onclick = function () {
-    const like_checker = document.getElementById("liked");
-    if (like_checker == null) {
-      add_like();
-      setTimeout(remove_heartbeat, 1000);
-    } else {
-      remove_like();
-    }
-  };
 </script>
 {% endblock %}
