@@ -1,91 +1,115 @@
 {% extends "base.html" %} {% block title %}{{ course_page_dict['course_name']
 }}{% endblock %} {% block content %}
-<div class="container my-5">
-  <div class="banner text-center py-3 mb-4 border-bottom">
-    <!-- Importet from database -->
-    <h1>{{ course_page_dict['course_name'] }}</h1>
-  </div>
-  <div class="row">
-    <div class="col border-right">
-      <p>University: {{ course_page_dict['course_university'] }}</p>
-    </div>
-    <div class="col">
-      <p>Subject: {{ course_page_dict['course_subject'] }}</p>
-    </div>
-  </div>
-  <div class="container-fluid text-center my-4">
-    <div class="row">
-      <div class="col-6 px-1">
-        <button type="button" class="btn btn-secondary w-100" id="btnContent1">
-          Documents
-        </button>
-      </div>
-      <div class="col-6 px-1">
-        <button type="button" class="btn btn-secondary w-100" id="btnContent2">
-          Forum
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- All documents in database related to course -->
-  <div class="container my-5">
-    <div id="content1" class="content">
-        {% for doc_type, doc_names in course_page_dict['course_documents_name_dict'].items() %}
-        <h3>{{ doc_type }}</h3>
-        <ul class="documentList">
-            {% for doc_name in doc_names %}
-            <li class="documentResult">
-                {% set doc_id = course_page_dict['course_documents_id_dict'][doc_type][loop.index0] %}
-                <a href="{{ url_for('views.document', document_id=doc_id) }}">{{ doc_name }}</a>
-                <div class="vote-counters">
-                  {% if doc_id in course_page_dict['course_documents_votes_dict'] %}
-                  <span class="badge bg-success mx-1">{{ course_page_dict['course_documents_votes_dict'][doc_id][0] }}</span>
-                  <span class="badge bg-danger mx-1">{{ course_page_dict['course_documents_votes_dict'][doc_id][1] }}</span>
-                  {% else %}
-                  <span class="badge bg-success mx-1">0</span>
-                  <span class="badge bg-danger mx-1">0</span>
-                  {% endif %}
-              </div>
-            </li>
-            {% endfor %}
-        </ul>
-        {% endfor %}
+<div class="grid">
+  <div class="blankTop"></div>
+  <div class="leftInfo">
+    <h1 class="courseName">
+      <strong> {{course_page_dict['course_name']}} </strong>
+    </h1>
+    <h3>{{ course_page_dict['course_university']}}</h3>
+    <p>Subject: {{ course_page_dict['course_subject'] }}</p>
+  </div>
+  <div class="rightInfo">
+    <p>Något</p>
+    <p>Något</p>
+  </div>
+  <div class="infoBlankTop"></div>
+  <div class="infoBar">
+    <div class="infoBarBox">
+      <div class="content1">
+        <strong> Qty of Docs &nbsp;</strong>
+      </div>
+      <div class="verticalDivider1"></div>
+      <div class="content2">
+        <strong> Qty of Comments &nbsp;</strong>
+      </div>
+      <div class="verticalDivider2"></div>
+      <div class="content3">
+        <strong> Något &nbsp;</strong>
+      </div>
     </div>
-</div>
-    <!-- All comments in database related to course -->
-    <div id="content2" class="content" style="display: none">
-      <!-- Comment form -->
-      <div id="commentSection" class="container mt-0">
-        <h1 class="text-center">Forum</h1>
-        <div class="comment-submit-form">
-          <textarea
-            id="commentInput"
-            class="form-control mb-2"
-            placeholder="Add a comment..."
-            rows="3"
-          ></textarea>
-          <button id="submitComment" class="btn btn-primary">Comment</button>
-        </div>
+  </div>
+  <div class="infoBlankBottom"></div>
+  <div class="documentArea">
+    <!-- kanske lägga till ett filter om det skulle finnas många dokument? -->
+    <div id="content1" class="content">
+      {% for doc_type, doc_names in
+      course_page_dict['course_documents_name_dict'].items() %}
+      <h3><strong> {{ doc_type }} </strong></h3>
+      <ul class="documentList">
+        {% for doc_name in doc_names %}
+        <li class="documentResult">
+          {% set doc_id =
+          course_page_dict['course_documents_id_dict'][doc_type][loop.index0] %}
+          <a href="{{ url_for('views.document', document_id=doc_id) }}"
+            >{{ doc_name }}</a
+          >
+          <div class="vote-counters">
+            {% if doc_id in course_page_dict['course_documents_votes_dict'] %}
+            <span class="badge bg-success mx-1"
+              >{{ course_page_dict['course_documents_votes_dict'][doc_id][0]
+              }}</span
+            >
+            <span class="badge bg-danger mx-1"
+              >{{ course_page_dict['course_documents_votes_dict'][doc_id][1]
+              }}</span
+            >
+            {% else %}
+            <span class="badge bg-success mx-1">0</span>
+            <span class="badge bg-danger mx-1">0</span>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="documentFacts">
+    <div class="documentFactsBox">
+      <p>Antal dokument av varje typ som en lista?</p>
+    </div>
+  </div>
+  <div class="commentArea">
+    <!-- Comment form -->
+    <div id="commentSection" class="container mt-4">
+      <h1><strong>Course Forum</strong></h1>
+      <div class="comment-submit-form">
+        <textarea
+          id="commentInput"
+          class="form-control mb-2"
+          placeholder="Add a comment..."
+          rows="3"
+        ></textarea>
+        <button id="submitComment" class="btn btn-primary">Comment</button>
+      </div>
+      <!-- Display of comments -->
+      <div class="comments-display">
+        <!-- Comments will be dynamically added here from our database -->
         <!-- Display of comments -->
-        <div class="comments-display">
-          <!-- Comments will be dynamically added here from our database -->
-              <!-- Display of comments -->
-            {% for comment in comments %}
-            <div class="comment">
-              <div class="comment-avatar">
-                <!-- If we want it later -->
-                <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
-              </div>
-              <div class="comment-content">
-                <div class="comment-author">User: {{ comment.username }}</div>
-                <div class="comment-text">Comment: {{ comment.text }}</div>
-                <div class="comment-timestamp">
-                  {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
-                </div>
-              </div>
-              {% endfor %}
+        {% for comment in comments %}
+        <div class="comment">
+          <div class="comment-avatar">
+            <!-- If we want it later -->
+            <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
+          </div>
+          <div class="comment-content">
+            <div class="comment-author">User: {{ comment.username }}</div>
+            <div class="comment-text">
+              <strong> Comment: </strong> {{ comment.text }}
             </div>
+            <div class="comment-timestamp">
+              {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
+            </div>
+            <div class="commentButtons">
+              <i id="commentLike" class="bi bi-hand-thumbs-up"></i>
+              <i id="commentDislike" class="bi bi-hand-thumbs-down"></i>
+              <i id="commentReply" class="bi bi-reply"></i>
+              <i id="commentFlag" class="bi bi-flag"></i>
+            </div>
+          </div>
+          {% endfor %}
         </div>
       </div>
     </div>
@@ -93,6 +117,142 @@
 </div>
 
 <style>
+  .grid {
+    display: grid;
+    grid-template-columns: 1.76fr 1fr;
+    grid-template-rows: 60px 200px 100px 100px auto auto;
+  }
+  .blankFooter {
+    grid-column: 1 / span 2;
+    grid-row: 6;
+  }
+
+  .blankTop {
+    grid-row: 1;
+    grid-column: 1 / span 2;
+    /* background-color: #efefef; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .leftInfo,
+  .rightInfo {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    background-color: #efefef;
+  }
+
+  .leftInfo {
+    grid-column: 1;
+    grid-row: 2;
+    text-align: left;
+    padding-left: 40px;
+  }
+
+  .rightInfo {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+    padding-right: 40px;
+    font-size: large;
+  }
+
+  .infoBlankTop {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+    background-color: #efefef;
+  }
+  .infoBlankBottom {
+    grid-column: 1 / span 2;
+    grid-row: 4;
+  }
+
+  .infoBar,
+  .infoBarBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .infoBar {
+    grid-column: 1 / span 2;
+    grid-row: 3 / 5;
+  }
+  .infoBarBox {
+    padding-left: 40px;
+    padding-right: 40px;
+    display: flex;
+    margin: auto;
+    border: 2px solid #e4e4e4;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    width: 90%;
+    height: 100px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .content1,
+  .content2,
+  .content3 {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .content3 a {
+    text-decoration: none; /* Removes the underline from links */
+    color: inherit; /* Inherits the text color from the parent element */
+  }
+
+  .content3 a:hover {
+    text-decoration: underline; /* Adds underline on hover for better indication */
+  }
+
+  .verticalDivider1,
+  .verticalDivider2 {
+    height: 50%;
+    width: 1px;
+    background-color: #ccc;
+  }
+
+  .documentArea {
+    grid-column: 1/2;
+    grid-row: 5;
+    margin-left: 10px;
+    margin-right: 10px;
+    border: 2px solid #e4e4e4;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+  }
+
+  .documentFacts {
+    grid-column: 2 / 2;
+    grid-row: 5;
+    min-height: 500px;
+  }
+
+  .documentFactsBox {
+    border: 2px solid #e4e4e4;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    height: 800px;
+    width: 95%;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .commentArea {
+    grid-row: 6;
+    grid-column: 1 / span 2;
+  }
+
   .banner {
     background-color: #f8f9fa;
     border-bottom: 2px solid #dee2e6; /* Adds a bottom border*/
@@ -102,16 +262,15 @@
   }
   .content {
     margin-top: 20px;
-    border: 1px solid #dee2e6;
+    /* border: 1px solid #dee2e6; */
     border-radius: 5px;
     padding: 20px;
-    display: none; /* Start with both content areas hidden */
   }
   .comment-section {
     margin-top: 20px;
   }
   .comment {
-    border-top: 1px solid #ccc;
+    /* border-top: 1px solid #ccc; */
     margin-bottom: 15px;
     padding: 10px 0;
   }
@@ -125,7 +284,10 @@
   }
   .comment-content {
     flex-grow: 1;
-    margin-left: 50px;
+    border: 2px solid #efefef;
+    border-radius: 10px;
+    font-size: 16px;
+    padding: 10px;
   }
   .comment-author {
     font-weight: bold;
@@ -134,13 +296,44 @@
     margin-top: 5px;
     margin-bottom: 5px;
   }
+
+  .commentButtons {
+    display: flex;
+    justify-content: space-evenly;
+    margin-left: 50%;
+    font-size: 18px;
+  }
+
+  .commentButtons i:hover {
+    transform: scale(1.2);
+  }
+
+  .commentButtons i {
+    cursor: pointer;
+  }
+
+  #commentFlag {
+    color: red;
+  }
+  #commentReply {
+    color: rgb(1, 111, 255);
+    font-size: 18px;
+  }
+  #commentLike:hover {
+    color: rgb(65, 240, 79);
+    transform: scale(1.09);
+  }
+  #commentDislike:hover {
+    color: red;
+    transform: scale(1.09);
+  }
   .documentList {
     list-style-type: none;
     padding: 0;
   }
   .documentResult {
-    background-color: #f0f0f0;
-    margin-bottom: 8px;
+    background-color: #efefef;
+    margin-bottom: 15px;
     padding: 10px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -153,32 +346,32 @@
     background-color: #e9e9e9;
   }
   .documentResult a {
-    color: inherit; 
-    text-decoration: none; 
+    color: inherit;
+    text-decoration: none;
   }
   .documentResult a:hover {
     text-decoration: underline;
   }
   .votes {
     float: right; /* Aligns the vote counts to the right */
-}
+  }
 
-.upvotes {
+  .upvotes {
     color: green; /* Green color for upvotes */
     margin-right: 10px; /* Adds some spacing between upvotes and downvotes */
-}
+  }
 
-.downvotes {
+  .downvotes {
     color: red; /* Red color for downvotes */
-}
-.vote-counters {
+  }
+  .vote-counters {
     display: flex;
     justify-content: flex-end;
-}
+  }
 </style>
 
 <script type="module">
-    // Firebase configuration and initialization
+  // Firebase configuration and initialization
   import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import {
@@ -209,57 +402,6 @@
         return false;
       });
   }
-
-
-  // Button documents page
-  document.getElementById("btnContent1").addEventListener("click", function () {
-    document.getElementById("content1").style.display = "block";
-    document.getElementById("content2").style.display = "none";
-    this.classList.add("active");
-    document.getElementById("btnContent2").classList.remove("active");
-  });
-  // Button forum page
-  document.getElementById("btnContent2").addEventListener("click", function () {
-    document.getElementById("content2").style.display = "block";
-    document.getElementById("content1").style.display = "none";
-    this.classList.add("active");
-    document.getElementById("btnContent1").classList.remove("active");
-  });
-  document.addEventListener("DOMContentLoaded", function () {
-    // Function to update button classes
-    function updateButtonClasses(activeButtonId) {
-      const buttonIds = ["btnContent1", "btnContent2"];
-      const activeClass = "btn-primary";
-      const inactiveClass = "btn-secondary";
-
-      buttonIds.forEach((id) => {
-        const button = document.getElementById(id);
-        if (id === activeButtonId) {
-          button.classList.add(activeClass);
-          button.classList.remove(inactiveClass);
-        } else {
-          button.classList.add(inactiveClass);
-          button.classList.remove(activeClass);
-        }
-      });
-    }
-
-    document
-      .getElementById("btnContent1")
-      .addEventListener("click", function () {
-        document.getElementById("content1").style.display = "block";
-        document.getElementById("content2").style.display = "none";
-        updateButtonClasses("btnContent1");
-      });
-
-    document
-      .getElementById("btnContent2")
-      .addEventListener("click", function () {
-        document.getElementById("content2").style.display = "block";
-        document.getElementById("content1").style.display = "none";
-        updateButtonClasses("btnContent2");
-      });
-  });
 
   // <!-- Dynamic commentsection -->
   document
@@ -294,28 +436,27 @@
       } else {
         console.log("User is not signed in or comment is empty.");
       }
-  });
+    });
 
   function fetchUser(uid) {
-      const url = "/get_user"; // Update this URL to match your Flask endpoint
+    const url = "/get_user"; // Update this URL to match your Flask endpoint
 
-      const data = {
-        uid: uid,
-      };
+    const data = {
+      uid: uid,
+    };
 
-      return fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-        .then((response) => response.json())
-        .catch((error) => {
-          console.error(error);
-          return null;
-        });
-    }
-
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        console.error(error);
+        return null;
+      });
+  }
 </script>
 {% endblock %}
