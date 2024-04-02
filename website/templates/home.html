@@ -1,62 +1,64 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
 %}
 
-<!-- Header Section -->
-<header class="text-center my-5">
-  <h1 class="display-3">
-    <span style="color: rgb(201, 0, 0)">Study</span
-    ><span style="color: rgb(0, 0, 173)">Pal</span>
-  </h1>
-  <small>
-    <h2>The easiest way to better grades!</h2>
-    <br />
-  </small>
-  <!-- Combined Search Form -->
-  <form action="/search" method="get" class="input-group my-3">
-    <!-- University Dropdown -->
-    <select
-      class="custom-select"
-      id="university"
-      name="university"
-      onchange="searchDropDownMenu.updateSubjects(); searchDropDownMenu.updateCourses();"
-    >
-      <option selected>Choose a university...</option>
-      {% for university in universities %}
-      <option value="{{ university }}">{{ university }}</option>
-      {% endfor %}
-    </select>
+<div class="grid">
+  <div class="first">
+    <div class="firstContent">
+      <h1><strong>StudyPal</strong></h1>
+      <p>Your way to educational success</p>
 
-    <!-- Subject Dropdown -->
-    <select
-      class="custom-select"
-      id="subject"
-      name="subject"
-      onchange="searchDropDownMenu.updateUniversities(); searchDropDownMenu.updateCourses();"
-    >
-      <option selected>Choose a subject...</option>
-      {% for subject in subjects %}
-      <option value="{{ subject }}">{{ subject }}</option>
-      {% endfor %}
-    </select>
+      <form action="/search" method="get" class="searchbar">
+        <!-- University Dropdown -->
+        <select
+          class="custom-select"
+          id="university"
+          name="university"
+          onchange="searchDropDownMenu.updateSubjects(); searchDropDownMenu.updateCourses();"
+        >
+          <option selected>Choose a university...</option>
+          {% for university in universities %}
+          <option value="{{ university }}">{{ university }}</option>
+          {% endfor %}
+        </select>
 
-    <!-- Courses Dropdown, initially disabled -->
-    <select class="custom-select" id="course" name="course" disabled>
-      <option selected>Choose a course...</option>
-      <!-- Course options will be populated based on the selected university and subject -->
-    </select>
+        <!-- Subject Dropdown -->
+        <select
+          class="custom-select"
+          id="subject"
+          name="subject"
+          onchange="searchDropDownMenu.updateUniversities(); searchDropDownMenu.updateCourses();"
+        >
+          <option selected>Choose a subject...</option>
+          {% for subject in subjects %}
+          <option value="{{ subject }}">{{ subject }}</option>
+          {% endfor %}
+        </select>
 
-    <!-- Search Input -->
-    <input
-      type="text"
-      class="form-control"
-      placeholder="Search for courses"
-      name="query"
-    />
-    <div class="input-group-append">
-      <button class="btn btn-outline-secondary" type="submit">Search</button>
+        <!-- Courses Dropdown, initially disabled -->
+        <select class="custom-select" id="course" name="course" disabled>
+          <option selected>Choose a course...</option>
+          <!-- Course options will be populated based on the selected university and subject -->
+        </select>
+
+        <!-- Search Input -->
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search for courses"
+          name="query"
+        />
+        <div class="input-group-append">
+          <button class="btn btn-secondary" type="submit">Search</button>
+        </div>
+      </form>
     </div>
-  </form>
-</header>
+  </div>
+  <div class="second"></div>
+  <div class="thirdLeft"></div>
+  <div class="thirdRight"></div>
+  <div class="fourthLeft"></div>
+  <div class="fourthRight"></div>
+</div>
 
 <script>
   class SearchDropDownMenu {
@@ -242,132 +244,106 @@
   var searchDropDownMenu = new SearchDropDownMenu();
 </script>
 
-<section class="text-center my-5">
-  <br />
-
-  <div class="container">
-    <div class="row">
-      <!-- Stats Item -->
-      <div class="col">
-        <div class="card box-card1">
-          <div class="card-body">
-            <h5 class="card-title">40+</h5>
-            <p class="card-text"><strong>Universities</strong></p>
-            <p class="card-text">
-              <i>
-                StudyPal allows students from more than 40 universities in
-                Sweden to upload materials such as exams, assignments, and
-                lecture notes!
-              </i>
-            </p>
-          </div>
-        </div>
-      </div>
-      <!-- Stats Item -->
-      <div class="col">
-        <div class="card box-card2">
-          <div class="card-body">
-            <h5 class="card-title">450K+</h5>
-            <p class="card-text"><strong>Students</strong></p>
-            <p class="card-text">
-              <i>
-                More than 450,000 students in Sweden could benefit from
-                utilizing StudyPal for more efficient studying by accessing
-                materials shared by other students!
-                <br />
-              </i>
-            </p>
-          </div>
-        </div>
-      </div>
-      <!-- Add more stats items as necessary -->
-    </div>
-  </div>
-</section>
-
-<!-- About Section -->
-<section class="my-5">
-  <br />
-  <br />
-  <div class="container text-center">
-    <h2 class="text-center">ABOUT STUDYPAL</h2>
-    <div class="text-center">
-      <i>
-        StudyPal is a platform where students can access materials uploaded by
-        other students, such as old exams, assignments, and lecture notes.
-        Additionally, StudyPal generates answers to exams that do not have
-        provided solutions.
-      </i>
-
-      <!-- Add more content about STUDYPAL here -->
-      <p class="text-center">
-        <br /><br /><br />
-        <img
-          src="{{ url_for('static', filename='pictures/User_view.png') }}"
-          alt="StudyPal Logo"
-          width="700"
-          height="250"
-        />
-        <br /><br />
-      </p>
-    </div>
-  </div>
-</section>
-
 <style>
-  .box-card1 {
-    background-image: url("{{ url_for('static', filename='pictures/University.png') }}");
-    background-size: cover;
+  .grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: 650px 450px 400px 400px;
+  }
+
+  .first {
+    grid-row: 1;
+    grid-column: 1 / span 2;
+    background-color: black;
+  }
+  .firstContent {
+    display: flex;
+    align-items: center;
+    /* justify-content: center; */
+    flex-direction: column;
+    padding-top: 150px;
+    width: 100%;
+    height: 100%;
+    background-attachment: fixed;
     background-position: center;
-    color: white;
-    position: relative;
-    height: 400px;
-  }
-
-  .card-body {
-    position: relative;
-    z-index: 2;
-  }
-
-  .box-card1::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1;
-  }
-
-  .box-card2 {
-    background-image: url("{{ url_for('static', filename='pictures/Student.png') }}");
+    background-repeat: no-repeat;
     background-size: cover;
-    background-position: center;
     color: white;
-    position: relative;
-    height: 400px;
+    background-image: url("{{ url_for("static", filename= "pictures/bookedited.png") }}");
+  }
+  .firstContent h1 {
+    font-size: 64px;
+  }
+  .firstContent p {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .searchbar {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8%;
+    width: 80%;
   }
 
-  .card-body {
-    display: flex; /* Enable Flexbox */
-    flex-direction: column; /* Stack children vertically */
-    justify-content: center; /* Center vertically */
-    align-items: center; /* Center horizontally */
-    position: relative; /* Keeps it above the ::before pseudo-element */
-    z-index: 2; /* Ensures it's above the overlay */
-    height: 100%; /* Take full height of parent */
-    text-align: center; /* Ensure text is centered */
+  .second {
+    grid: 2;
+    grid-column: 1 / span 2;
+    background-color: #f5f5f5;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
-  .box-card2::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1;
+
+  .thirdLeft {
+    grid-row: 3;
+    grid-column: 1 / 2;
+    margin: 10px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    /* background-image: url("{{ url_for('static', filename='pictures/Student.png') }}"); */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #efefef;
+    background-size: cover;
+  }
+
+  .thirdRight {
+    grid-row: 3;
+    grid-column: 2 / 2;
+    margin: 10px;
+    margin-bottom: 5px;
+    margin-left: 5px;
+    /* background-image: url("{{ url_for('static', filename='pictures/University.png') }}"); */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: black;
+    background-size: cover;
+  }
+  .fourthLeft {
+    grid-row: 4;
+    grid-column: 1 / 2;
+    margin: 10px;
+    margin-top: 5px;
+    margin-right: 5px;
+    /* background-image: url("{{ url_for('static', filename='pictures/Student.png') }}"); */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: black;
+    background-size: cover;
+  }
+
+  .fourthRight {
+    grid-row: 4;
+    grid-column: 2 / 2;
+    margin: 10px;
+    margin-top: 5px;
+    margin-left: 5px;
+    /* background-image: url("{{ url_for('static', filename='pictures/University.png') }}"); */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #efefef;
+    background-size: cover;
   }
 </style>
 
