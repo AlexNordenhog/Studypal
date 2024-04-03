@@ -782,15 +782,16 @@ def test_document():
 def test_course_search():
 
     # Testing testing
-    course_directory = CourseDirectory()
-    search_controller = SearchController()
+    #course_directory = CourseDirectory()
+    #search_controller = SearchController()
+    m = Main()
     analys1 = Course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
     industriell_marknadsföring = Course('Industriell Marknadsföring', 'Blekinge Institute of Technology', 'Marketing')
     inledande_matematisk_analys = Course('Inledande Matematisk Analys', 'Chalmers Institute of Technology', 'Mathematics')
-    course_directory.add_course(analys1)
-    course_directory.add_course(industriell_marknadsföring)
-    course_directory.add_course(inledande_matematisk_analys)
-    search_results = search_controller.search('', 'Blekinge Institute of Technology', 'Mathematics')
+    m.add_course(analys1, analys1.get_university(), analys1.get_subject())
+    m.add_course(industriell_marknadsföring, industriell_marknadsföring.get_university(), industriell_marknadsföring.get_subject())
+    m.add_course(inledande_matematisk_analys, inledande_matematisk_analys.get_university(), inledande_matematisk_analys.get_subject())
+    search_results = m.search('', 'Blekinge Institute of Technology', 'Mathematics')
 
     if search_results:
         for result in search_results:
@@ -798,3 +799,4 @@ def test_course_search():
     else:
         print('No search results.')
 
+test_course_search()
