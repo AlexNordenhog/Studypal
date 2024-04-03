@@ -439,10 +439,8 @@ class DocumentDirectory(Directory):
         return True if document_id in self._documents.keys() else False
 
 class SearchController:
-    def __init__(self) -> None:
-        pass
 
-    def search(self, query, university=None, subject=None, course=None):
+    def search(self, query, course_directory: CourseDirectory, university=None, subject=None, course=None):
         '''
         Search function to search for courses in the database.
         
@@ -455,7 +453,7 @@ class SearchController:
         Returns a list of matching courses based on the search criteria.
         '''
         filtered_courses = []
-        all_courses = course_directory.get_courses().values()
+        all_courses = course_directory.get_course_names()
 
         if university and subject and course:
             for c in all_courses:
@@ -692,12 +690,16 @@ class Main:
     _course_dir = CourseDirectory()
     _user_dir = UserDirectory()
     _document_dir = DocumentDirectory()
+    _search_controller = SearchController()
 
     def __new__(cls):
         if cls._main == None:
             cls._main = super(Main, cls).__new__(cls)
 
         return cls._main
+    
+    def search(self, query, university=None, subject=None, course=None):
+        return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
     def get_universities(self):
         return self._firebase_manager.get_from_storage_path("/categorization/universities")
