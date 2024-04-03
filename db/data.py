@@ -774,3 +774,6 @@ def test_course_search():
             print(result.get_course_name())
     else:
         print('No search results.')
+
+a = FirebaseManager()
+a._database.upload_categorization()
