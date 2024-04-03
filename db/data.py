@@ -796,5 +796,3 @@ def test_course_search():
     else:
         print('No search results.')
 
-a = FirebaseManager()
-a._database.upload_categorization()
