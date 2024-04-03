@@ -573,6 +573,12 @@ class FirebaseDatabase(Firebase):
     def __new__(cls):
         return super().__new__(cls)
     
+    def get_from_path(self, path):
+        try:
+            return db.reference(path).get()
+        except:
+            print("Error fetching from FirebaseStorage")
+
     def _initialize_firebase(self):
         self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
         self._firebase_url = {"databaseURL":"https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/"}
@@ -641,6 +647,12 @@ class FirebaseManager:
         
         return cls._firebase_manager
 
+    def get_from_storage_path(self, path):
+        data = self._database.get_from_path(path)
+
+        return data if data else None
+
+
     def _set_from_firebase(self):
         
         users = {}
@@ -687,6 +699,15 @@ class Main:
 
         return cls._main
     
+    def get_universities(self):
+        return self._firebase_manager.get_from_storage_path("/categorization/universisities")
+
+    def get_document_types(self):
+        return self._firebase_manager.get_from_storage_path("/categorization/document_types")
+    
+    def get_subjects(self):
+        return self._firebase_manager.get_from_storage_path("/categorization/subjects")
+
     def get_document(self, document_id: str) -> Document:
         return self._document_dir.get(document_id=document_id)
 
