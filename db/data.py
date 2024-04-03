@@ -132,11 +132,12 @@ class Document:
     _comments = {}
     _votes = {}
 
-    def __init__(self, pdf_url, header, document_id, user_id) -> None:
+    def __init__(self, pdf_url, header, document_type, user_id) -> None:
         
         # document content
         self._header = header
         self._pdf_url = pdf_url
+        self._document_type = document_type
         
         # ids
         self._user_id = user_id
@@ -151,7 +152,7 @@ class Document:
         self.comments.append(comment)
 
     def get_id(self) -> int:
-        return self._id
+        return self._document_id
 
     def get(self):
         return self
@@ -162,9 +163,12 @@ class Document:
     def get_validation(self) -> bool:
         return self._validated
 
+    def get_type(self):
+        return self._document_type
+    
     def to_json(self):
         json = {
-            self.document_id:{
+            self._document_id:{
                 "upload":{
                     "header":self._header,
                     "pdf_url":self._pdf_url,
@@ -172,7 +176,7 @@ class Document:
                     "user_id":self._user_id
                 },
 
-                "categorization":self._categorization,
+                #"categorization":self._categorization,
 
                 "votes":self._votes,
 
@@ -226,7 +230,7 @@ class Course:
     A course.
     '''
     def __init__(self, course_name, university, subject) -> None:
-        self.course_name = course_name
+        self.course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
@@ -245,12 +249,12 @@ class Course:
         '''
         return self.course_name
 
-    def add_document(self, document_type, document: Document):
+    def add_document(self, document_type, document_id):
         '''
-        Adds a document to the _documents dict.
+        Adds a document id to the _documents dict.
         '''
         try:
-            self._documents[document_type].append(document)
+            self._documents[document_type].append(document_id)
         except:
             print('Could not add document.')
 
@@ -330,9 +334,12 @@ class CourseDirectory(Directory):
     '''
     A directory containing courses.
     '''
-    def __init__(self):
-        self._pending_courses = {}
-        self._courses = {}
+
+    _pending_courses = {}
+    _courses = {}
+
+    def get_course(self, course_name) -> Course:
+        return self._courses[course_name] if self.course_exists(course_name=course_name) else None
 
     def get_course_names(self) -> list:
         '''
@@ -359,13 +366,21 @@ class CourseDirectory(Directory):
         '''
         Takes a course object and adds it to the course dictionary.
         '''
-        self._courses.update({course.course_name : course})
+        self._courses.update({course.course_name : course}) # currently overwrites if already exists, make sure it is unique before adding
 
     def add_pending_course(self, course: Course):
         '''
         Takes a course object and adds it to the pending course dictionary.
         '''
         self._pending_courses.update({course.course_name : course})
+
+    def course_exists(self, course_name: str) -> bool:
+        """
+        Takes a string and returns a bool wether if course_name is in the courses dict.
+        """
+        course_names = self.get_course_names()
+
+        return True if course_name in course_names else False
 
 class UserDirectory(Directory):
     _users = {}
@@ -408,6 +423,20 @@ class UserDirectory(Directory):
             return False
         
         return True
+
+class DocumentDirectory(Directory):
+    
+    _documents = {}
+
+    def add(self, document:Document):
+        if not self.document_exists(document._document_id):
+            self._documents[document.get_id] = document
+
+    def get(self, document_id) -> Document:
+        return self._documents[document_id] if self.document_exists(document_id) else None
+
+    def document_exists(self, document_id: str) -> bool:
+        return True if document_id in self._documents.keys() else False
 
 class SearchController:
     def __init__(self) -> None:
@@ -549,6 +578,14 @@ class FirebaseDatabase(Firebase):
         self._firebase_url = {"databaseURL":"https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/"}
         self._app = firebase_admin.initialize_app(self._firebase_cert, self._firebase_url, "database")
     
+    def add_document(self, document: Document, user_id: str, course: Course):
+        json = document.to_json()
+        document_id = document.get_id()
+        course_name = course.get_course_name()
+
+        ref = db.reference("/Documents", app=self._app)
+        ref.update(json)
+
     def get_users(self):
 
         users_dct = {}
@@ -612,6 +649,9 @@ class FirebaseManager:
         for user in db_users:
             self._user_dir.add(users[user])
 
+    def add_document(self, document: Document, user_id: str, course: Course):
+        self._database.add_document(document=document, user_id=user_id, course=course)
+
     #methods below needs to move/change
     def add_user(self, user_id, username, add_to_db=True):
         """Create user and add to database."""
@@ -626,8 +666,7 @@ class FirebaseManager:
         if add_to_db:
             self._add_to_db(ref="/Users/", json=user.to_json())
 
-    def add_document(self, document: Document, user: User, course: Course):
-        document.to_json()
+    
 
     def add_course(self, course_id, university):
         self.course_directory.add()
@@ -637,14 +676,57 @@ class FirebaseManager:
 
 class Main:
     _main = None
+    _firebase_manager = FirebaseManager()
     _course_dir = CourseDirectory()
     _user_dir = UserDirectory()
+    _document_dir = DocumentDirectory()
 
     def __new__(cls):
         if cls._main == None:
             cls._main = super(Main, cls).__new__(cls)
 
         return cls._main
+    
+    def get_document(self, document_id: str) -> Document:
+        return self._document_dir.get(document_id=document_id)
+
+    def add_document(self, course_name: str, document: Document, user_id: str):
+        """
+        Adds a course to the Document Directory and document id to the Course.
+        """
+        self._firebase_manager.add_document(document=document, course=self._course_dir.get_course(course_name), user_id=user_id)
+        try:
+            course = self._course_dir.get_course(course_name)
+
+            # Add the document id to the Course
+            document_type = document.get_type()
+            document_id = document.get_id()
+            course.add_document(document_id=document_id, document_type=document_type)
+            
+            # Add the document to the Document Directory
+            self._document_dir.add(document=document)
+
+            # Save to Firebase
+            
+
+            print("Success")
+        except:
+            print("Error storing document")
+
+    
+    def add_course(self, course_name: str, university: str, subject: str) -> bool:
+        """
+        Adds a course to the Course Directory.
+        """
+
+        course = Course(course_name=course_name,
+                        university=university,
+                        subject=subject
+        )
+
+        self._course_dir.add_course(course=course)
+
+
 
     def _set_from_firebase(self):
         users = self._database.get_users()
@@ -652,19 +734,43 @@ class Main:
         for user in users:
             self._user_dir.add(users[user])
 
-# Testing testing
-course_directory = CourseDirectory()
-search_controller = SearchController()
-analys1 = Course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
-industriell_marknadsföring = Course('Industriell Marknadsföring', 'Blekinge Institute of Technology', 'Marketing')
-inledande_matematisk_analys = Course('Inledande Matematisk Analys', 'Chalmers Institute of Technology', 'Mathematics')
-course_directory.add_course(analys1)
-course_directory.add_course(industriell_marknadsföring)
-course_directory.add_course(inledande_matematisk_analys)
-search_results = search_controller.search('', 'Blekinge Institute of Technology', 'Mathematics')
 
-if search_results:
-    for result in search_results:
-        print(result.get_course_name())
-else:
-    print('No search results.')
+
+
+def test_document():
+    main = Main()
+
+    # create and add a course
+    course = Course("IY1422", "BTH", "Economics")
+    main._course_dir.add_course(course=course)
+
+    # add document
+    doc = Document(pdf_url="https://", header="is generated", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
+
+    print(doc.to_json())
+
+    main.add_document(document=doc, course_name=course.get_course_name(), user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
+    t = main.get_document(doc.get_id())
+    if t:
+        print(t.get_id())
+
+#test_document()
+
+def test_course_search():
+
+    # Testing testing
+    course_directory = CourseDirectory()
+    search_controller = SearchController()
+    analys1 = Course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
+    industriell_marknadsföring = Course('Industriell Marknadsföring', 'Blekinge Institute of Technology', 'Marketing')
+    inledande_matematisk_analys = Course('Inledande Matematisk Analys', 'Chalmers Institute of Technology', 'Mathematics')
+    course_directory.add_course(analys1)
+    course_directory.add_course(industriell_marknadsföring)
+    course_directory.add_course(inledande_matematisk_analys)
+    search_results = search_controller.search('', 'Blekinge Institute of Technology', 'Mathematics')
+
+    if search_results:
+        for result in search_results:
+            print(result.get_course_name())
+    else:
+        print('No search results.')
