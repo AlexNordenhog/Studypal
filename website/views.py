@@ -31,7 +31,7 @@ def search_results():
         course = None
     query = request.args.get('query', '')
 
-    results = s.search(query, university, subject, course)  
+    results = m.search(query, university, subject, course)  
     return render_template('search.html', query=query, results=results)
 
 
