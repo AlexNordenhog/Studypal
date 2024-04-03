@@ -1,9 +1,10 @@
 from flask import Blueprint, request, render_template, jsonify
-from db.database import d
+from db.data import Main
 from .categorization import c
 
 views = Blueprint("views", __name__)
 
+m = Main()
 
 @views.route("/")
 def home():

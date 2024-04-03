@@ -575,7 +575,7 @@ class FirebaseDatabase(Firebase):
     
     def get_from_path(self, path):
         try:
-            return db.reference(path).get()
+            return db.reference(path, self._app).get()
         except:
             print("Error fetching from FirebaseStorage")
 
@@ -700,7 +700,7 @@ class Main:
         return cls._main
     
     def get_universities(self):
-        return self._firebase_manager.get_from_storage_path("/categorization/universisities")
+        return self._firebase_manager.get_from_storage_path("/categorization/universities")
 
     def get_document_types(self):
         return self._firebase_manager.get_from_storage_path("/categorization/document_types")
