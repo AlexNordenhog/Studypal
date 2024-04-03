@@ -1,5 +1,4 @@
 from flask import Blueprint, request, render_template, jsonify
-from .search import s, SearchError
 from db.database import d
 from .categorization import c
 
