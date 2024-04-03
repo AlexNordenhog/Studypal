@@ -8,7 +8,7 @@ views = Blueprint("views", __name__)
 
 @views.route("/")
 def home():
-    universities = 
+    universities = 0
     subjects = d.get_all_unique_subjects()
     return render_template("home.html",
                            universities=universities,
