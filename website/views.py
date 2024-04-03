@@ -8,8 +8,8 @@ m = Main()
 
 @views.route("/")
 def home():
-    universities = 0
-    subjects = d.get_all_unique_subjects()
+    universities = m.get_universities()
+    subjects = m.get_subjects()
     return render_template("home.html",
                            universities=universities,
                            subjects=subjects)
@@ -107,16 +107,6 @@ def course_page(course_name):
             comment["username"] = d.get_user(uid)["username"]    
 
     return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
-
-
-@views.app_errorhandler(SearchError)
-def handle_search_error(error):
-    '''
-    Redirects the user to the search_error page if there is an issue with 
-    executing the search() function when they press on the search button.
-    '''
-    return render_template('search_error.html')
-
 
 @views.route("/add_user", methods=["POST"])
 def add_user():
