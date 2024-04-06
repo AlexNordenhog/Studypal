@@ -10,14 +10,33 @@
     body {
       font-family: Arial, sans-serif;
     }
+    .header-container {
+      background-color: #efefef;
+      text-align: center; 
+      padding: 40px 20px; 
+      margin-bottom: 20px; 
+      border-radius: 20px; 
+    }
+
+   
+    .header {
+      margin: 0; 
+      font-size: 48px;
+      font-weight: normal; 
+      color: #333; 
+    }
     .container {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
       max-width: 1200px;
       margin: 20px auto;
       padding: 0 20px;
+      font-family: "montserrat", sans-serif; 
     }
     .header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .flex-container {
       display: flex;
@@ -42,40 +61,51 @@
       color: white;
       border: none;
       cursor: pointer;
-      width: 100%; /* Make the button expand to the width of the container */
+      width: 100%;
       padding: 8px;
-      border-radius: 10px; /* Rounded corners */
+      border-radius: 10px;
       display: inline-block; 
       margin: 0 auto;
     }
     .submit-button:hover {
       background-color: #0056b3;
     }
-    .custom-select, .custom-entry {
-      width: 100%;
+    .custom-select{
+      width: 50%;
       display: block;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
+    }
+      
+    .custom-entry {
+      width: 580px;
+      display: block;
+      margin-bottom: 20px;
+    
     }
     #uploadForm {
       display: flex;
       flex-direction: column;
-      align-items: center; /* Centers children horizontally */
+      align-items: center; 
       width: 100%;
       max-width: 600px;
       margin: auto;
     }
-    .button-container { /* New container for the button to center it */
+    .button-container { 
       display: flex;
       text-align: center;
       width: 20%;
-      justify-content: center; /* Center the button inside this container */
-      margin-top: 20px; /* Add some space above the button */
+      justify-content: center; 
+      margin-top: 20px; 
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 style="text-align: center;">Upload Specifications</h1>
+    <div class="header-container">
+      <h1 class=".header">Upload Specifications</h1>
+    </div>
+
+  <div>
     <form id="specificationsForm" action="/your-submission-endpoint" method="post">
       <div class="flex-container">
         <div class="pdf-preview-container">
@@ -86,8 +116,11 @@
           <textarea id="documentComment" name="documentComment" rows="4" cols="50" class="custom-entry" placeholder="Enter your comment here..."></textarea>
         </div>
       </div>
-      
+    </div>
+
+
     <!-- Document Type Dropdown-->
+    
     <label for="documentType"
       >Select the type of document that you have uploaded:
     </label>
@@ -179,8 +212,8 @@
 
     <!-- Manual course entry if course not in database, initially disabled -->
     <label for="manualDocumentCourse"
-      >If the course does not appear in the dropdown menu, please enter the
-      course code followed by the course name below:
+      >If the course does not appear in the dropdown menu, please enter 
+      <br> the course code followed by the course name below:
     </label>
     <textarea
       class="custom-entry"
