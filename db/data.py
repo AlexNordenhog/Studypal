@@ -4,7 +4,7 @@ import datetime
 from pathlib import Path
 import uuid
 import difflib
-#import json
+
 
 class IDHandler:
     #_used_ids = []
@@ -29,10 +29,12 @@ class Timestamp:
         }
 
 class VoteDirectory():
-    _votes = {}
+
+    def __init__(self, vote_directory_id = uuid.uuid4().hex, votes = {}):
+        self._vote_directory_id = vote_directory_id
+        self._votes = votes
 
     def get(self) -> dict:
-        
         upvotes = sum(vote for vote in self._votes.values())
         downvotes = len(self._votes) - upvotes
         
@@ -65,6 +67,9 @@ class CommentSection():
         comment = Comment(user_id=user_id, text=text, reply_to=reply_to)
         ref = self._get_new_comment_ref()
         self._comments[ref] = comment
+    
+    def get_id(self):
+        return self._comment_section_id
 
     def _get_new_comment_ref(self) -> int:
         try:
@@ -127,22 +132,33 @@ class Comment:
 
 class Document:
 
-    _document_id = uuid.uuid4().hex
-    _validated = False
-    _comments = {}
-    _votes = {}
-
-    def __init__(self, pdf_url, header, document_type, user_id) -> None:
+    def __init__(self, pdf_url, document_type, 
+                 user_id, university, course_name, subject,
+                 validated = False, vote_directory = None, 
+                 comment_section = None, document_id = uuid.uuid4().hex,
+                 timestamp = Timestamp().timestamp) -> None:
         
         # document content
-        self._header = header
+        self._user_id = user_id
+        self._header = course_name
         self._pdf_url = pdf_url
         self._document_type = document_type
         
-        # ids
-        self._user_id = user_id
-        self._timestamp = Timestamp().timestamp
-    
+        # categorization
+        self._university = university
+        self._course_name = course_name
+        self._subject = subject
+        self._validated = validated
+        self._document_id = document_id
+
+        self._timestamp = timestamp
+
+        if not vote_directory:
+            self._vote_directory = VoteDirectory()
+
+        if not comment_section:
+            self._comment_section = CommentSection()
+
     def add_vote(self, user_id, upvote):
         # Overwrites old vote, if it exists
         self.votes[user_id] = upvote
@@ -153,9 +169,6 @@ class Document:
 
     def get_id(self) -> int:
         return self._document_id
-
-    def get(self):
-        return self
 
     def get_header(self) -> str:
         return self._header()
@@ -176,9 +189,16 @@ class Document:
                     "user_id":self._user_id
                 },
 
-                #"categorization":self._categorization,
+                "categorization":{
+                    "university":self._university,
+                    "course_name":self._course_name,
+                    "subject":self._subject,
+                    "document_type":self._document_type
+                },
 
-                "votes":self._votes,
+                #"vote_directory":self._vote_directory.to_json(),
+
+                #"comment_section":self._comment_section.to_json(),
 
                 "timestamp":self._timestamp
                 
@@ -186,56 +206,25 @@ class Document:
         }
     
         return json
-    
-    def get_votes(self):
-        """Returns a dictionary with upvote and downvote count."""
-        values = list(self.votes.values())
-        upvotes = values.count(True)
-        downvotes = values.count(False)
-
-        return {
-            "upvotes":upvotes,
-            "downvotes":downvotes
-        }
-    
-    def get_user_vote(self, user_id):
-        """
-        Returns user vote type;
-        
-        If user vote is an upvote: -> True
-        If user vote is an upvote: -> True
-        If there is no user vote -> None
-        """
-        
-        if user_id in self.votes.keys():
-            
-            # User vote is recorded
-            if self.votes[user_id] == True:
-
-                return True
-            
-            return False
-
-        return None
-
-    def get_comments(self):
-        return self.comments
 
 class GradedExam(Document):
     def __init__(self, pdf_url, header, document_id, user_id, grade) -> None:
         super().__init__(pdf_url, header, document_id, user_id, grade)
 
 class Course:
+    _comment_section_id = None
     '''
     A course.
     '''
-    def __init__(self, course_name, university, subject) -> None:
+    def __init__(self, course_name, university, subject, validated = False, comment_section_id = None) -> None:
         self.course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
-        self._comments = {}
-        self._validated = False
+        self._validated = validated
+
+        if comment_section_id:
+            self._comment_section_id = comment_section_id
 
     def approve_course(self):
         '''
@@ -282,12 +271,35 @@ class Course:
         Returns a dictionary containing all the information needed to display the course in UI.
         '''
 
+    def to_json(self):
+        json = {
+            self.course_name:{
+                "Documents":{
+                    "Graded Exams":(self._documents["Graded Exams"]),
+                    "Exams":(self._documents["Exams"]),
+                    "Lecture Materials":(self._documents["Lecture Materials"]),
+                    "Assignments":(self._documents["Assignments"]),
+                    "Other Documents":(self._documents["Other Documents"])
+                },
+
+                "Course Info":{
+                    "course_name":self.course_name,
+                    "university":self._university,
+                    "subject":self._subject,
+                    "validated":self._validated,
+                    "comment_section_id":self._comment_section_id
+                }
+            }
+        }
+        
+        return json
+
 class User:
-    def __init__(self, user_id, username, role = "student", sign_up_timestamp=Timestamp().timestamp) -> None:
+    def __init__(self, user_id, username, role = "student", sign_up_timestamp=Timestamp().timestamp, documents: list = []) -> None:
         self._id = user_id
         self._username = username
         self._sign_up_timestamp = sign_up_timestamp
-        self._documents = {}
+        self._documents = documents
         self._role = role
 
     def get_username(self):
@@ -306,13 +318,8 @@ class User:
 
         return json
 
-    def add_document_link(self, document: Document):
-        document_id = document.get_id()
-        document_name = document.get_header()
-        document_validated = document.get_validation()
-        
-        #append
-        #self._documents[document_id] = 
+    def add_document_link(self, document_id):
+        self._documents.append(document_id)
 
 class Moderator(User):
     def __init__(self, user_id, username) -> None:
@@ -366,7 +373,10 @@ class CourseDirectory(Directory):
         '''
         Takes a course object and adds it to the course dictionary.
         '''
-        self._courses.update({course.course_name : course}) # currently overwrites if already exists, make sure it is unique before adding
+        if not self.course_exists(course_name=course.course_name):
+            self._courses.update({course.course_name : course})
+        else:
+            print(f"Failed to add course. The course, {course.course_name}, already exists.")
 
     def add_pending_course(self, course: Course):
         '''
@@ -430,7 +440,9 @@ class DocumentDirectory(Directory):
 
     def add(self, document:Document):
         if not self.document_exists(document._document_id):
-            self._documents[document.get_id] = document
+            self._documents[document.get_id()] = document
+        else:
+            print("Document already exists.")
 
     def get(self, document_id) -> Document:
         return self._documents[document_id] if self.document_exists(document_id) else None
@@ -570,7 +582,7 @@ class FirebaseDatabase(Firebase):
 
     def __new__(cls):
         return super().__new__(cls)
-    
+
     def get_from_path(self, path):
         try:
             return db.reference(path, self._app).get()
@@ -583,54 +595,94 @@ class FirebaseDatabase(Firebase):
         self._app = firebase_admin.initialize_app(self._firebase_cert, self._firebase_url, "database")
     
     def add_document(self, document: Document, user_id: str, course: Course):
-        json = document.to_json()
+        ref = db.reference("/Documents", self._app)
+        ref.update(document.to_json())
+
         document_id = document.get_id()
         course_name = course.get_course_name()
+        university = course.get_university()
+        subject = course.get_subject()
+        document_type = document.get_type()
 
-        ref = db.reference("/Documents", app=self._app)
-        ref.update(json)
+        ref = db.reference(f"/Courses/{course_name}/Documents", self._app)
 
-    def get_users(self):
-
-        users_dct = {}
-
-        # Fetch all users from database
-        db_user_ref = db.reference("/Users", self._app)
-        db_users = db_user_ref.get()
+        # get and update course document reference list
+        course_documents = ref.get(document_type)
         
-        for user_id in db_users:
-            users_dct[user_id] = User(user_id=user_id,
-                                      username=db_users[user_id]["username"],
-                                      sign_up_timestamp=db_users[user_id]["creation_date"])
+        try:
+            course_documents.append(document_id)
         
-        return users_dct
+        except:
+            course_documents = [document_id]
+
+        ref.update({document_type:course_documents})
+
+        # add document reference to user
+        ref = db.reference(f"/Users/{user_id}", self._app)
+        user_documents = ref.get("/Documents")
+        
+        try:
+            user_documents.append(document_id)
+        
+        except:
+            user_documents = [document_id]
+        
+        ref.update({"Documents":user_documents})
+        
+    def get_users(self) -> list[User]:
+        """Returns a list of all users in a list[User]"""
+        users = []
+        users_dict = self.get_from_path(path="/Users")
+        
+        if users_dict:
+            for user_id in users_dict:
+                user = User(user_id=user_id, username=users_dict[user_id]["username"],
+                            role=users_dict[user_id]["role"], sign_up_timestamp=users_dict[user_id]["creation_date"])
+                
+                users.append(user)
+        
+        return users
     
-    def get_documents(self):
+    def add_course(self, course: Course):
+        ref = db.reference("/Courses", self._app)
+        ref.update(course.to_json())
 
-        documents_dct = {}
-
-        # Fetch all documents from databae
-
-        universities = self._get_keys(f'/Universities/', self._app)
+    def get_courses(self) -> list[Course]:
+        courses = []
+        courses_dict = self.get_from_path("/Courses")
         
-        for university in universities:
-            subjects = self._get_keys(f'/Universities/{university}')
-            
-            for subject in subjects:
-                courses = self._get_keys(f'/Universities/{university}/{subject}')
-                    
-                for course in courses:
-                    if 'Documents' in self._get_keys(f'/Universities/{university}/{subject}/{course}'):
-                        document_types = self._get_keys(f'/Universities/{university}/{subject}/{course}/Documents')
+        if courses_dict:
+            for course_name in courses_dict:
+                current_course = courses_dict[course_name]["Course Info"]
+                course = Course(course_name=course_name,
+                                university=current_course["university"],
+                                subject=current_course["subject"],
+                                validated=current_course["validated"])
+                
+                courses.append(course)
 
-                        for document_type in document_types:
-                            document_ids = self._get_keys(f'/Universities/{university}/{subject}/{course}/Documents/{document_type}')
-                        
-                            for id in document_ids:
-                                # add document here to dict
-                                pass
+        return courses
+    
+    def get_documents(self) -> list[Document]:
         
-        return documents_dct
+        documents = []
+        documents_dict = self.get_from_path("/Documents")
+        if documents_dict:
+            for document_id in documents_dict:
+                document_dict = documents_dict[document_id]
+                document = Document(document_id=document_id,
+                                    pdf_url=document_dict["upload"]["pdf_url"],
+                                    user_id=document_dict["upload"]["user_id"],
+                                    validated=document_dict["upload"]["validated"],
+                                    university=document_dict["categorization"]["university"],
+                                    document_type=document_dict["categorization"]["document_type"],
+                                    course_name=document_dict["categorization"]["course_name"],
+                                    subject=document_dict["categorization"]["subject"],
+                                    timestamp=document_dict["timestamp"])
+                
+                documents.append(document)
+
+        return documents
 
 class FirebaseManager:
     _firebase_manager = None
@@ -645,11 +697,10 @@ class FirebaseManager:
         
         return cls._firebase_manager
 
-    def get_from_storage_path(self, path):
+    def get_from_database_path(self, path):
         data = self._database.get_from_path(path)
 
         return data if data else None
-
 
     def _set_from_firebase(self):
         
@@ -658,6 +709,15 @@ class FirebaseManager:
 
         for user in db_users:
             self._user_dir.add(users[user])
+        
+    def get_all_courses(self) -> list[Course]:
+        return self._database.get_courses()
+
+    def get_all_documents(self) -> list[Document]:
+        return self._database.get_documents()
+
+    def get_all_users(self) -> list[User]:
+        return self._database.get_users()
 
     def add_document(self, document: Document, user_id: str, course: Course):
         self._database.add_document(document=document, user_id=user_id, course=course)
@@ -676,13 +736,8 @@ class FirebaseManager:
         if add_to_db:
             self._add_to_db(ref="/Users/", json=user.to_json())
 
-    
-
-    def add_course(self, course_id, university):
-        self.course_directory.add()
-
-    def _add_to_db(self, ref, json):
-        db.reference(ref).update(json)
+    def add_course(self, course: Course):
+        self._database.add_course(course=course)
 
 class Main:
     _main = None
@@ -695,6 +750,7 @@ class Main:
     def __new__(cls):
         if cls._main == None:
             cls._main = super(Main, cls).__new__(cls)
+            cls._set_from_firebase(cls)
 
         return cls._main
     
@@ -702,21 +758,47 @@ class Main:
         return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
     def get_universities(self):
-        return self._firebase_manager.get_from_storage_path("/categorization/universities")
+        return self._firebase_manager.get_from_database_path("/categorization/universities")
 
     def get_document_types(self):
-        return self._firebase_manager.get_from_storage_path("/categorization/document_types")
+        return self._firebase_manager.get_from_database_path("/categorization/document_types")
     
     def get_subjects(self):
-        return self._firebase_manager.get_from_storage_path("/categorization/subjects")
+        return self._firebase_manager.get_from_database_path("/categorization/subjects")
 
     def get_document(self, document_id: str) -> Document:
         return self._document_dir.get(document_id=document_id)
 
-    def add_document(self, course_name: str, document: Document, user_id: str):
+    def add_document(self, pdf_url, document_type, 
+                 user_id, university, course_name, subject,
+                 validated = False, vote_directory = None, 
+                 comment_section = None, document_id = uuid.uuid4().hex,
+                 timestamp = Timestamp().timestamp):
+        
+        document = Document(pdf_url=pdf_url, document_type=document_type, 
+                 user_id=user_id, university=university, course_name=course_name, subject=subject)
+        
+        if not self._course_dir.course_exists(course_name=course_name):
+            print("Course does not exist, please create the course before (for now?)")
+        
+        else:
+            # add to document dir and firebase
+            course = self._course_dir.get_course(course_name=course_name)
+            self._document_dir.add(document=document)
+            self._firebase_manager.add_document(document=document, user_id=user_id, course=course)
+
+            # add reference in course
+            course.add_document(document_id=document_id, document_type=document_type)
+
+            # add reference in user
+            user = self._user_dir.get(user_id=user_id)
+            user.add_document_link(document_id=document_id)
+
+    def old_add_document(self, course_name: str, document: Document, user_id: str):
         """
         Adds a course to the Document Directory and document id to the Course.
         """
+
         self._firebase_manager.add_document(document=document, course=self._course_dir.get_course(course_name), user_id=user_id)
         try:
             course = self._course_dir.get_course(course_name)
@@ -736,7 +818,6 @@ class Main:
         except:
             print("Error storing document")
 
-    
     def add_course(self, course_name: str, university: str, subject: str) -> bool:
         """
         Adds a course to the Course Directory.
@@ -748,17 +829,32 @@ class Main:
         )
 
         self._course_dir.add_course(course=course)
+        self._firebase_manager.add_course(course=course)
 
+    def _set_user_directory_from_firebase(self):
+        users = self._firebase_manager.get_all_users()
+        
+        for user in users:
+            self._user_dir.add(user)
 
+    def _set_cuorse_directory_from_firebase(self):
+        courses = self._firebase_manager.get_all_courses()
+        
+        for course in courses:
+            self._course_dir.add_course(course)
+
+    def _set_documents_from_firebase(self):
+        documents = self._firebase_manager.get_all_documents()
+
+        for document in documents:
+            self._document_dir.add(document=document)
 
     def _set_from_firebase(self):
-        users = self._database.get_users()
-
-        for user in users:
-            self._user_dir.add(users[user])
-
-
-
+        print("FirebaseRealtimeDatabase sync initiated")
+        self._set_user_directory_from_firebase(self)
+        self._set_cuorse_directory_from_firebase(self)
+        self._set_documents_from_firebase(self)
+        print("FirebaseRealtimeDatabase sync completed")
 
 def test_document():
     main = Main()
@@ -799,4 +895,14 @@ def test_course_search():
     else:
         print('No search results.')
 
-test_course_search()
+#test_course_search()
+
+
+
+main = Main()
+
+#print(main.get_document("df69c0d511954b7e9a343b65da52f96f").get_type())
+#main.add_course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
+#main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
+#                  university="Blekinge Institute of Technology", course_name="Analys 1", 
+#                  subject="Mathematics")
