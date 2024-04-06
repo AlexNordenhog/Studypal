@@ -1,11 +1,13 @@
 <!-- This is the moderator page where unvalidated documents and reports appear -->
 {% extends "base.html" %} {% block title %}Moderator view{% endblock %} {% block
 content %}
-
 <div class="container my-5">
+  <div class="header-container">
+    <h1 class="header text-center">Moderator Panel</h1>
+  </div>
   <div class="row">
     <!-- Column for documents awaiting validation -->
-    <div class="col-md-6">
+    <div class="col-md-6 awaiting-validation-wrapper">
       <h2>Awaiting Validation</h2>
       <div id="documentList" class="document_list">
         {% if documents_ids %} {% for document_id in documents_ids %}
@@ -23,12 +25,12 @@ content %}
     </div>
 
     <!-- Vertical Divider -->
-    <div class="col-md-1 d-none d-md-block">
+    <div class="col-md-1 d-none d-md-flex align-items-stretch">
       <div class="divider"></div>
     </div>
 
     <!-- Column for flagged documents -->
-    <div class="col-md-5">
+    <div class="col-md-5 ">
       <h2>Flagged Documents</h2>
       <div id="reportlist" class="report_list">
         {% if reported_ids %} {% for document_id in reported_ids %}
@@ -51,26 +53,56 @@ content %}
 </div>
 
 <style>
-  .divider {
-    height: 100%;
-    width: 1px;
-    background-color: #000;
-    margin-right: -15px;
-  }
+    .header-container {
+      background-color: #efefef;
+      text-align: center; 
+      padding: 40px 20px; 
+      margin-bottom: 20px; 
+      border-radius: 20px; 
+    }
+    .awaiting-validation-wrapper {
+      position: relative; /* Needed for the absolute positioning of the pseudo-element */
+      padding-right: 15px; /* Give some space for the divider */
+    }
+    .awaiting-validation-wrapper::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: #000000; /* Color of the divider */
+    }
 
-  .list-item {
-    margin-bottom: 10px;
-  }
+    .col-md-5.offset-md-1 {
+      padding-left: 15px; /* Align with the right edge of the divider */
+    }
+    .header {
+      margin: 0; 
+      font-size: 48px;
+      font-weight: normal; 
+      color: #333; 
+    }
 
-  .item-link {
-    color: #007bff;
-    text-decoration: none;
-    border-bottom: 2px #000;
-  }
+    /* Ensure the list items fill the flex container */
+    .list-item, .report_list {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .row {
+      display: flex;
+      align-items: stretch;
+    }
 
-  .no-documents-message {
-    color: #888;
-  }
+    .item-link {
+      color: #007bff;
+      text-decoration: none;
+      border-bottom: 2px #000;
+    }
+
+    .no-documents-message {
+      color: #888;
+    }
 </style>
 
 <script type="module">
