@@ -3,15 +3,16 @@ content %}
 <style>
   /* Add your custom CSS styles here */
   .profile-card {
-    width: 350px; /* Increased width for the profile card */
-    float: left; /* Changed float to left */
-    margin-bottom: 20px; /* Added margin-bottom to separate profile card from documents box */
+    width: 350px; 
+    float: left; 
+    margin-bottom: 20px; 
+    margin-left: 100px;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
-    position: relative; /* Added position relative for positioning the sign-out button */
-    min-height: 320px; /* Set minimum height for profile card */
+    background-color: #f5f5f5;
+    position: relative; 
+    min-height: 320px; 
   }
   .profile-card h3 {
     margin-bottom: 15px;
@@ -34,12 +35,13 @@ content %}
     max-width: calc(
       100% - 390px
     ); /* Adjusted max-width for the documents box */
-    margin-left: 370px; /* Changed margin-left to accommodate the profile card */
+    margin-left: 470px; /* Changed margin-left to accommodate the profile card */
     margin-top: 40px; /* Added margin-top to create space between the top and the boxes */
+    margin-right: 100px;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
+    background-color: #f5f5f5;
   }
   .document-box h3 {
     margin-bottom: 15px;
@@ -105,6 +107,14 @@ content %}
   .loading-documents {
     margin-bottom: 10px;
     color: #888;
+  }
+
+  .validated {
+    color: green;
+  }
+
+  .awaiting-validation {
+    color: red;
   }
 </style>
 
@@ -234,19 +244,18 @@ content %}
             .map((document) => document.id)
             .sort((a, b) => a - b);
 
-          sortedDocumentIds.forEach((documentId) => {
-            // Fetch document details for each document
-            fetchDocumentDetails(documentId)
-              .then((data) => {
-                const validationStatus = data.validated
-                  ? "Validated"
-                  : "Awaiting Validation";
-                documentListView += `
-                <div class="document-item">
-                  <a href="/document/${documentId}" class="document-link">${data.header}</a>
-                  <span class="document-validation">${validationStatus}</span>
-                </div>
-              `;
+            sortedDocumentIds.forEach((documentId) => {
+              // Fetch document details for each document
+              fetchDocumentDetails(documentId)
+                .then((data) => {
+                  const validationClass = data.validated ? "validated" : "awaiting-validation";
+                  const validationStatus = data.validated ? "Validated" : "Awaiting Validation";
+                  documentListView += `
+                    <div class="document-item">
+                      <a href="/document/${documentId}" class="document-link">${data.header}</a>
+                      <span class="document-validation ${validationClass}">${validationStatus}</span>
+                    </div>
+                  `;
 
                 // Update the document list container with the generated HTML
                 document.getElementById("documentList").innerHTML =
