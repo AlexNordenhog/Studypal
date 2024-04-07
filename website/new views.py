@@ -5,6 +5,8 @@ from db.data import DocumentDirectory
 from db.data import Document
 from db.data import CourseDirectory
 from db.data import Course
+from db.data import UserDirectory
+from db.data import User
 from .categorization import c
 
 views = Blueprint("views", __name__)
@@ -13,6 +15,7 @@ main = Main()
 search_controller = SearchController()
 document_directory = DocumentDirectory()
 course_directory = CourseDirectory()
+user_directory = UserDirectory()
 
 @views.route("/")
 def home():
@@ -132,6 +135,9 @@ def add_user():
     username = data.get("username")
     
     # Add the user to the database
+
+    #
+    # Hampoos add user
     d.add_user(uid, username)
     
     return jsonify({"message": "User added successfully"})
@@ -148,14 +154,15 @@ def get_document():
     document_id = data.get("document_id")
     
     # Get the document from the database
-    document = d.get_document(document_id)
+    document = document_directory.get(document_id) # The document object
+    document_dict = document.to_json()
     
     if document:
-        categorization = document.get("categorization", {})
-        comments = document.get("comments", {})
-        upload = document.get("upload", {})
-        votes = document.get("votes", {})
-        timestamp = document.get("timestamp", {})
+        categorization = document_dict.get("categorization", {})
+        comments = document_dict.get("comments", {})
+        upload = document_dict.get("upload", {})
+        votes = document_dict.get("votes", {})
+        timestamp = document_dict.get("timestamp", {})
         
         # Return specific values from the document
         return jsonify({
@@ -185,7 +192,8 @@ def add_document_comment():
     text = data.get("text")
 
     # Add the comment to the document in the database
-    d.add_document_comment(document_id, uid, text)
+    document = document_directory.get(document_id) # The document object
+    document.add_comment(uid, text)
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -197,6 +205,10 @@ def add_document_report():
     document_id = data.get("document_id")
     text = data.get("text")
     reason = data.get("reason")
+
+    #
+    # Report behöver implementeras i data
+    #
 
     d.add_document_report(document_id, uid, reason, text)
 
@@ -210,6 +222,10 @@ def add_course_comment():
     course_name = data.get("course_name")
     text = data.get("text")
     
+    #
+    # Comment grejer
+    #
+
     # Add the comment to the document in the database
     d.add_course_comment(course_name, uid, text)
     
