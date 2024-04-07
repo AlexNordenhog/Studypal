@@ -1,17 +1,23 @@
 from flask import Blueprint, request, render_template, jsonify
 from db.data import Main
 from db.data import SearchController
+from db.data import DocumentDirectory
+from db.data import Document
+from db.data import CourseDirectory
+from db.data import Course
 from .categorization import c
 
 views = Blueprint("views", __name__)
 
-m = Main()
-s = SearchController()
+main = Main()
+search_controller = SearchController()
+document_directory = DocumentDirectory()
+course_directory = CourseDirectory()
 
 @views.route("/")
 def home():
-    universities = m.get_universities()
-    subjects = m.get_subjects()
+    universities = main.get_universities()
+    subjects = main.get_subjects()
     return render_template("home.html",
                            universities=universities,
                            subjects=subjects)
@@ -33,14 +39,14 @@ def search_results():
         course = None
     query = request.args.get('query', '')
 
-    results = m.search(query, university, subject, course)  
+    results = main.search(query, university, subject, course)  
     return render_template('search.html', query=query, results=results)
 
 
 @views.route("/upload")
 def upload():
-    universities = m.get_universities()
-    subjects = m.get_subjects()
+    universities = main.get_universities()
+    subjects = main.get_subjects()
     return render_template("upload.html", universities=universities, subjects=subjects)
 
 
@@ -54,32 +60,36 @@ def profile():
 def get_courses():
     university = request.args.get('university')
     subject = request.args.get('subject')
-    courses = s.get_courses_from_subject_at_university(university, subject)
+    courses = search_controller.get_courses_from_subject_at_university(university, subject)
     return jsonify(courses)
 
 
 @views.route('/get-subjects')
 def get_subjects():
     university = request.args.get('university')
-    uni_subjects = s.get_all_subjects_from_university(university)
+    uni_subjects = search_controller.get_all_subjects_from_university(university)
     return jsonify(uni_subjects)
 
 
 @views.route('/get-universities')
 def get_universities():
     subject = request.args.get('subject')
-    subject_unis = s.get_subject_universities(subject)
+    subject_unis = search_controller.get_subject_universities(subject)
     return jsonify(subject_unis)
 
 
 @views.route("document/<document_id>")
 def document(document_id):
-    document_dict = d.get_document(document_id)
+    document = document_directory.get(document_id) # The document object
+    document_dict = document.to_json()
     if document_dict is None:
         return "Document dict doesnt work", 404
     else:
         pass
 
+    #
+    # Detta med kommentarer och grejer måste vi lösa här
+    #
     comments = d.get_document_comments(document_id)
     
     for comment in comments:
@@ -99,7 +109,12 @@ def document(document_id):
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):
-    course_page_dict = d.get_course_data(course_name)
+    course = course_directory.get(course_name) # The course object
+    course_page_dict = course.to_json(course_name)
+
+    #
+    # Samma sak här, kommentarsfältet
+    #
 
     comments = d.get_course_comments(course_name)
     
