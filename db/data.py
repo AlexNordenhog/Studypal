@@ -542,6 +542,37 @@ class SearchController:
 
         return matching_courses
 
+    def get_courses_from_subject_at_university(self, university, subject):
+        '''
+        Returns a list of all courses from a specific subject at a specific university.
+        '''
+
+        subject_courses = self._get_keys(f'Universities/{university}/{subject}')
+
+        return subject_courses
+    
+    def get_all_subjects_from_university(self, university):
+        '''
+        Returns a list of all subjects for a certain university.
+        '''
+        university_subjects = self._get_keys(f'Universities/{university}')
+
+        return university_subjects
+    
+    def get_subject_universities(self, subject):
+        '''
+        Returns a list of all universities for a certain subject.
+        '''
+        subject_universities = []
+        universities = self.get_all_universities()
+        for u in universities:
+            university_subjects = self.get_all_subjects_from_university(u)
+            for s in university_subjects:
+                if s == subject:
+                    subject_universities.append(u)
+        return subject_universities
+
+
 class Firebase:
     _firebase = None
 

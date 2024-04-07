@@ -1,10 +1,12 @@
 from flask import Blueprint, request, render_template, jsonify
 from db.data import Main
+from db.data import SearchController
 from .categorization import c
 
 views = Blueprint("views", __name__)
 
 m = Main()
+s = SearchController()
 
 @views.route("/")
 def home():
@@ -52,21 +54,21 @@ def profile():
 def get_courses():
     university = request.args.get('university')
     subject = request.args.get('subject')
-    courses = d.get_courses_from_subject_at_university(university, subject)
+    courses = s.get_courses_from_subject_at_university(university, subject)
     return jsonify(courses)
 
 
 @views.route('/get-subjects')
 def get_subjects():
     university = request.args.get('university')
-    uni_subjects = d.get_all_subjects_from_university(university)
+    uni_subjects = s.get_all_subjects_from_university(university)
     return jsonify(uni_subjects)
 
 
 @views.route('/get-universities')
 def get_universities():
     subject = request.args.get('subject')
-    subject_unis = d.get_subject_universities(subject)
+    subject_unis = s.get_subject_universities(subject)
     return jsonify(subject_unis)
 
 
