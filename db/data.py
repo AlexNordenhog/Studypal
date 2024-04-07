@@ -46,22 +46,30 @@ class VoteDirectory():
         return votes
 
     def add(self, user_id, upvote):
-        
         try:
             old_vote = self._votes[user_id]
 
             if old_vote == upvote:
                 return "User vote already stored"
+            
             else:
                 self._votes[user_id] = upvote
                 return "User vote updated"
         except:
             self._votes[user_id] = upvote
             return "User vote stored"
+        
+    def to_json(self):
+        return {
+            "votes":self._votes,
+            "vote_directory_id":self._vote_directory_id
+        }
 
 class CommentSection():
-    _comments = {}
-    _comment_section_id = uuid.uuid4().hex
+    
+    def __init__(self, comment_section_id = uuid.uuid4().hex, comments = {}) -> None:
+        self._comment_section_id = comment_section_id
+        self._comments = comments
 
     def add_comment(self, user_id:str, text:str, reply_to=None):
         comment = Comment(user_id=user_id, text=text, reply_to=reply_to)
@@ -78,20 +86,25 @@ class CommentSection():
             ref = 1
         
         return ref
+    
+    def to_json(self):
+        return {
+            "comments":self._comments,
+            "comment_section_id":self._comment_section_id
+        }
 
 class Comment:
-    _vote_dir = VoteDirectory()
-    _db_ref = None
-    comment_id = uuid.uuid4().hex
 
-    def __init__(self, user_id, text, reply_to = None):
+    def __init__(self, user_id, text, reply_to = None, comment_id = uuid.uuid4().hex, vote_dir = VoteDirectory()):
         """
         :reply_to: id of the parent document
         """
         self._user_id = user_id
+        self._comment_id = comment_id
         self._text = text
         self._parent = reply_to # comment id
         self._timestamp = Timestamp().timestamp
+        self._vote_dir = vote_dir
 
     def get_json(self) -> str:
         json = {
@@ -132,10 +145,16 @@ class Comment:
 
 class Document:
 
-    def __init__(self, pdf_url, document_type, 
-                 user_id, university, course_name, subject,
-                 validated = False, vote_directory = None, 
-                 comment_section = None, document_id = uuid.uuid4().hex,
+    def __init__(self, pdf_url: str, 
+                 document_type: str, 
+                 user_id: str, 
+                 university: str, 
+                 course_name: str, 
+                 subject: str, 
+                 validated: bool = False, 
+                 vote_directory: VoteDirectory = VoteDirectory(), 
+                 comment_section: CommentSection = CommentSection(), 
+                 document_id: str = uuid.uuid4().hex,
                  timestamp = Timestamp().timestamp) -> None:
         
         # document content
@@ -153,19 +172,16 @@ class Document:
 
         self._timestamp = timestamp
 
-        if not vote_directory:
-            self._vote_directory = VoteDirectory()
-
-        if not comment_section:
-            self._comment_section = CommentSection()
+        self._vote_directory = vote_directory
+        self._comment_section = comment_section
 
     def add_vote(self, user_id, upvote):
         # Overwrites old vote, if it exists
-        self.votes[user_id] = upvote
+        self._vote_directory.add(user_id=user_id, upvote=upvote)
 
     def add_comment(self, user_id, text):
-        comment = Comment(user_id, text)
-        self.comments.append(comment)
+        print("Comments not yet implemented")
+        pass
 
     def get_id(self) -> int:
         return self._document_id
@@ -196,7 +212,7 @@ class Document:
                     "document_type":self._document_type
                 },
 
-                #"vote_directory":self._vote_directory.to_json(),
+                "vote_directory":self._vote_directory.to_json(),
 
                 #"comment_section":self._comment_section.to_json(),
 
@@ -208,8 +224,15 @@ class Document:
         return json
 
 class GradedExam(Document):
-    def __init__(self, pdf_url, header, document_id, user_id, grade) -> None:
-        super().__init__(pdf_url, header, document_id, user_id, grade)
+    def __init__(self, pdf_url, document_type, user_id, 
+                 university, course_name, subject, 
+                 validated=False, vote_directory=None, 
+                 comment_section=None, document_id=uuid.uuid4().hex, 
+                 timestamp=Timestamp().timestamp) -> None:
+        super().__init__(pdf_url, document_type, user_id, 
+                         university, course_name, subject, 
+                         validated, vote_directory, comment_section, 
+                         document_id, timestamp)
 
 class Course:
     _comment_section_id = None
@@ -670,14 +693,25 @@ class FirebaseDatabase(Firebase):
         if documents_dict:
             for document_id in documents_dict:
                 document_dict = documents_dict[document_id]
+
+                try:
+                    vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
+                                                   votes=document_dict["vote_directory"]["votes"])
+                except:
+                    vote_directory = VoteDirectory()
+
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["upload"]["pdf_url"],
                                     user_id=document_dict["upload"]["user_id"],
                                     validated=document_dict["upload"]["validated"],
+
                                     university=document_dict["categorization"]["university"],
                                     document_type=document_dict["categorization"]["document_type"],
                                     course_name=document_dict["categorization"]["course_name"],
                                     subject=document_dict["categorization"]["subject"],
+
+                                    vote_directory=vote_directory,
+
                                     timestamp=document_dict["timestamp"])
                 
                 documents.append(document)
@@ -900,6 +934,7 @@ def test_course_search():
 
 
 main = Main()
+main.get_document("df69c0d511954b7e9a343b65da52f96f").add_vote(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
 #print(main.get_document("df69c0d511954b7e9a343b65da52f96f").get_type())
 #main.add_course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
