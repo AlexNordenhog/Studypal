@@ -313,6 +313,7 @@
       document
         .getElementById("submitBtn")
         .addEventListener("click", function (event) {
+
           var documentType = document.getElementById("documentType").value;
           var documentDate = document.getElementById("documentDate").value;
           var university = document.getElementById("uploadUniversity").value;
@@ -364,6 +365,10 @@
 
           event.preventDefault(); // Prevent form submission
         });
+        var formData = new FormData(document.getElementById("specificationsForm"));
+          // Add additional form data here if necessary
+          
+        submitForm(formData);
     });
     //Code for updating grading system
     document.addEventListener("DOMContentLoaded", function () {
