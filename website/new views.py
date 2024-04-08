@@ -33,7 +33,7 @@ def search_results():
         course = None
     query = request.args.get('query', '')
 
-    results = main.search(query, university, subject, course)  
+    results = search_controller.search(query, university, subject, course)  
     return render_template('search.html', query=query, results=results)
 
 
@@ -127,6 +127,7 @@ def add_user():
 
     #
     # Hampoos add user
+    #
     d.add_user(uid, username)
     
     return jsonify({"message": "User added successfully"})
@@ -177,6 +178,10 @@ def add_document_comment():
     uid = data.get("uid")
     document_id = data.get("document_id")
     text = data.get("text")
+
+    #
+    #Hampoos comment
+    #
 
     # Add the comment to the document in the database
     document = document_directory.get(document_id) # The document object
@@ -232,7 +237,7 @@ def vote_document():
     is_upvote = data.get("is_upvote")
     
     # Add vote to the document in the database
-    d.add_document_vote(document_id, uid, is_upvote)
+    main.add_document_vote(document_id, uid, is_upvote)
     
     return jsonify({"message": "Vote added successfully"})
 
@@ -242,7 +247,7 @@ def get_user():
     data = request.json
     uid = data.get("uid")
 
-    user = d.get_user(uid)
+    user = main.to_json('user', uid)
 
     if user != None:
         return jsonify({"username":user["username"],"creation_date":user["creation_date"],"role":user["role"]})
@@ -253,33 +258,6 @@ def get_user():
 @views.route("/test-vote")
 def test_comment():
     return render_template("/test-vote.html")
-
-
-@views.route('/upload_document', methods=['POST'])
-def upload_document():
-    if 'pdf_file' not in request.files:
-        return "No file part"
-    
-    pdf_file = request.files['pdf_file']
-
-    # Check if the file is selected
-    if pdf_file.filename == '':
-        return "No selected file"
-
-    # Add document to db
-    d.add_document(
-        pdf_url=request.form['downloadURL'],
-        course=request.form['course'],
-        school=request.form['school'],
-        upload_comment=request.form['upload_comment'],
-        subject=request.form['subject'],
-        uid=request.form['uid'],
-        header=request.form['header'],
-        type_of_document=request.form['type_of_document'],
-        tags=request.form.getlist('tags')
-    )
-    
-    return "Document uploaded successfully"
 
 @views.route('/upload_document_v2', methods=['POST'])
 def upload_document_v2():
@@ -297,17 +275,21 @@ def upload_document_v2():
 
     # Add document to db
     status = (
-        d.add_document(
+        main.add_document(
         pdf_url=request.form['tempURL'],
-        course=course,
-        school=request.form['uploadUniversity'],
-        upload_comment=request.form['documentComment'],
+        document_type=request.form['documentType'],
+        user_id=request.form['uid'],
+        university=request.form['uploadUniversity'],
+        course_name=course,
         subject=request.form['uploadSubject'],
-        uid=request.form['uid'],
-        header='none',
-        type_of_document=request.form['documentType'],
-        tags=[],
-        document_date=request.form["documentDate"]
+        subject=request.form['uploadSubject'],
+        write_date=request.form["documentDate"],
+        grade = 'ungraded',
+        validated = False,
+        vote_directory = None, # Hampos
+        comment_section = None, # Hampos
+        document_id = None,
+        timestamp = None
     ))
 
     return render_template("thank_you.html")
@@ -320,7 +302,7 @@ def get_user_documents_view():
     if uid is None:
         return jsonify({"error": "UID is required"}), 400
 
-    documents = d.get_user_documents(uid)
+    documents = main.get_user_documents(uid)
 
     if documents is not None:
         # Format the list of IDs into a list of dictionaries
@@ -341,6 +323,10 @@ def upload_temp_pdf():
     temp_id = request.json.get('temp_id')
     uid = request.json.get('uid')
 
+    #
+    # Temp pdf??
+    #
+
     if temp_url and temp_id and uid:
         d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
         return "Success"
@@ -350,6 +336,12 @@ def upload_temp_pdf():
 
 @views.route('upload/specifications/<temp_id>', methods=["GET"])
 def upload_specificatoins(temp_id):
+
+
+    #
+    # Temp pdf???
+    #
+
     temp_url = d.get_temp_pdf(temp_id)
 
     universities = [
@@ -382,32 +374,10 @@ def upload_specificatoins(temp_id):
                            subjects=subjects,
                            document_types=document_types)
 
-@views.route('/submit-document', methods=['POST'])
-def submit_document():
-    pdf_url = request.form.get('tempURL')
-    uid = int(0)
-    document_type = request.form.get('documentType')
-    document_date = request.form.get('documentDate')
-    university = request.form.get('uploadUniversity')
-    subject = request.form.get('uploadSubject')
-    course = request.form.get('uploadCourse')
-    if course == 'Choose a course...':
-        course = request.form.get('manualUploadCourse')
-    comment = request.form.get('documentComment', '')
-    if document_type == 'Assignment':
-        grading_system = request.form.get('gradingSystem', '')
-        document_grade = request.form.get('documentGrade', '')
-        c.categorize(pdf_url, uid, document_type, document_date, university, subject, course, comment)
-    else:
-        c.categorize(pdf_url, uid, document_type, document_date, university, subject, course, comment)
-
-    return render_template("thank_you.html")
-
-
 @views.route("/documents_awaiting_validation")
 def get_waiting_documents():
-    document_ids = d._get_id_lst(waiting=True)
-    reported_ids = d.get_reported_document_ids()
+    document_ids = main.get_waiting_documents()
+    reported_ids = main.get_reported_documents()
 
     return render_template("documents_awaiting_validation.html",
                            documents_ids=document_ids, reported_ids=reported_ids)
@@ -421,7 +391,7 @@ def validate_document(document_id):
     if approve not in [True, False]:
         return "Error: Approve/Disapprove not provided."
     else:
-        d.validate_document(document_id, approve)
+        main.validate_document(document_id)
     
     return jsonify({"status":"success"})
 

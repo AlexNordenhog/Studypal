@@ -157,7 +157,9 @@ class Document:
                  vote_directory: VoteDirectory = VoteDirectory(), 
                  comment_section: CommentSection = CommentSection(), 
                  document_id: str = uuid.uuid4().hex,
-                 timestamp = Timestamp().timestamp) -> None:
+                 timestamp = Timestamp().timestamp,
+                 reported = False) -> None:
+                
         
         # document content
         self._user_id = user_id
@@ -178,6 +180,9 @@ class Document:
 
         self._vote_directory = vote_directory
         self._comment_section = comment_section
+
+        self._reported = reported
+        
 
     def add_vote(self, user_id, upvote):
         self._vote_directory.add(user_id=user_id, upvote=upvote)
@@ -200,6 +205,18 @@ class Document:
 
     def get_type(self):
         return self._document_type
+    
+    def get_report_status(self):
+        '''
+        Find out if the comment is reported.
+        '''
+        return self._reported
+    
+    def validate_document(self):
+        '''
+        Validate the document.
+        '''
+        self._validated = True
     
     def to_json(self):
         json = {
@@ -343,6 +360,12 @@ class User:
     def add_document_link(self, document_id):
         self._documents.append(document_id)
 
+    def get_documents(self):
+        '''
+        Returns a list of ids for all documents uploaded by the user.
+        '''
+        return self._documents
+
 class Moderator(User):
     def __init__(self, user_id, username) -> None:
         super().__init__(user_id, username)
@@ -471,6 +494,31 @@ class DocumentDirectory(Directory):
 
     def document_exists(self, document_id: str) -> bool:
         return True if document_id in self._documents.keys() else False
+    
+    def get_waiting_documents(self):
+        '''
+        Returns a list of document ids awaiting validation.
+        '''
+        waiting_documents = []
+        for document in self._documents:
+            if document.get_validation():
+                document_id = document.get_id()
+                waiting_documents.append(document_id)
+
+        return waiting_documents
+    
+    def get_reported_documents(self):
+        '''
+        Returns a list of all document ids that are reported.
+        '''
+        reported_documents = []
+        for document in self._documents:
+            if document.get_report_status():
+                document_id = document.get_id()
+                reported_documents.append(document_id)
+
+        return reported_documents
+
 
 class SearchController:
 
@@ -842,7 +890,6 @@ class Main:
     _course_dir = CourseDirectory()
     _user_dir = UserDirectory()
     _document_dir = DocumentDirectory()
-    _search_controller = SearchController()
 
     def __new__(cls):
         if cls._main == None:
@@ -862,9 +909,6 @@ class Main:
                                                          vote_directory_json=vote_directory_json)
         except:
             print(f"Failed to add vote to document: {document_id}")
-
-    def search(self, query, university=None, subject=None, course=None):
-        return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
     def get_universities(self):
         return self._firebase_manager.get_from_database_path("/categorization/universities")
@@ -984,9 +1028,48 @@ class Main:
             json = course.to_json()
             return json
         
+        elif type == 'user':
+            user = self.get_user(id)
+            json = user.to_json()
+            return json
+
         else:
             return 'Failed to get course/document json.'
-
+        
+    def get_user(self, user_id):
+        '''
+        Calls on the user directory to return a certain user object.
+        '''
+        return self._user_dir.get(user_id)
+    
+    def get_user_documents(self, user_id):
+        '''
+        Calls on the relevant user object to return a list of the documents
+        uploaded by the user.
+        '''
+        user = UserDirectory.get(user_id)
+        return user.get_documents()
+    
+    def get_waiting_documents(self):
+        '''
+        Calls on the doc directory to return a list of documents
+        that are awaiting validation.
+        '''
+        return self._document_dir.get_waiting_documents()
+    
+    def get_reported_documents(self):
+        '''
+        Calls on the doc direcotory to return a list of documents
+        that are reported.
+        '''
+        return self._document_dir.get_reported_documents()
+    
+    def validate_document(self, document_id):
+        '''
+        Validate a document with a certain document id.
+        '''
+        document = self._document_dir.get(document_id)
+        document.validate_document()
 
 def test_document():
     main = Main()
@@ -1007,7 +1090,7 @@ def test_document():
 
 #test_document()
 
-def test_course_search():
+def test_course_search(search_controller):
 
     # Testing testing
     #course_directory = CourseDirectory()
@@ -1019,7 +1102,7 @@ def test_course_search():
     m.add_course(analys1, analys1.get_university(), analys1.get_subject())
     m.add_course(industriell_marknadsföring, industriell_marknadsföring.get_university(), industriell_marknadsföring.get_subject())
     m.add_course(inledande_matematisk_analys, inledande_matematisk_analys.get_university(), inledande_matematisk_analys.get_subject())
-    search_results = m.search('', 'Blekinge Institute of Technology', 'Mathematics')
+    search_results = search_controller.search('', 'Blekinge Institute of Technology', 'Mathematics')
 
     if search_results:
         for result in search_results:
