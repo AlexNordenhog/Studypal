@@ -176,7 +176,6 @@ class Document:
         self._comment_section = comment_section
 
     def add_vote(self, user_id, upvote):
-        # Overwrites old vote, if it exists
         self._vote_directory.add(user_id=user_id, upvote=upvote)
 
     def add_comment(self, user_id, text):
@@ -686,17 +685,14 @@ class FirebaseDatabase(Firebase):
         
         ref.update({"Documents":user_documents})
     
-    def add_document_vote(self, document_id, vote_directory_json):
+    def update_document_votes(self, document_id, vote_directory_json):
         try:
-            try:
-                ref = db.reference(f"/Documents/{document_id}/vote_directory", self._app)
-                ref.update(vote_directory_json)
-            except:
-                ref = db.reference(f"/Documents/{document_id}/", self._app)
-                ref.update({"vote_directory":vote_directory_json})
-
+            ref = db.reference(f"/Documents/{document_id}/vote_directory", self._app)
+            ref.update(vote_directory_json)
+            
         except:
-            print(f"Failed to update vote directory on document: {document_id}")
+            ref = db.reference(f"/Documents/{document_id}/", self._app)
+            ref.update({"vote_directory":vote_directory_json})
 
     def get_users(self) -> list[User]:
         """Returns a list of all users in a list[User]"""
@@ -843,6 +839,7 @@ class Main:
             document.add_vote(user_id=user_id, upvote=upvote)
             vote_directory_json = document.get_vote_directory_json()
 
+            # update to firebase database
             self._firebase_manager.update_document_votes(document_id=document_id,
                                                          vote_directory_json=vote_directory_json)
         except:
