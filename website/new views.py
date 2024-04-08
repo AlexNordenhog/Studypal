@@ -1,21 +1,12 @@
 from flask import Blueprint, request, render_template, jsonify
 from db.data import Main
 from db.data import SearchController
-from db.data import DocumentDirectory
-from db.data import Document
-from db.data import CourseDirectory
-from db.data import Course
-from db.data import UserDirectory
-from db.data import User
 from .categorization import c
 
 views = Blueprint("views", __name__)
 
 main = Main()
 search_controller = SearchController()
-document_directory = DocumentDirectory()
-course_directory = CourseDirectory()
-user_directory = UserDirectory()
 
 @views.route("/")
 def home():
@@ -83,8 +74,7 @@ def get_universities():
 
 @views.route("document/<document_id>")
 def document(document_id):
-    document = document_directory.get(document_id) # The document object
-    document_dict = document.to_json()
+    document_dict = main.to_json('document', document_id)
     if document_dict is None:
         return "Document dict doesnt work", 404
     else:
@@ -112,8 +102,7 @@ def document(document_id):
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):
-    course = course_directory.get(course_name) # The course object
-    course_page_dict = course.to_json(course_name)
+    course_page_dict = main.to_json('course', course_name)
 
     #
     # Samma sak här, kommentarsfältet
@@ -153,9 +142,7 @@ def get_document():
     data = request.json
     document_id = data.get("document_id")
     
-    # Get the document from the database
-    document = document_directory.get(document_id) # The document object
-    document_dict = document.to_json()
+    document_dict = main.to_json('document', document_id)
     
     if document:
         categorization = document_dict.get("categorization", {})
