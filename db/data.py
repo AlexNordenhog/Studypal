@@ -877,6 +877,9 @@ class Main:
 
     def get_document(self, document_id: str) -> Document:
         return self._document_dir.get(document_id=document_id)
+    
+    def get_course(self, course_name: str) -> Course:
+        return self._course_dir.get(course_name=course_name)
 
     def add_document(self, pdf_url, document_type, 
                  user_id, university, course_name, subject,
@@ -966,6 +969,24 @@ class Main:
         self._set_cuorse_directory_from_firebase(self)
         self._set_documents_from_firebase(self)
         print("FirebaseRealtimeDatabase sync completed")
+
+    def to_json(self, type: str, id: str):
+        '''
+        Takes a type of page and converts it to json.
+        '''
+        if type == 'document':
+            document = self.get_document(id)
+            json = document.to_json()
+            return json
+
+        elif type == 'course':
+            course = self.get_course(id)
+            json = course.to_json()
+            return json
+        
+        else:
+            return 'Failed to get course/document json.'
+
 
 def test_document():
     main = Main()
