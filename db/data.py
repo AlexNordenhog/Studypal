@@ -183,6 +183,9 @@ class Document:
         print("Comments not yet implemented")
         pass
 
+    def get_vote_directory_json(self):
+        return self._vote_directory.to_json()
+
     def get_id(self) -> int:
         return self._document_id
 
@@ -651,7 +654,19 @@ class FirebaseDatabase(Firebase):
             user_documents = [document_id]
         
         ref.update({"Documents":user_documents})
-        
+    
+    def add_document_vote(self, document_id, vote_directory_json):
+        try:
+            try:
+                ref = db.reference(f"/Documents/{document_id}/vote_directory", self._app)
+                ref.update(vote_directory_json)
+            except:
+                ref = db.reference(f"/Documents/{document_id}/", self._app)
+                ref.update({"vote_directory":vote_directory_json})
+
+        except:
+            print(f"Failed to update vote directory on document: {document_id}")
+
     def get_users(self) -> list[User]:
         """Returns a list of all users in a list[User]"""
         users = []
@@ -755,6 +770,9 @@ class FirebaseManager:
 
     def add_document(self, document: Document, user_id: str, course: Course):
         self._database.add_document(document=document, user_id=user_id, course=course)
+    
+    def update_document_votes(self, document_id, vote_directory_json):
+        self._database.update_document_votes(document_id=document_id, vote_directory_json=vote_directory_json)
 
     #methods below needs to move/change
     def add_user(self, user_id, username, add_to_db=True):
@@ -788,6 +806,17 @@ class Main:
 
         return cls._main
     
+    def add_document_vote(self, document_id: str, user_id: str, upvote: bool):
+        try:
+            document = self._document_dir.get(document_id=document_id)
+            document.add_vote(user_id=user_id, upvote=upvote)
+            vote_directory_json = document.get_vote_directory_json()
+
+            self._firebase_manager.update_document_votes(document_id=document_id,
+                                                         vote_directory_json=vote_directory_json)
+        except:
+            print(f"Failed to add vote to document: {document_id}")
+
     def search(self, query, university=None, subject=None, course=None):
         return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
@@ -934,7 +963,7 @@ def test_course_search():
 
 
 main = Main()
-main.get_document("df69c0d511954b7e9a343b65da52f96f").add_vote(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+main.add_document_vote(document_id="df69c0d511954b7e9a343b65da52f96f", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
 #print(main.get_document("df69c0d511954b7e9a343b65da52f96f").get_type())
 #main.add_course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
