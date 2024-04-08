@@ -150,7 +150,9 @@ class Document:
                  user_id: str, 
                  university: str, 
                  course_name: str, 
-                 subject: str, 
+                 subject: str,
+                 write_date: str,
+                 grade: str = "ungraded",
                  validated: bool = False, 
                  vote_directory: VoteDirectory = VoteDirectory(), 
                  comment_section: CommentSection = CommentSection(), 
@@ -159,10 +161,12 @@ class Document:
         
         # document content
         self._user_id = user_id
-        self._header = course_name
+        self._header = f"{document_type} {write_date}"
         self._pdf_url = pdf_url
         self._document_type = document_type
-        
+        self._grade = grade
+        self._write_date = write_date
+
         # categorization
         self._university = university
         self._course_name = course_name
@@ -200,17 +204,19 @@ class Document:
     def to_json(self):
         json = {
             self._document_id:{
-                "upload":{
+                "content":{
                     "header":self._header,
                     "pdf_url":self._pdf_url,
-                    "validated":self._validated,
-                    "user_id":self._user_id
+                    "user_id":self._user_id,
+                    "grade":self._grade,
+                    "write_date":self._write_date
                 },
 
                 "categorization":{
                     "university":self._university,
                     "course_name":self._course_name,
                     "subject":self._subject,
+                    "validated":self._validated,
                     "document_type":self._document_type
                 },
 
@@ -224,17 +230,6 @@ class Document:
         }
     
         return json
-
-class GradedExam(Document):
-    def __init__(self, pdf_url, document_type, user_id, 
-                 university, course_name, subject, 
-                 validated=False, vote_directory=None, 
-                 comment_section=None, document_id=uuid.uuid4().hex, 
-                 timestamp=Timestamp().timestamp) -> None:
-        super().__init__(pdf_url, document_type, user_id, 
-                         university, course_name, subject, 
-                         validated, vote_directory, comment_section, 
-                         document_id, timestamp)
 
 class Course:
     _comment_section_id = None
@@ -337,7 +332,9 @@ class User:
         json = {
             self._user_id:{
                 "username":self._username,
-                "creation_date":self._sign_up_timestamp
+                "creation_date":self._sign_up_timestamp,
+                "documents":self._documents,
+                "role":self._role
             }
         }
 
@@ -640,6 +637,7 @@ class FirebaseDatabase(Firebase):
         return super().__new__(cls)
 
     def get_from_path(self, path):
+        """Returns the json string from the database avalable under specified 'path'"""
         try:
             return db.reference(path, self._app).get()
         except:
@@ -651,6 +649,8 @@ class FirebaseDatabase(Firebase):
         self._app = firebase_admin.initialize_app(self._firebase_cert, self._firebase_url, "database")
     
     def add_document(self, document: Document, user_id: str, course: Course):
+        """Add a document to the database."""
+
         ref = db.reference("/Documents", self._app)
         ref.update(document.to_json())
 
@@ -660,32 +660,33 @@ class FirebaseDatabase(Firebase):
         subject = course.get_subject()
         document_type = document.get_type()
 
-        ref = db.reference(f"/Courses/{course_name}/Documents", self._app)
+        ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
 
         # get and update course document reference list
-        course_documents = ref.get(document_type)
-        
+        course_documents = ref.get()
+
         try:
             course_documents.append(document_id)
         
         except:
             course_documents = [document_id]
 
-        ref.update({document_type:course_documents})
+        ref.parent.update({document_type:course_documents})
 
         # add document reference to user
-        ref = db.reference(f"/Users/{user_id}", self._app)
-        user_documents = ref.get("/Documents")
+        ref = db.reference(f"/Users/{user_id}/Documents", self._app)
+        user_documents = ref.get()
         
         try:
             user_documents.append(document_id)
-        
+
         except:
             user_documents = [document_id]
         
-        ref.update({"Documents":user_documents})
+        ref.parent.update({"Documents":user_documents})
     
     def update_document_votes(self, document_id, vote_directory_json):
+        """Updates a document's vote directory in the database"""
         try:
             ref = db.reference(f"/Documents/{document_id}/vote_directory", self._app)
             ref.update(vote_directory_json)
@@ -695,24 +696,39 @@ class FirebaseDatabase(Firebase):
             ref.update({"vote_directory":vote_directory_json})
 
     def get_users(self) -> list[User]:
-        """Returns a list of all users in a list[User]"""
+        """
+        Takes the users from the database and creates User objects from the data.
+
+        Returns list containing all users avalable in the database.
+        """
+        
         users = []
         users_dict = self.get_from_path(path="/Users")
         
         if users_dict:
             for user_id in users_dict:
-                user = User(user_id=user_id, username=users_dict[user_id]["username"],
-                            role=users_dict[user_id]["role"], sign_up_timestamp=users_dict[user_id]["creation_date"])
+                try:
+                    documents = users_dict[user_id]["Documents"]
+                except:
+                    documents = []
+
+                user = User(user_id=user_id, 
+                            username=users_dict[user_id]["username"],
+                            documents=documents,
+                            role=users_dict[user_id]["role"], 
+                            sign_up_timestamp=users_dict[user_id]["creation_date"])
                 
                 users.append(user)
         
         return users
     
     def add_course(self, course: Course):
+        """Add a course to the database"""
         ref = db.reference("/Courses", self._app)
         ref.update(course.to_json())
 
     def get_courses(self) -> list[Course]:
+        """Returns list containing all courses avalable in the database."""
         courses = []
         courses_dict = self.get_from_path("/Courses")
         
@@ -729,7 +745,7 @@ class FirebaseDatabase(Firebase):
         return courses
     
     def get_documents(self) -> list[Document]:
-        
+        """Returns list containing all documents avalable in the database."""
         documents = []
         documents_dict = self.get_from_path("/Documents")
         if documents_dict:
@@ -743,10 +759,12 @@ class FirebaseDatabase(Firebase):
                     vote_directory = VoteDirectory()
 
                 document = Document(document_id=document_id,
-                                    pdf_url=document_dict["upload"]["pdf_url"],
-                                    user_id=document_dict["upload"]["user_id"],
-                                    validated=document_dict["upload"]["validated"],
-
+                                    pdf_url=document_dict["content"]["pdf_url"],
+                                    user_id=document_dict["content"]["user_id"],
+                                    grade=document_dict["content"]["grade"],
+                                    
+                                    write_date=document_dict["content"]["write_date"],
+                                    validated=document_dict["categorization"]["validated"],
                                     university=document_dict["categorization"]["university"],
                                     document_type=document_dict["categorization"]["document_type"],
                                     course_name=document_dict["categorization"]["course_name"],
@@ -862,12 +880,14 @@ class Main:
 
     def add_document(self, pdf_url, document_type, 
                  user_id, university, course_name, subject,
+                 write_date, grade = "ungraded",
                  validated = False, vote_directory = None, 
                  comment_section = None, document_id = uuid.uuid4().hex,
                  timestamp = Timestamp().timestamp):
         
         document = Document(pdf_url=pdf_url, document_type=document_type, 
-                 user_id=user_id, university=university, course_name=course_name, subject=subject)
+                 user_id=user_id, university=university, course_name=course_name, 
+                 subject=subject, write_date=write_date, grade=grade)
         
         if not self._course_dir.course_exists(course_name=course_name):
             print("Course does not exist, please create the course before (for now?)")
@@ -991,10 +1011,20 @@ def test_course_search():
 
 
 main = Main()
-main.add_document_vote(document_id="df69c0d511954b7e9a343b65da52f96f", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
-#print(main.get_document("df69c0d511954b7e9a343b65da52f96f").get_type())
-#main.add_course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
+
 #main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
 #                  university="Blekinge Institute of Technology", course_name="Analys 1", 
-#                  subject="Mathematics")
+#                  subject="Mathematics", write_date="2024-05-20")
+#main.add_document(pdf_url="https://", document_type="Assignments", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
+#                  university="Blekinge Institute of Technology", course_name="Analys 1",
+#                  subject="Mathematics", write_date="2021-05-01")
+
+#main.add_document_vote(document_id="15daa9805d6040eb861acc4a012749d7", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+#main.add_document_vote(document_id="15daa9805d6040eb861acc4a012749d7", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=False)
+
+# DON't ACTUALLY DO THIS, PURELY TESTING
+#print(main._user_dir.get(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2")._documents)
+
+
+#main.add_document_vote(document_id="cfa9d3c25925414ea861d6768ecf6b86", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
