@@ -225,6 +225,17 @@
       disabled
     ></textarea>
 
+    <div class="checkbox-container">
+      <input type="checkbox" id="publishCheckbox" name="publish" value="publish" required>
+      <label for="publishCheckbox">I agree to publish this document.</label>
+    </div>
+    
+    <!-- Checkbox for Anonymous Submission -->
+    <div class="checkbox-container">
+      <input type="checkbox" id="anonymousCheckbox" name="anonymous" value="anonymous">
+      <label for="anonymousCheckbox">Submit anonymously.</label>
+    </div>
+
     <!-- Submit button -->
     <div class="button-container">
       <!-- Submit button -->
@@ -307,12 +318,18 @@
           var university = document.getElementById("uploadUniversity").value;
           var subject = document.getElementById("uploadSubject").value;
           var course = document.getElementById("uploadCourse").value;
+          var isPublishing = document.getElementById("publishCheckbox").checked;
           var manualCourse = document
             .getElementById("manualUploadCourse")
             .value.trim();
           var gradingSystem = document.getElementById("gradingSystem").value;
           var documentGrade = document.getElementById("documentGrade").value;
-
+          
+          if (!isPublishing) {
+              alert("You must agree to publish the document before submitting.");
+              event.preventDefault(); // Prevent form submission
+              return false;
+            }
           if (
             !documentType ||
             documentType === "Choose a document type..." ||
