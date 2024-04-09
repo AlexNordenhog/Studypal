@@ -28,7 +28,15 @@ class Timestamp:
             "time":datetime_now.strftime("%H:%M:%S")
         }
 
-class VoteDirectory():
+class Directory:
+
+    def add(self):
+        pass
+
+    def get(self):
+        pass
+
+class VoteDirectory(Directory):
 
     def __init__(self, vote_directory_id = uuid.uuid4().hex, votes = {}):
         self._vote_directory_id = vote_directory_id
@@ -66,44 +74,110 @@ class VoteDirectory():
         }
 
 class CommentSection():
-    
-    def __init__(self, comment_section_id = uuid.uuid4().hex, comments = {}) -> None:
-        self._comment_section_id = comment_section_id
-        self._comments = comments
 
-    def add_comment(self, user_id:str, text:str, reply_to=None):
-        comment = Comment(user_id=user_id, text=text, reply_to=reply_to)
-        ref = self._get_new_comment_ref()
-        self._comments[ref] = comment
-    
+    def __init__(self, comment_section_id = uuid.uuid4().hex, comments = {}, replies = {}) -> None:
+        self._comment_section_id = comment_section_id
+        self._comments = comments # { comment_id : Comment }
+        self._replies = replies # { reply_to_comment_id : { comment_id : Comment } }
+
+    def add_comment(self, user_id: str, text: str):
+        comment = Comment(user_id=user_id, text=text)
+        self._comments[comment.get_id()] = comment
+
+    def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
+        reply = Comment(user_id=user_id, text=text)
+        if reply_to_comment_id not in self._replies.keys():
+            self._replies[reply_to_comment_id] = {}
+            self._replies[reply_to_comment_id][reply.get_id()] = reply
+        else:
+            self._replies[reply_to_comment_id][reply.get_id()] = reply
+
+    def get_comment(self, comment_id):
+        print(comment_id, list(self._comments.keys()))
+        if comment_id in list(self._comments.keys()):
+            return self._comments[comment_id]
+        else:
+            replied_to_comment_ids = list(self._replies.keys())
+            for replied_to_comment_id in replied_to_comment_ids:
+                print(replied_to_comment_id)
+                if comment_id in list(self._replies[replied_to_comment_id]):
+                    return self._replies[replied_to_comment_id][comment_id]
+        
+        print("404: Comment not found error")
+            
+    def get_comments(self, sorting="popular"):
+        """
+        Not yet implemented
+        
+        Sorting options: 'popular', 'latest'
+        """
+
+        if sorting == "popular":
+            pass
+        elif sorting == "latest":
+            pass
+        else:
+            print("Error: Sorting option not avalable")
+
+        return self._comments
+
+    def get_replies(self, comment_id: str):
+        """
+        Get replies from the comment_id.
+        
+        Returns a list of comments, or empty list if there are no replies.
+        """
+
+        try:
+            replies = self._replies[comment_id]
+
+        except:
+            replies = []
+        
+        return replies
+
+    def _has_replies(self, comment_id):
+        try:
+            self._replies[comment_id]
+            return True
+        except:
+            return False
+
     def get_id(self):
         return self._comment_section_id
-
-    def _get_new_comment_ref(self) -> int:
-        try:
-            ref = max(self._comments.keys())
-        except:
-            ref = 1
-        
-        return ref
     
     def to_json(self):
+
+        comments_json = {}
+        replies_json = {}
+
+        comment_ids = list(self._comments.keys())
+
+        for comment_id in comment_ids:
+            comments_json[comment_id] = self._comments[comment_id].to_json()
+
+        comment_ids_with_replies = list(self._replies.keys())
+
+        for comment_id in comment_ids_with_replies:
+            reply_ids = list(self._replies[comment_id].keys())
+            replies_json[comment_id] = {}
+
+            for reply_id in reply_ids:
+                replies_json[comment_id][reply_id] = self._replies[comment_id][reply_id].to_json()
+
         return {
-            "comments":self._comments,
+            "comments":comments_json,
+            "replies":replies_json,
             "comment_section_id":self._comment_section_id
         }
 
 class Comment:
 
-    def __init__(self, user_id, text, reply_to = None, comment_id = uuid.uuid4().hex, vote_dir = VoteDirectory()):
-        """
-        :reply_to: id of the parent document
-        """
+    def __init__(self, user_id, text, comment_id = uuid.uuid4().hex, timestamp = Timestamp().timestamp, vote_dir = VoteDirectory()):
         self._user_id = user_id
         self._comment_id = comment_id
         self._text = text
-        self._parent = reply_to # comment id
-        self._timestamp = Timestamp().timestamp
+        self._timestamp = timestamp
         self._vote_dir = vote_dir
 
     def get_json(self) -> str:
@@ -114,22 +188,20 @@ class Comment:
         }
         return json
 
-    def get_content(self):
+    def to_json(self):
         """
-        Returns a json string with 
-
-        user_id,
-        text,
-        timestamp,
-        parent
+        Returns a json string
         """
 
         json = {
+            "comment_id":self._comment_id,
             "user_id": self._user_id,
             "text":self._text,
             "timestamp":self._timestamp,
-            "parent":self._parent
+            "vote_directory":self._vote_dir.to_json()
         }
+
+        return json
 
     def get_parent(self):
         return self._parent
@@ -140,8 +212,11 @@ class Comment:
     def get_votes(self) -> dict:
         return self._vote_dir.get()
 
+    def get_vote_directory_json(self):
+        return self._vote_dir.to_json()
+
     def get_id(self):
-        return self.comment_id
+        return self._comment_id
 
 class Document:
 
@@ -183,8 +258,7 @@ class Document:
         self._vote_directory.add(user_id=user_id, upvote=upvote)
 
     def add_comment(self, user_id, text):
-        print("Comments not yet implemented")
-        pass
+        self._comment_section.add_comment(user_id=user_id, text=text)
 
     def get_vote_directory_json(self):
         return self._vote_directory.to_json()
@@ -201,6 +275,15 @@ class Document:
     def get_type(self):
         return self._document_type
     
+    def add_comment_reply(self, user_id, text, reply_to_comment_id):
+        self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
+
+    def get_comment_section_json(self):
+        return self._comment_section.to_json()
+
+    def get_comment(self, comment_id):
+        return self._comment_section.get_comment(comment_id=comment_id)
+
     def to_json(self):
         json = {
             self._document_id:{
@@ -222,10 +305,9 @@ class Document:
 
                 "vote_directory":self._vote_directory.to_json(),
 
-                #"comment_section":self._comment_section.to_json(),
+                "comment_section":self._comment_section.to_json(),
 
                 "timestamp":self._timestamp
-                
             }
         }
     
@@ -350,14 +432,6 @@ class Moderator(User):
 class Student(User):
     def __init__(self, user_id, username) -> None:
         super().__init__(user_id, username)
-
-class Directory:
-
-    def add(self):
-        pass
-
-    def get(self):
-        pass
 
 class CourseDirectory(Directory):
     '''
@@ -571,7 +645,6 @@ class SearchController:
                     subject_universities.append(u)
         return subject_universities
 
-
 class Firebase:
     _firebase = None
 
@@ -695,6 +768,15 @@ class FirebaseDatabase(Firebase):
             ref = db.reference(f"/Documents/{document_id}/", self._app)
             ref.update({"vote_directory":vote_directory_json})
 
+    def update_document_comment_section(self, document_id, document_comment_section_json):
+        try:
+            ref = db.reference(f"/Documents/{document_id}/comment_section", self._app)
+            ref.update(document_comment_section_json)
+            
+        except:
+            ref = db.reference(f"/Documents/{document_id}/", self._app)
+            ref.update({"comment_section":document_comment_section_json})
+
     def get_users(self) -> list[User]:
         """
         Takes the users from the database and creates User objects from the data.
@@ -752,12 +834,64 @@ class FirebaseDatabase(Firebase):
             for document_id in documents_dict:
                 document_dict = documents_dict[document_id]
 
+                # Vote Directory
                 try:
                     vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
                                                    votes=document_dict["vote_directory"]["votes"])
                 except:
                     vote_directory = VoteDirectory()
 
+                # Cmoment section
+                    # Comments
+                try:
+                    comments = {}
+                    comment_ids = list(document_dict["comment_section"]["comments"].keys())
+                    comments_json = document_dict["comment_section"]["comments"]
+                    
+                    for comment_id in comment_ids:
+                        try:
+                            comment_vote_directory = VoteDirectory(vote_directory_id=comments_json[comment_id]["vote_directory"]["vote_directory_id"],
+                                                                   votes=comments_json[comment_id]["vote_directory"]["votes"])
+
+                        except:
+                            comment_vote_directory = VoteDirectory()
+
+                        comments[comment_id] = Comment(user_id=comments_json[comment_id]["user_id"],
+                                                        text=comments_json[comment_id]["text"],
+                                                        comment_id=comments_json[comment_id]["comment_id"],
+                                                        timestamp=comments_json[comment_id]["timestamp"],
+                                                        vote_dir=comment_vote_directory)
+                except:
+                   comments = {}
+
+                # Comment Section
+                    # Replies
+                try:
+                    replies = {}
+                    #reply_ids = list(document_dict["comment_section"]["replies"].keys())
+                    reply_to_comment_ids = list(document_dict["comment_section"]["replies"].keys())
+                    comments_json = document_dict["comment_section"]["comments"]
+                    
+                    for reply_to_comment_id in reply_to_comment_ids:
+                        for reply_id in document_dict["comment_section"]["replies"][reply_to_comment_id]:
+                            try:
+                                reply_vote_directory = VoteDirectory(vote_directory_id=comments_json["vote_directory"]["vote_directory_id"])
+
+                            except:
+                                reply_vote_directory = VoteDirectory()
+
+                            replies[reply_id] = Comment(user_id=comments_json["user_id"],
+                                                        text=comments_json["text"],
+                                                        comment_id=comments_json["comment_id"],
+                                                        timestamp=comments_json["timestamp"],
+                                                        vote_dir=reply_vote_directory)
+                except:
+                    replies = {}
+
+                comment_section = CommentSection(comment_section_id=document_dict["comment_section"]["comment_section_id"],
+                                                     comments=comments,
+                                                     replies=replies)
+                print(replies)
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
                                     user_id=document_dict["content"]["user_id"],
@@ -771,6 +905,7 @@ class FirebaseDatabase(Firebase):
                                     subject=document_dict["categorization"]["subject"],
 
                                     vote_directory=vote_directory,
+                                    comment_section=comment_section,
 
                                     timestamp=document_dict["timestamp"])
                 
@@ -819,6 +954,12 @@ class FirebaseManager:
     def update_document_votes(self, document_id, vote_directory_json):
         self._database.update_document_votes(document_id=document_id, vote_directory_json=vote_directory_json)
 
+    def update_document_comment_sectino_votes(self, document_id, document_comment_section_json):
+        self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+
+    def update_document_comment_section(self, document_id, document_comment_section_json):
+        self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+
     #methods below needs to move/change
     def add_user(self, user_id, username, add_to_db=True):
         """Create user and add to database."""
@@ -863,6 +1004,18 @@ class Main:
         except:
             print(f"Failed to add vote to document: {document_id}")
 
+    def add_document_comment_vote(self, document_id: str, user_id: str, comment_id: str, upvote: bool):
+        try:
+            document = self._document_dir.get(document_id=document_id)
+            comment = document.get_comment(comment_id=comment_id)
+            comment.add_vote(user_id=user_id, upvote=upvote)
+            document_comment_section_json = document.get_comment_section_json()
+
+            # update to firebase database
+            self._firebase_manager.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+        except:
+            print(f"Failed to add vote to comment: {comment_id}")
+
     def search(self, query, university=None, subject=None, course=None):
         return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
@@ -905,30 +1058,6 @@ class Main:
             user = self._user_dir.get(user_id=user_id)
             user.add_document_link(document_id=document_id)
 
-    def old_add_document(self, course_name: str, document: Document, user_id: str):
-        """
-        Adds a course to the Document Directory and document id to the Course.
-        """
-
-        self._firebase_manager.add_document(document=document, course=self._course_dir.get_course(course_name), user_id=user_id)
-        try:
-            course = self._course_dir.get_course(course_name)
-
-            # Add the document id to the Course
-            document_type = document.get_type()
-            document_id = document.get_id()
-            course.add_document(document_id=document_id, document_type=document_type)
-            
-            # Add the document to the Document Directory
-            self._document_dir.add(document=document)
-
-            # Save to Firebase
-            
-
-            print("Success")
-        except:
-            print("Error storing document")
-
     def add_course(self, course_name: str, university: str, subject: str) -> bool:
         """
         Adds a course to the Course Directory.
@@ -941,6 +1070,24 @@ class Main:
 
         self._course_dir.add_course(course=course)
         self._firebase_manager.add_course(course=course)
+
+    def add_document_comment(self, user_id, document_id, text):
+        try:
+            document = self._document_dir.get(document_id=document_id)
+            document.add_comment(user_id=user_id, text=text)
+            document_comment_section_json = document.get_comment_section_json()
+            self._firebase_manager.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+        except:
+            print(f"Failed to add comment to document {document_id}")
+
+    def add_document_comment_reply(self, user_id, document_id, reply_to_comment_id, text):
+        try:
+            document = self._document_dir.get(document_id=document_id)
+            document.add_comment_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
+            document_comment_section_json = document.get_comment_section_json()
+            self._firebase_manager.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+        except:
+            print(f"Failed to add comment reply to document {document_id}")
 
     def _set_user_directory_from_firebase(self):
         users = self._firebase_manager.get_all_users()
@@ -1011,11 +1158,38 @@ def test_course_search():
 
 
 main = Main()
+#print(main._document_dir.get("6f908051b1ca451f9790fdfcf3d8c702")._comment_section._comments["5c4dec83a0a94aa4864f00a183281d9a"])
+#main.add_document_vote("6f908051b1ca451f9790fdfcf3d8c702", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)
+#main.add_document_comment_vote("6f908051b1ca451f9790fdfcf3d8c702", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "5c4dec83a0a94aa4864f00a183281d9a", False)
+#main.add_document_comment_reply(reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="not")
+main.add_document_comment_reply(reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="asd")
+#main.add_document_comment(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="asd")
+#main.add_document_comment_vote(document_id="6f908051b1ca451f9790fdfcf3d8c702", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", comment_id="ae468a771b204f7bb3efdc521dc14297", upvote=False)
 
 
+
+
+#main.add_document_comment_vote("6f908051b1ca451f9790fdfcf3d8c702", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "5c4dec83a0a94aa4864f00a183281d9a", True)
 #main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
 #                  university="Blekinge Institute of Technology", course_name="Analys 1", 
 #                  subject="Mathematics", write_date="2024-05-20")
+#main.add_document_comment(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="first")
+#main.add_document_comment_reply(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", text="what")
+#main.add_document_comment_vote(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", comment_id="5c4dec83a0a94aa4864f00a183281d9a", upvote=True)
+#main.add_document_comment_reply(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", text="second")
+
+
+
+
+
+
+#main.add_comment_vote(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="15daa9805d6040eb861acc4a012749d7", comment_id="fd3d4c6379b14d44afb16ce7cad585a6", upvote=False)
+#main.add_document_reply(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="15daa9805d6040eb861acc4a012749d7", reply_to_comment_id="fd3d4c6379b14d44afb16ce7cad585a6", text="asd")
+
+#print(list(main.get_document("15daa9805d6040eb861acc4a012749d7").get_comment_section_json()["comments"].keys()))
+#main.add_document_comment("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "15daa9805d6040eb861acc4a012749d7", "why ")
+#print(list(main.get_document("15daa9805d6040eb861acc4a012749d7").get_comment_section_json()["comments"].keys()))
+
 #main.add_document(pdf_url="https://", document_type="Assignments", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
 #                  university="Blekinge Institute of Technology", course_name="Analys 1",
 #                  subject="Mathematics", write_date="2021-05-01")
