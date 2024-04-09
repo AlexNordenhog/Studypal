@@ -258,7 +258,6 @@ class Document:
 
         self._reported = reported
         
-
     def add_vote(self, user_id, upvote):
         self._vote_directory.add(user_id=user_id, upvote=upvote)
 
@@ -331,19 +330,19 @@ class Document:
         return json
 
 class Course:
-    _comment_section_id = None
     '''
     A course.
     '''
-    def __init__(self, course_name, university, subject, validated = False, comment_section_id = None) -> None:
+    def __init__(self, course_name, university, subject, validated = False, comment_section = CommentSection(), add_to_firebase = True) -> None:
         self.course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
         self._validated = validated
+        self._comment_section = comment_section
 
-        if comment_section_id:
-            self._comment_section_id = comment_section_id
+        if add_to_firebase:
+            FirebaseManager().add_course(course=self)
 
     def approve_course(self):
         '''
@@ -406,7 +405,7 @@ class Course:
                     "university":self._university,
                     "subject":self._subject,
                     "validated":self._validated,
-                    "comment_section_id":self._comment_section_id
+                    "comment_section":self._comment_section.to_json()
                 }
             }
         }
@@ -865,10 +864,17 @@ class FirebaseDatabase(Firebase):
         if courses_dict:
             for course_name in courses_dict:
                 current_course = courses_dict[course_name]["Course Info"]
+                if "comment_section" in list(current_course.keys()):
+                    comment_section = comment_section=current_course["comment_section"]
+                else:
+                    comment_section = CommentSection()
+
                 course = Course(course_name=course_name,
                                 university=current_course["university"],
                                 subject=current_course["subject"],
-                                validated=current_course["validated"])
+                                validated=current_course["validated"],
+                                comment_section=comment_section,
+                                add_to_firebase=False)
                 
                 courses.append(course)
 
@@ -1119,7 +1125,6 @@ class Main:
         )
 
         self._course_dir.add_course(course=course)
-        self._firebase_manager.add_course(course=course)
 
     def add_document_comment(self, user_id, document_id, text):
         try:
@@ -1262,7 +1267,10 @@ def test_course_search(search_controller):
 
 #test_course_search()
 
-
+main = Main()
+main.add_course("PA2576 Programvaruintensiv Produktutveckling",
+                "Blekinge Institute of Technology",
+               "Software Development")
 
 #main = Main()
 #print(main._document_dir.get("6f908051b1ca451f9790fdfcf3d8c702")._comment_section._comments["5c4dec83a0a94aa4864f00a183281d9a"])
