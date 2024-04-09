@@ -102,10 +102,9 @@
 <body>
   <div class="container">
     <div class="header-container">
-      <h1 class=".header">Upload Specifications</h1>
+      <h1 class="header">Upload Specifications</h1>
     </div>
 
-  <div>
     <form id="specificationsForm" action="/your-submission-endpoint" method="post">
       <div class="flex-container">
         <div class="pdf-preview-container">
@@ -116,7 +115,7 @@
           <textarea id="documentComment" name="documentComment" rows="4" cols="50" class="custom-entry" placeholder="Enter your comment here..."></textarea>
         </div>
       </div>
-    </div>
+  
 
 
     <!-- Document Type Dropdown-->
@@ -313,24 +312,24 @@
       document
         .getElementById("submitBtn")
         .addEventListener("click", function (event) {
+          if (!isPublishing) {
+            alert("You must agree to publish the document before submitting.");
+            // Prevent the default form submission if no file is selected
+            event.preventDefault();
+          } else {
+            pass}
 
           var documentType = document.getElementById("documentType").value;
           var documentDate = document.getElementById("documentDate").value;
           var university = document.getElementById("uploadUniversity").value;
           var subject = document.getElementById("uploadSubject").value;
           var course = document.getElementById("uploadCourse").value;
-          var isPublishing = document.getElementById("publishCheckbox").checked;
           var manualCourse = document
             .getElementById("manualUploadCourse")
             .value.trim();
           var gradingSystem = document.getElementById("gradingSystem").value;
           var documentGrade = document.getElementById("documentGrade").value;
-          
-          if (!isPublishing) {
-              alert("You must agree to publish the document before submitting.");
-              event.preventDefault(); // Prevent form submission
-              return false;
-            }
+        
           if (
             !documentType ||
             documentType === "Choose a document type..." ||
