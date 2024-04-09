@@ -257,7 +257,15 @@ class Document:
         self._comment_section = comment_section
 
         self._reported = reported
-        
+    
+    def get_author(self) -> str:
+        """Returns the author user id as str"""
+        return self._user_id
+
+    def get_course(self) -> str:
+        """Returns the course name as str"""
+        return self._course_name
+
     def add_vote(self, user_id, upvote):
         self._vote_directory.add(user_id=user_id, upvote=upvote)
 
@@ -333,16 +341,13 @@ class Course:
     '''
     A course.
     '''
-    def __init__(self, course_name, university, subject, validated = False, comment_section = CommentSection(), add_to_firebase = True) -> None:
+    def __init__(self, course_name, university, subject, validated = False, comment_section = CommentSection()) -> None:
         self.course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
         self._validated = validated
         self._comment_section = comment_section
-
-        if add_to_firebase:
-            FirebaseManager().add_course(course=self)
 
     def approve_course(self):
         '''
@@ -487,12 +492,19 @@ class CourseDirectory(Directory):
         except KeyError:
             raise ValueError(f'Could not get course for: {course_name}')
 
-    def add_course(self, course: Course):
+    def add_course(self, course: Course, add_to_firebase = True):
         '''
         Takes a course object and adds it to the course dictionary.
         '''
+        if "/" in course.get_course_name():
+            print(f"Failed to add course. The course, {course.course_name}, containts invalid characters.")
+            return "Failed to add course, course contains invalid characters"
+
         if not self.course_exists(course_name=course.course_name):
             self._courses.update({course.course_name : course})
+            
+            if add_to_firebase:
+                FirebaseManager().add_course(course=course)
         else:
             print(f"Failed to add course. The course, {course.course_name}, already exists.")
 
@@ -556,9 +568,15 @@ class DocumentDirectory(Directory):
     
     _documents = {}
 
-    def add(self, document:Document):
+    def add(self, document:Document, add_to_firebase = True):
         if not self.document_exists(document._document_id):
             self._documents[document.get_id()] = document
+
+            if add_to_firebase:
+                user_id = document.get_author()
+                course = document.get_course()
+                FirebaseManager().add_document(document=document, user_id=user_id, course=course)
+
         else:
             print("Document already exists.")
 
@@ -591,7 +609,6 @@ class DocumentDirectory(Directory):
                 reported_documents.append(document_id)
 
         return reported_documents
-
 
 class SearchController:
 
@@ -864,17 +881,16 @@ class FirebaseDatabase(Firebase):
         if courses_dict:
             for course_name in courses_dict:
                 current_course = courses_dict[course_name]["Course Info"]
+                comment_section = CommentSection()
+                
                 if "comment_section" in list(current_course.keys()):
                     comment_section = comment_section=current_course["comment_section"]
-                else:
-                    comment_section = CommentSection()
 
                 course = Course(course_name=course_name,
                                 university=current_course["university"],
                                 subject=current_course["subject"],
                                 validated=current_course["validated"],
-                                comment_section=comment_section,
-                                add_to_firebase=False)
+                                comment_section=comment_section)
                 
                 courses.append(course)
 
@@ -1105,8 +1121,7 @@ class Main:
             # add to document dir and firebase
             course = self._course_dir.get_course(course_name=course_name)
             self._document_dir.add(document=document)
-            self._firebase_manager.add_document(document=document, user_id=user_id, course=course)
-
+            
             # add reference in course
             course.add_document(document_id=document_id, document_type=document_type)
 
@@ -1150,25 +1165,28 @@ class Main:
         for user in users:
             self._user_dir.add(user)
 
-    def _set_cuorse_directory_from_firebase(self):
+    def _set_course_directory_from_firebase(self):
         courses = self._firebase_manager.get_all_courses()
         
         for course in courses:
-            self._course_dir.add_course(course)
+            self._course_dir.add_course(course, add_to_firebase=False)
 
     def _set_documents_from_firebase(self):
         documents = self._firebase_manager.get_all_documents()
 
         for document in documents:
-            self._document_dir.add(document=document)
+            self._document_dir.add(document=document, add_to_firebase=False)
 
     def _set_from_firebase(self):
-        print("FirebaseRealtimeDatabase sync initiated")
-        self._set_user_directory_from_firebase(self)
-        self._set_cuorse_directory_from_firebase(self)
-        self._set_documents_from_firebase(self)
-        print("FirebaseRealtimeDatabase sync completed")
-
+        try:
+            print("FirebaseRealtimeDatabase sync initiated")
+            self._set_user_directory_from_firebase(self)
+            self._set_course_directory_from_firebase(self)
+            self._set_documents_from_firebase(self)
+            print("FirebaseRealtimeDatabase sync completed")
+        except:
+            print("Error: FirebaseRealtimeDatabase sync failed")
+        
     def to_json(self, type: str, id: str):
         '''
         Takes a type of page and converts it to json.
@@ -1268,9 +1286,13 @@ def test_course_search(search_controller):
 #test_course_search()
 
 main = Main()
-main.add_course("PA2576 Programvaruintensiv Produktutveckling",
-                "Blekinge Institute of Technology",
-               "Software Development")
+
+
+
+
+#main.add_course("PA2576 Programvaruintensiv Produktutveckling",
+#                "Blekinge Institute of Technology",
+#               "Software Development")
 
 #main = Main()
 #print(main._document_dir.get("6f908051b1ca451f9790fdfcf3d8c702")._comment_section._comments["5c4dec83a0a94aa4864f00a183281d9a"])
