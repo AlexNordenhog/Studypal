@@ -7,8 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Upload Document</title>
     <style>
-      /* Add custom CSS styles */
-      /* Add custom CSS styles */
+
   
   
       .centered-content {
@@ -17,13 +16,13 @@
         align-items: center;
         justify-content: center;
         height: flex;
-        font-family: Arial, sans-serif; /* Example font */
+        font-family: Arial, sans-serif; 
       }
   
       #uploadForm {
         text-align: center;
-        width: 100%; /* Adjust this to the width you want */
-        max-width: 600px; /* Example max-width */
+        width: 100%; 
+        max-width: 600px; 
         margin: auto;
       }
   
@@ -34,7 +33,14 @@
         padding: 20px;
         width: 80%;
         margin: 0 auto;
+
+        display: flex;
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center;
+        margin-top: 20px; 
       }
+    
   
       .my-form {
         margin-top: 0;
@@ -70,18 +76,20 @@
         <div id="drop-area">
   
   
-          <form class="center-align">
+          <form class="centered-content">
             <p style="font-weight: bold; text-decoration: underline;">Upload your file here</p>
-            <div class="centered-content">
-              <input
-                type="file"
-                id="pdf_file"
-                name="pdf_file"
-                accept=".pdf, image/png, image/jpeg, image/jpg, image/HEIC"
-                onchange="previewPDF()"
-                required
-            /><br /><br />
-            </div>
+              <div class="centered-content">
+                <input
+                  style="margin-left: 110px;"
+                  type="file"
+                  id="pdf_file"
+                  name="pdf_file"
+                  accept=".pdf, image/png, image/jpeg, image/jpg, image/HEIC"
+                  onchange="previewPDF()"
+                  required
+              />
+              <br /><br />
+              </div>
 
     
             <div type="my-form" id="previewContainer" class="center-align">
