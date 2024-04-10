@@ -120,15 +120,12 @@ def course_page(course_name):
 @views.route("/add_user", methods=["POST"])
 def add_user():
     data = request.json
-    uid = data.get("uid")
+    user_id = data.get("uid")
     username = data.get("username")
     
     # Add the user to the database
-
-    #
-    # Hampoos add user
-    #
-    d.add_user(uid, username)
+    main.add_user(user_id=user_id,
+                  username=username)
     
     return jsonify({"message": "User added successfully"})
 

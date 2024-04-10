@@ -38,9 +38,10 @@ class Directory:
 
 class VoteDirectory(Directory):
 
-    def __init__(self, vote_directory_id = uuid.uuid4().hex, votes = {}):
+    def __init__(self, path, vote_directory_id = uuid.uuid4().hex, votes = {}):
         self._vote_directory_id = vote_directory_id
         self._votes = votes
+        self._path = path
 
     def get(self) -> dict:
         upvotes = sum(vote for vote in self._votes.values())
@@ -53,7 +54,7 @@ class VoteDirectory(Directory):
 
         return votes
 
-    def add(self, user_id, upvote):
+    def add(self, user_id, upvote, update_firebase = True):
         try:
             old_vote = self._votes[user_id]
 
@@ -62,6 +63,7 @@ class VoteDirectory(Directory):
             
             else:
                 self._votes[user_id] = upvote
+                FirebaseDatabase().update(path=self._path, json=self.to_json())
                 return "User vote updated"
         except:
             self._votes[user_id] = upvote
@@ -104,7 +106,7 @@ class CommentSection():
                     return self._replies[replied_to_comment_id][comment_id]
         
         print("404: Comment not found error")
-            
+    
     def get_comments(self, sorting="popular"):
         """
         Not yet implemented
@@ -128,12 +130,11 @@ class CommentSection():
         Returns a list of comments, or empty list if there are no replies.
         """
 
-        try:
-            replies = self._replies[comment_id]
+        replies = []
 
-        except:
-            replies = []
-        
+        if self._has_replies(comment_id=comment_id):
+            replies = self._replies[comment_id]
+            
         return replies
 
     def _has_replies(self, comment_id):
@@ -173,12 +174,18 @@ class CommentSection():
 
 class Comment:
 
-    def __init__(self, user_id, text, comment_id = uuid.uuid4().hex, timestamp = Timestamp().timestamp, vote_dir = VoteDirectory()):
+    def __init__(self, user_id, text, db_path, comment_id = uuid.uuid4().hex, timestamp = Timestamp().timestamp, vote_dir = None):
         self._user_id = user_id
         self._comment_id = comment_id
         self._text = text
         self._timestamp = timestamp
-        self._vote_dir = vote_dir
+        self._db_path = db_path
+
+        if vote_dir:
+            self._vote_dir = vote_dir
+        else:
+
+            self._vote_dir = VoteDirectory()
 
     def get_json(self) -> str:
         json = {
@@ -229,7 +236,7 @@ class Document:
                  write_date: str,
                  grade: str = "ungraded",
                  validated: bool = False, 
-                 vote_directory: VoteDirectory = VoteDirectory(), 
+                 vote_directory: VoteDirectory = None, 
                  comment_section: CommentSection = CommentSection(), 
                  document_id: str = uuid.uuid4().hex,
                  timestamp = Timestamp().timestamp,
@@ -253,7 +260,12 @@ class Document:
 
         self._timestamp = timestamp
 
-        self._vote_directory = vote_directory
+        if vote_directory:
+            self._vote_directory = vote_directory
+        else:
+            path = f"Documents/{self._document_id}/vote_directory"
+            self._vote_directory = VoteDirectory(path=path)
+
         self._comment_section = comment_section
 
         self._reported = reported
@@ -262,7 +274,7 @@ class Document:
         """Returns the author user id as str"""
         return self._user_id
 
-    def get_course(self) -> str:
+    def get_course_name(self) -> str:
         """Returns the course name as str"""
         return self._course_name
 
@@ -370,11 +382,12 @@ class Course:
         except:
             print('Could not add document.')
 
-    def add_comment(self, comment):
+    def add_comment(self, user_id, text):
         '''
-        Adds a comment to the _comments dict.
+        wip
         '''
-        self._comments.update({comment.comment_id : comment})
+        print(type(self._comment_section))
+        self._comment_section.add_comment(user_id=user_id, text=text)
 
     def get_university(self):
         '''
@@ -405,7 +418,7 @@ class Course:
                     "Other Documents":(self._documents["Other Documents"])
                 },
 
-                "Course Info":{
+                "Course Content":{
                     "course_name":self.course_name,
                     "university":self._university,
                     "subject":self._subject,
@@ -468,9 +481,6 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
-    def get_course(self, course_name) -> Course:
-        return self._courses[course_name] if self.course_exists(course_name=course_name) else None
-
     def get_course_names(self) -> list:
         '''
         Returns a list of all the course names for all courses in the course directory.
@@ -483,7 +493,7 @@ class CourseDirectory(Directory):
         '''
         return self._courses
 
-    def get(self, course_name):
+    def get_course(self, course_name) -> Course:
         '''
         Returns the course object for a certain course name.
         '''
@@ -569,13 +579,13 @@ class DocumentDirectory(Directory):
     _documents = {}
 
     def add(self, document:Document, add_to_firebase = True):
-        if not self.document_exists(document._document_id):
+        if not self.document_exists(document.get_id()):
             self._documents[document.get_id()] = document
 
             if add_to_firebase:
                 user_id = document.get_author()
-                course = document.get_course()
-                FirebaseManager().add_document(document=document, user_id=user_id, course=course)
+                course_name = document.get_course_name()
+                FirebaseManager().add_document(document=document, user_id=user_id, course_name=course_name)
 
         else:
             print("Document already exists.")
@@ -785,16 +795,13 @@ class FirebaseDatabase(Firebase):
         self._firebase_url = {"databaseURL":"https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/"}
         self._app = firebase_admin.initialize_app(self._firebase_cert, self._firebase_url, "database")
     
-    def add_document(self, document: Document, user_id: str, course: Course):
+    def add_document(self, document: Document, user_id: str, course_name: str):
         """Add a document to the database."""
 
         ref = db.reference("/Documents", self._app)
         ref.update(document.to_json())
 
         document_id = document.get_id()
-        course_name = course.get_course_name()
-        university = course.get_university()
-        subject = course.get_subject()
         document_type = document.get_type()
 
         ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
@@ -880,11 +887,25 @@ class FirebaseDatabase(Firebase):
         
         if courses_dict:
             for course_name in courses_dict:
-                current_course = courses_dict[course_name]["Course Info"]
+                current_course = courses_dict[course_name]["Course Content"]
                 comment_section = CommentSection()
                 
                 if "comment_section" in list(current_course.keys()):
-                    comment_section = comment_section=current_course["comment_section"]
+                    comment_section_id = current_course["comment_section"]["comment_section_id"]
+
+                    try:
+                        comments = current_course["comment_section"]["comments"]
+                    except:
+                        comments = {}
+
+                    try:
+                        replies = current_course["comment_section"]["replies"]
+                    except:
+                        replies = {}
+
+                    comment_section = comment_section=CommentSection(comment_section_id=comment_section_id,
+                                                                     comments=comments,
+                                                                     replies=replies)
 
                 course = Course(course_name=course_name,
                                 university=current_course["university"],
@@ -895,7 +916,14 @@ class FirebaseDatabase(Firebase):
                 courses.append(course)
 
         return courses
-    
+
+    def update(self, path, json):
+        """
+        Updates the Firebase Realtime Database with 'json' under 'path'
+        """
+        db.reference(path, self._app).update(json)
+
+    ##### WIP #####
     def get_documents(self) -> list[Document]:
         """Returns list containing all documents avalable in the database."""
         documents = []
@@ -903,13 +931,13 @@ class FirebaseDatabase(Firebase):
         if documents_dict:
             for document_id in documents_dict:
                 document_dict = documents_dict[document_id]
-
+                document_path = f"Documents/{document_id}"
                 # Vote Directory
                 try:
-                    vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
+                    vote_directory = VoteDirectory(path=document_path+"/vote_directory", vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
                                                    votes=document_dict["vote_directory"]["votes"])
                 except:
-                    vote_directory = VoteDirectory()
+                    vote_directory = VoteDirectory(path=document_path+"/vote_directory")
 
                 # Cmoment section
                     # Comments
@@ -920,11 +948,11 @@ class FirebaseDatabase(Firebase):
                     
                     for comment_id in comment_ids:
                         try:
-                            comment_vote_directory = VoteDirectory(vote_directory_id=comments_json[comment_id]["vote_directory"]["vote_directory_id"],
+                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory", vote_directory_id=comments_json[comment_id]["vote_directory"]["vote_directory_id"],
                                                                    votes=comments_json[comment_id]["vote_directory"]["votes"])
 
                         except:
-                            comment_vote_directory = VoteDirectory()
+                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory")
 
                         comments[comment_id] = Comment(user_id=comments_json[comment_id]["user_id"],
                                                         text=comments_json[comment_id]["text"],
@@ -945,10 +973,10 @@ class FirebaseDatabase(Firebase):
                     for reply_to_comment_id in reply_to_comment_ids:
                         for reply_id in document_dict["comment_section"]["replies"][reply_to_comment_id]:
                             try:
-                                reply_vote_directory = VoteDirectory(vote_directory_id=comments_json["vote_directory"]["vote_directory_id"])
+                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory", vote_directory_id=comments_json["vote_directory"]["vote_directory_id"])
 
                             except:
-                                reply_vote_directory = VoteDirectory()
+                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory")
 
                             replies[reply_id] = Comment(user_id=comments_json["user_id"],
                                                         text=comments_json["text"],
@@ -961,7 +989,7 @@ class FirebaseDatabase(Firebase):
                 comment_section = CommentSection(comment_section_id=document_dict["comment_section"]["comment_section_id"],
                                                      comments=comments,
                                                      replies=replies)
-                print(replies)
+                
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
                                     user_id=document_dict["content"]["user_id"],
@@ -1018,8 +1046,8 @@ class FirebaseManager:
     def get_all_users(self) -> list[User]:
         return self._database.get_users()
 
-    def add_document(self, document: Document, user_id: str, course: Course):
-        self._database.add_document(document=document, user_id=user_id, course=course)
+    def add_document(self, document: Document, user_id: str, course_name:str):
+        self._database.add_document(document=document, user_id=user_id, course_name=course_name)
     
     def update_document_votes(self, document_id, vote_directory_json):
         self._database.update_document_votes(document_id=document_id, vote_directory_json=vote_directory_json)
@@ -1060,7 +1088,18 @@ class Main:
             cls._set_from_firebase(cls)
 
         return cls._main
-    
+
+    def add_user(self, user_id, username):
+        user = User(user_id=user_id, username=username)
+        self._user_dir.add(user=user)
+
+    def add_course_comment(self, course_name, user_id, text):
+        try:
+            course = self._course_dir.get_course(course_name=course_name)
+            course.add_comment(user_id=user_id, text=text)
+        except:
+            print(f"Failed to add comment to course")
+
     def add_document_vote(self, document_id: str, user_id: str, upvote: bool):
         try:
             document = self._document_dir.get(document_id=document_id)
@@ -1119,9 +1158,9 @@ class Main:
         
         else:
             # add to document dir and firebase
-            course = self._course_dir.get_course(course_name=course_name)
+            course = self._course_dir.get(course_name=course_name)
             self._document_dir.add(document=document)
-            
+
             # add reference in course
             course.add_document(document_id=document_id, document_type=document_type)
 
@@ -1289,6 +1328,42 @@ main = Main()
 
 
 
+# is able to add documents where the user doesnt exist
+
+
+
+
+
+
+
+
+
+#main.add_course(course_name="Test 101", university="Blekinge Institute of Technology", subject="Mathematics")
+#main.add_document("https://", "Exams", "userid", "Blekinge Institute of Technology", "Test 101", "Mathematics", "2020-02-02", "A")
+#course = main._course_dir.get("Test 101")
+#course.add_document(document_type="Exams", document_id="oijoij")
+
+def test_document() -> Document: 
+
+    document = Document(pdf_url="https",
+                    document_type="Exams",
+                    user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
+                    university="Blekinge Institute of Technology",
+                    course_name="Test 101",
+                    subject="Mathematics",
+                    write_date="2020-02-02",
+                    grade="A")
+    return document
+    
+#document = test_document()
+#main._document_dir.add(document=document)
+document = main._document_dir.get("8412bdf6c94f4aebb23e1ab485a110e9")
+document.add_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", False)
+
+
+
+#main.add_course("IY1422 Finansiell ekonomi", "Blekinge Institute of Technology", "Software Development")
+#main.add_course_comment("PA2576 Programvaruintensiv Produktutveckling", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
 
 #main.add_course("PA2576 Programvaruintensiv Produktutveckling",
 #                "Blekinge Institute of Technology",
