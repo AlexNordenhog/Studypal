@@ -6,6 +6,379 @@ import uuid
 import difflib
 
 
+class Firebase:
+    _firebase = None
+
+    def __new__(cls):
+        # Make sure there is only one instance of FirebaseStorage,
+        # and that firebase storage is not initialized multiple times.
+        if cls._firebase == None:
+            # Initialize Firebase Storage
+            cls._initialize_firebase(cls)
+            cls._firebase = super(Firebase, cls).__new__(cls)
+        return cls._firebase
+    
+    def _initialize_firebase(self):
+        pass
+
+class FirebaseStorage(Firebase):
+    _firebase_cert = None
+    _app = None
+    _storage_url = None
+
+    def __new__(cls):
+        return super().__new__(cls)
+    
+    def _initialize_firebase_storage(self):
+        self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
+        self._storage_url = {"storageBucket": "studypal-8a379.appspot.com"}
+        self._app = firebase_admin.initialize_app(self._firebase_cert, self._storage_url, name = "storage")
+
+    def upload_pdf(self, pdf_file_path: str, document_id: int):
+        """
+        Save PDF file to firebase storage.
+        """
+        
+        storage_path = f"PDF/{document_id}.pdf"
+        bucket = storage.bucket(app=self.app)
+        blob = bucket.blob(storage_path)
+        blob.upload_from_filename(pdf_file_path)
+        
+        return storage_path
+    
+    def download_pdf(self, document_id: int):
+        
+        download_path = (f"{Path.home()}/Downloads")
+
+        with open(f"{download_path}/{document_id}.pdf", "wb") as f:    
+            storage.bucket(app=self.app).get_blob(f"PDF/{document_id}.pdf").download_to_file(f)
+
+    # Generates url to filestorage document
+    def generate_download_url(self, document_id: int):
+        """Generate a download URL for a document."""
+        storage_path = f"PDF/{document_id}.pdf"
+        bucket = storage.bucket(app=self.app)
+        blob = bucket.blob(storage_path)
+        download_url = blob.generate_signed_url(datetime.timedelta(seconds=300), method="GET") # URL expires in 5 minutes
+        return download_url
+
+class FirebaseDatabase(Firebase):
+    _app = None
+    _firebase_cert = None
+    _firebase_url = None
+
+    def __new__(cls):
+        return super().__new__(cls)
+
+    def push_to_path(self, path, data):
+        ref = db.reference(path, self._app)
+        ref.update(data)
+
+    def get_from_path(self, path):
+        """Returns the json string from the database avalable under specified 'path'"""
+        try:
+            return db.reference(path, self._app).get()
+        except:
+            print("Error fetching from FirebaseStorage")
+
+    def _initialize_firebase(self):
+        self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
+        self._firebase_url = {"databaseURL":"https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/"}
+        self._app = firebase_admin.initialize_app(self._firebase_cert, self._firebase_url, "database")
+    
+    def add_document(self, document, user_id: str, course_name: str):
+        """Add a document to the database."""
+
+        ref = db.reference("/Documents", self._app)
+        ref.update(document.to_json())
+
+        document_id = document.get_id()
+        document_type = document.get_type()
+
+        ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
+
+        # get and update course document reference list
+        course_documents = ref.get()
+
+        try:
+            course_documents.append(document_id)
+        
+        except:
+            course_documents = [document_id]
+
+        ref.parent.update({document_type:course_documents})
+
+        # add document reference to user
+        ref = db.reference(f"/Users/{user_id}/Documents", self._app)
+        user_documents = ref.get()
+        
+        try:
+            user_documents.append(document_id)
+
+        except:
+            user_documents = [document_id]
+        
+        ref.parent.update({"Documents":user_documents})
+    
+    def update_document_votes(self, document_id, vote_directory_json):
+        """Updates a document's vote directory in the database"""
+        try:
+            ref = db.reference(f"/Documents/{document_id}/vote_directory", self._app)
+            ref.update(vote_directory_json)
+            
+        except:
+            ref = db.reference(f"/Documents/{document_id}/", self._app)
+            ref.update({"vote_directory":vote_directory_json})
+
+    def update_document_comment_section(self, document_id, document_comment_section_json):
+        try:
+            ref = db.reference(f"/Documents/{document_id}/comment_section", self._app)
+            ref.update(document_comment_section_json)
+            
+        except:
+            ref = db.reference(f"/Documents/{document_id}/", self._app)
+            ref.update({"comment_section":document_comment_section_json})
+
+    def update_course_comment_section(self, course_name: str, comment_section: str):
+        try:
+            ref = db.reference(f"/Courses/{course_name}/comment_section", self._app)
+            ref.update(comment_section)
+        except:
+            ref = db.reference(f"/Courses/{course_name}", self._app)
+            ref.update({"comment_section":comment_section})
+
+    def get_users(self):
+        """
+        Takes the users from the database and creates User objects from the data.
+
+        Returns list containing all users avalable in the database.
+        """
+        
+        users = []
+        users_dict = self.get_from_path(path="/Users")
+        
+        if users_dict:
+            for user_id in users_dict:
+                try:
+                    documents = users_dict[user_id]["Documents"]
+                except:
+                    documents = []
+
+                user = User(user_id=user_id, 
+                            username=users_dict[user_id]["username"],
+                            documents=documents,
+                            role=users_dict[user_id]["role"], 
+                            sign_up_timestamp=users_dict[user_id]["creation_date"])
+                
+                users.append(user)
+        
+        return users
+    
+    def add_course(self, course):
+        """Add a course to the database"""
+        ref = db.reference("/Courses", self._app)
+        ref.update(course.to_json())
+
+    def get_courses(self) -> list:
+        """Returns list containing all courses avalable in the database."""
+        courses = []
+        courses_dict = self.get_from_path("/Courses")
+        
+        if courses_dict:
+            for course_name in courses_dict:
+                
+                current_course = courses_dict[course_name]["Course Content"]
+                comment_section = None
+                
+                if "comment_section" in list(current_course.keys()):
+                    comment_section_id = current_course["comment_section"]["comment_section_id"]
+
+                    try:
+                        comments = current_course["comment_section"]["comments"]
+                    except:
+                        comments = {}
+
+                    try:
+                        replies = current_course["comment_section"]["replies"]
+                    except:
+                        replies = {}
+                    
+                    parent_path = f"Courses/{course_name}/Course Content/comment_section"
+                    comment_section = comment_section=CommentSection(parent_path=parent_path,
+                                                                     comment_section_id=comment_section_id,
+                                                                     comments=comments,
+                                                                     replies=replies)
+
+                course = Course(course_name=course_name,
+                                university=current_course["university"],
+                                subject=current_course["subject"],
+                                validated=current_course["validated"],
+                                comment_section=comment_section)
+                
+                courses.append(course)
+        
+        return courses
+
+    def update(self, path, json):
+        """
+        Updates the Firebase Realtime Database with 'json' under 'path'
+        """
+        db.reference(path, self._app).update(json)
+
+    ##### WIP #####
+    def get_documents(self) -> list:
+        """Returns list containing all documents avalable in the database."""
+        documents = []
+        documents_dict = self.get_from_path("/Documents")
+        if documents_dict:
+            for document_id in documents_dict:
+                document_dict = documents_dict[document_id]
+                document_path = f"Documents/{document_id}"
+                # Vote Directory
+                try:
+                    vote_directory = VoteDirectory(path=document_path+"/vote_directory", vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
+                                                   votes=document_dict["vote_directory"]["votes"])
+                except:
+                    vote_directory = VoteDirectory(path=document_path+"/vote_directory")
+
+                # Cmoment section
+                    # Comments
+                try:
+                    comments = {}
+                    comment_ids = list(document_dict["comment_section"]["comments"].keys())
+                    comments_json = document_dict["comment_section"]["comments"]
+                    
+                    for comment_id in comment_ids:
+                        try:
+                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory", vote_directory_id=comments_json[comment_id]["vote_directory"]["vote_directory_id"],
+                                                                   votes=comments_json[comment_id]["vote_directory"]["votes"])
+
+                        except:
+                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory")
+
+                        comments[comment_id] = Comment(user_id=comments_json[comment_id]["user_id"],
+                                                        text=comments_json[comment_id]["text"],
+                                                        comment_id=comments_json[comment_id]["comment_id"],
+                                                        timestamp=comments_json[comment_id]["timestamp"],
+                                                        vote_dir=comment_vote_directory)
+                except:
+                   comments = {}
+
+                # Comment Section
+                    # Replies
+                try:
+                    replies = {}
+                    #reply_ids = list(document_dict["comment_section"]["replies"].keys())
+                    reply_to_comment_ids = list(document_dict["comment_section"]["replies"].keys())
+                    comments_json = document_dict["comment_section"]["comments"]
+                    
+                    for reply_to_comment_id in reply_to_comment_ids:
+                        for reply_id in document_dict["comment_section"]["replies"][reply_to_comment_id]:
+                            try:
+                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory", vote_directory_id=comments_json["vote_directory"]["vote_directory_id"])
+
+                            except:
+                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory")
+
+                            replies[reply_id] = Comment(user_id=comments_json["user_id"],
+                                                        text=comments_json["text"],
+                                                        comment_id=comments_json["comment_id"],
+                                                        timestamp=comments_json["timestamp"],
+                                                        vote_dir=reply_vote_directory)
+                except:
+                    replies = {}
+
+                comment_section = CommentSection(comment_section_id=document_dict["comment_section"]["comment_section_id"],
+                                                     comments=comments,
+                                                     replies=replies)
+                
+                document = Document(document_id=document_id,
+                                    pdf_url=document_dict["content"]["pdf_url"],
+                                    user_id=document_dict["content"]["user_id"],
+                                    grade=document_dict["content"]["grade"],
+                                    
+                                    write_date=document_dict["content"]["write_date"],
+                                    validated=document_dict["categorization"]["validated"],
+                                    university=document_dict["categorization"]["university"],
+                                    document_type=document_dict["categorization"]["document_type"],
+                                    course_name=document_dict["categorization"]["course_name"],
+                                    subject=document_dict["categorization"]["subject"],
+
+                                    vote_directory=vote_directory,
+                                    comment_section=comment_section,
+
+                                    timestamp=document_dict["timestamp"])
+                
+                documents.append(document)
+
+        return documents
+
+class FirebaseManager:
+    _firebase_manager = None
+    _storage = FirebaseStorage()
+    _database = FirebaseDatabase()
+
+    def __new__(cls):
+        # Make sure there is only one instance of FirebseManager
+        if cls._firebase_manager == None:
+            # Sync with firebase
+            cls._firebase_manager = super(FirebaseManager, cls).__new__(cls)
+        
+        return cls._firebase_manager
+
+    def get_from_database_path(self, path):
+        data = self._database.get_from_path(path)
+
+        return data if data else None
+
+    def _set_from_firebase(self):
+        
+        users = {}
+        db_users = self._database.get_users()
+
+        for user in db_users:
+            self._user_dir.add(users[user])
+        
+    def get_all_courses(self) -> list:
+        return self._database.get_courses()
+
+    def get_all_documents(self) -> list:
+        return self._database.get_documents()
+
+    def get_all_users(self) -> list:
+        return self._database.get_users()
+
+    def add_document(self, document, user_id: str, course_name:str):
+        self._database.add_document(document=document, user_id=user_id, course_name=course_name)
+    
+    def update_document_votes(self, document_id, vote_directory_json):
+        self._database.update_document_votes(document_id=document_id, vote_directory_json=vote_directory_json)
+
+    def update_document_comment_sectino_votes(self, document_id, document_comment_section_json):
+        self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+
+    def update_document_comment_section(self, document_id, document_comment_section_json):
+        self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+
+    #methods below needs to move/change
+    def add_user(self, user_id, username, add_to_db=True):
+        """Create user and add to database."""
+
+        # Create a new user
+        user = User(user_id=user_id, username=username)
+
+        # Add user to dict
+        self._users[user_id] = user
+
+        # Save user in database
+        if add_to_db:
+            self._add_to_db(ref="/Users/", json=user.to_json())
+
+    def add_course(self, course):
+        self._database.add_course(course=course)
+
+
+
 class IDHandler:
     #_used_ids = []
     _id_handler = None
@@ -38,10 +411,9 @@ class Directory:
 
 class VoteDirectory(Directory):
 
-    def __init__(self, path, vote_directory_id = uuid.uuid4().hex, votes = {}):
+    def __init__(self, vote_directory_id = uuid.uuid4().hex, votes = {}):
         self._vote_directory_id = vote_directory_id
         self._votes = votes
-        self._path = path
 
     def get(self) -> dict:
         upvotes = sum(vote for vote in self._votes.values())
@@ -54,7 +426,7 @@ class VoteDirectory(Directory):
 
         return votes
 
-    def add(self, user_id, upvote, update_firebase = True):
+    def add(self, user_id, upvote):
         try:
             old_vote = self._votes[user_id]
 
@@ -63,7 +435,6 @@ class VoteDirectory(Directory):
             
             else:
                 self._votes[user_id] = upvote
-                FirebaseDatabase().update(path=self._path, json=self.to_json())
                 return "User vote updated"
         except:
             self._votes[user_id] = upvote
@@ -77,13 +448,15 @@ class VoteDirectory(Directory):
 
 class CommentSection():
 
-    def __init__(self, comment_section_id = uuid.uuid4().hex, comments = {}, replies = {}) -> None:
+    def __init__(self, parent_path, comment_section_id = uuid.uuid4().hex, comments = {}, replies = {}) -> None:
         self._comment_section_id = comment_section_id
         self._comments = comments # { comment_id : Comment }
         self._replies = replies # { reply_to_comment_id : { comment_id : Comment } }
+        self._db_path = f"{parent_path}"
 
     def add_comment(self, user_id: str, text: str):
-        comment = Comment(user_id=user_id, text=text)
+        comment = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/comments")
+        FirebaseDatabase().push_to_path(comment._db_path, data=comment.to_json())
         self._comments[comment.get_id()] = comment
 
     def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
@@ -95,7 +468,7 @@ class CommentSection():
             self._replies[reply_to_comment_id][reply.get_id()] = reply
 
     def get_comment(self, comment_id):
-        print(comment_id, list(self._comments.keys()))
+        
         if comment_id in list(self._comments.keys()):
             return self._comments[comment_id]
         else:
@@ -174,17 +547,17 @@ class CommentSection():
 
 class Comment:
 
-    def __init__(self, user_id, text, db_path, comment_id = uuid.uuid4().hex, timestamp = Timestamp().timestamp, vote_dir = None):
+    def __init__(self, user_id, text, parent_path, comment_id = uuid.uuid4().hex, timestamp = Timestamp().timestamp, vote_dir = None):
         self._user_id = user_id
         self._comment_id = comment_id
         self._text = text
         self._timestamp = timestamp
-        self._db_path = db_path
+        self._db_path = f"{parent_path}/{comment_id}"
 
         if vote_dir:
             self._vote_dir = vote_dir
-        else:
 
+        else:
             self._vote_dir = VoteDirectory()
 
     def get_json(self) -> str:
@@ -210,9 +583,6 @@ class Comment:
 
         return json
 
-    def get_parent(self):
-        return self._parent
-
     def add_vote(self, user_id, upvote):
         return self._vote_dir.add(user_id=user_id, upvote=upvote)
 
@@ -237,7 +607,7 @@ class Document:
                  grade: str = "ungraded",
                  validated: bool = False, 
                  vote_directory: VoteDirectory = None, 
-                 comment_section: CommentSection = CommentSection(), 
+                 comment_section: CommentSection = None, 
                  document_id: str = uuid.uuid4().hex,
                  timestamp = Timestamp().timestamp,
                  reported = False) -> None:
@@ -266,7 +636,10 @@ class Document:
             path = f"Documents/{self._document_id}/vote_directory"
             self._vote_directory = VoteDirectory(path=path)
 
-        self._comment_section = comment_section
+        if comment_section:
+            self._comment_section = comment_section
+        else:
+            self._comment_section = CommentSection(parent_path="")
 
         self._reported = reported
     
@@ -353,13 +726,20 @@ class Course:
     '''
     A course.
     '''
-    def __init__(self, course_name, university, subject, validated = False, comment_section = CommentSection()) -> None:
-        self.course_name = course_name # id
+    def __init__(self, course_name, university, subject, validated = False, comment_section = None) -> None:
+        self._course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
         self._validated = validated
-        self._comment_section = comment_section
+        self._db_path = f"/Courses/{self._course_name}/"
+
+        if comment_section:
+            self._comment_section = comment_section
+        
+        else:
+            self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
+
 
     def approve_course(self):
         '''
@@ -371,7 +751,7 @@ class Course:
         '''
         Returns the course name.
         '''
-        return self.course_name
+        return self._course_name
 
     def add_document(self, document_type, document_id):
         '''
@@ -384,10 +764,17 @@ class Course:
 
     def add_comment(self, user_id, text):
         '''
-        wip
+        Adds a comment to the course.
+
+        Updates the course object as well as firebase database.
         '''
-        print(type(self._comment_section))
+        
+        #try:
+        self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
+            #FirebaseDatabase().push_to_path(path=path, data=data)
         self._comment_section.add_comment(user_id=user_id, text=text)
+        #except:
+        print(f"Failed to add comment to {self._course_name}")
 
     def get_university(self):
         '''
@@ -481,6 +868,19 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
+    def add_comment(self, course_name, user_id, text):
+        if course_name in list(self._courses.keys()):
+            #try:
+                course = self.get_course(course_name=course_name)
+                course.add_comment(user_id=user_id, text=text)
+                #FirebaseDatabase().add_comment()
+            #except:
+                print(f"Failed to add comment to course {course_name}")
+        elif course_name in list(self._pending_courses.keys()):
+            print(f"'{course_name}' is awaiting validation. The course must be validated before adding comments to the course.")
+        else:
+            print(f"'{course_name}' does not exist.")
+
     def get_course_names(self) -> list:
         '''
         Returns a list of all the course names for all courses in the course directory.
@@ -497,6 +897,10 @@ class CourseDirectory(Directory):
         '''
         Returns the course object for a certain course name.
         '''
+        
+        if self.course_exists(course_name=course_name):
+            return self._courses[course_name]
+
         try:
             return self._courses[course_name]
         except KeyError:
@@ -510,8 +914,8 @@ class CourseDirectory(Directory):
             print(f"Failed to add course. The course, {course.course_name}, containts invalid characters.")
             return "Failed to add course, course contains invalid characters"
 
-        if not self.course_exists(course_name=course.course_name):
-            self._courses.update({course.course_name : course})
+        if not self.course_exists(course_name=course._course_name):
+            self._courses.update({course._course_name : course})
             
             if add_to_firebase:
                 FirebaseManager().add_course(course=course)
@@ -527,8 +931,10 @@ class CourseDirectory(Directory):
     def course_exists(self, course_name: str) -> bool:
         """
         Takes a string and returns a bool wether if course_name is in the courses dict.
+
+        Only counts courses in _courses list.
         """
-        course_names = self.get_course_names()
+        course_names = self.get_courses()
 
         return True if course_name in course_names else False
 
@@ -719,362 +1125,6 @@ class SearchController:
                     subject_universities.append(u)
         return subject_universities
 
-class Firebase:
-    _firebase = None
-
-    def __new__(cls):
-        # Make sure there is only one instance of FirebaseStorage,
-        # and that firebase storage is not initialized multiple times.
-        if cls._firebase == None:
-            # Initialize Firebase Storage
-            cls._initialize_firebase(cls)
-            cls._firebase = super(Firebase, cls).__new__(cls)
-        return cls._firebase
-    
-    def _initialize_firebase(self):
-        pass
-
-class FirebaseStorage(Firebase):
-    _firebase_cert = None
-    _app = None
-    _storage_url = None
-
-    def __new__(cls):
-        return super().__new__(cls)
-    
-    def _initialize_firebase_storage(self):
-        self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
-        self._storage_url = {"storageBucket": "studypal-8a379.appspot.com"}
-        self._app = firebase_admin.initialize_app(self._firebase_cert, self._storage_url, name = "storage")
-
-    def upload_pdf(self, pdf_file_path: str, document_id: int):
-        """
-        Save PDF file to firebase storage.
-        """
-        
-        storage_path = f"PDF/{document_id}.pdf"
-        bucket = storage.bucket(app=self.app)
-        blob = bucket.blob(storage_path)
-        blob.upload_from_filename(pdf_file_path)
-        
-        return storage_path
-    
-    def download_pdf(self, document_id: int):
-        
-        download_path = (f"{Path.home()}/Downloads")
-
-        with open(f"{download_path}/{document_id}.pdf", "wb") as f:    
-            storage.bucket(app=self.app).get_blob(f"PDF/{document_id}.pdf").download_to_file(f)
-
-    # Generates url to filestorage document
-    def generate_download_url(self, document_id: int):
-        """Generate a download URL for a document."""
-        storage_path = f"PDF/{document_id}.pdf"
-        bucket = storage.bucket(app=self.app)
-        blob = bucket.blob(storage_path)
-        download_url = blob.generate_signed_url(datetime.timedelta(seconds=300), method="GET") # URL expires in 5 minutes
-        return download_url
-
-class FirebaseDatabase(Firebase):
-    _app = None
-    _firebase_cert = None
-    _firebase_url = None
-
-    def __new__(cls):
-        return super().__new__(cls)
-
-    def get_from_path(self, path):
-        """Returns the json string from the database avalable under specified 'path'"""
-        try:
-            return db.reference(path, self._app).get()
-        except:
-            print("Error fetching from FirebaseStorage")
-
-    def _initialize_firebase(self):
-        self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
-        self._firebase_url = {"databaseURL":"https://studypal-8a379-default-rtdb.europe-west1.firebasedatabase.app/"}
-        self._app = firebase_admin.initialize_app(self._firebase_cert, self._firebase_url, "database")
-    
-    def add_document(self, document: Document, user_id: str, course_name: str):
-        """Add a document to the database."""
-
-        ref = db.reference("/Documents", self._app)
-        ref.update(document.to_json())
-
-        document_id = document.get_id()
-        document_type = document.get_type()
-
-        ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
-
-        # get and update course document reference list
-        course_documents = ref.get()
-
-        try:
-            course_documents.append(document_id)
-        
-        except:
-            course_documents = [document_id]
-
-        ref.parent.update({document_type:course_documents})
-
-        # add document reference to user
-        ref = db.reference(f"/Users/{user_id}/Documents", self._app)
-        user_documents = ref.get()
-        
-        try:
-            user_documents.append(document_id)
-
-        except:
-            user_documents = [document_id]
-        
-        ref.parent.update({"Documents":user_documents})
-    
-    def update_document_votes(self, document_id, vote_directory_json):
-        """Updates a document's vote directory in the database"""
-        try:
-            ref = db.reference(f"/Documents/{document_id}/vote_directory", self._app)
-            ref.update(vote_directory_json)
-            
-        except:
-            ref = db.reference(f"/Documents/{document_id}/", self._app)
-            ref.update({"vote_directory":vote_directory_json})
-
-    def update_document_comment_section(self, document_id, document_comment_section_json):
-        try:
-            ref = db.reference(f"/Documents/{document_id}/comment_section", self._app)
-            ref.update(document_comment_section_json)
-            
-        except:
-            ref = db.reference(f"/Documents/{document_id}/", self._app)
-            ref.update({"comment_section":document_comment_section_json})
-
-    def get_users(self) -> list[User]:
-        """
-        Takes the users from the database and creates User objects from the data.
-
-        Returns list containing all users avalable in the database.
-        """
-        
-        users = []
-        users_dict = self.get_from_path(path="/Users")
-        
-        if users_dict:
-            for user_id in users_dict:
-                try:
-                    documents = users_dict[user_id]["Documents"]
-                except:
-                    documents = []
-
-                user = User(user_id=user_id, 
-                            username=users_dict[user_id]["username"],
-                            documents=documents,
-                            role=users_dict[user_id]["role"], 
-                            sign_up_timestamp=users_dict[user_id]["creation_date"])
-                
-                users.append(user)
-        
-        return users
-    
-    def add_course(self, course: Course):
-        """Add a course to the database"""
-        ref = db.reference("/Courses", self._app)
-        ref.update(course.to_json())
-
-    def get_courses(self) -> list[Course]:
-        """Returns list containing all courses avalable in the database."""
-        courses = []
-        courses_dict = self.get_from_path("/Courses")
-        
-        if courses_dict:
-            for course_name in courses_dict:
-                current_course = courses_dict[course_name]["Course Content"]
-                comment_section = CommentSection()
-                
-                if "comment_section" in list(current_course.keys()):
-                    comment_section_id = current_course["comment_section"]["comment_section_id"]
-
-                    try:
-                        comments = current_course["comment_section"]["comments"]
-                    except:
-                        comments = {}
-
-                    try:
-                        replies = current_course["comment_section"]["replies"]
-                    except:
-                        replies = {}
-
-                    comment_section = comment_section=CommentSection(comment_section_id=comment_section_id,
-                                                                     comments=comments,
-                                                                     replies=replies)
-
-                course = Course(course_name=course_name,
-                                university=current_course["university"],
-                                subject=current_course["subject"],
-                                validated=current_course["validated"],
-                                comment_section=comment_section)
-                
-                courses.append(course)
-
-        return courses
-
-    def update(self, path, json):
-        """
-        Updates the Firebase Realtime Database with 'json' under 'path'
-        """
-        db.reference(path, self._app).update(json)
-
-    ##### WIP #####
-    def get_documents(self) -> list[Document]:
-        """Returns list containing all documents avalable in the database."""
-        documents = []
-        documents_dict = self.get_from_path("/Documents")
-        if documents_dict:
-            for document_id in documents_dict:
-                document_dict = documents_dict[document_id]
-                document_path = f"Documents/{document_id}"
-                # Vote Directory
-                try:
-                    vote_directory = VoteDirectory(path=document_path+"/vote_directory", vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
-                                                   votes=document_dict["vote_directory"]["votes"])
-                except:
-                    vote_directory = VoteDirectory(path=document_path+"/vote_directory")
-
-                # Cmoment section
-                    # Comments
-                try:
-                    comments = {}
-                    comment_ids = list(document_dict["comment_section"]["comments"].keys())
-                    comments_json = document_dict["comment_section"]["comments"]
-                    
-                    for comment_id in comment_ids:
-                        try:
-                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory", vote_directory_id=comments_json[comment_id]["vote_directory"]["vote_directory_id"],
-                                                                   votes=comments_json[comment_id]["vote_directory"]["votes"])
-
-                        except:
-                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory")
-
-                        comments[comment_id] = Comment(user_id=comments_json[comment_id]["user_id"],
-                                                        text=comments_json[comment_id]["text"],
-                                                        comment_id=comments_json[comment_id]["comment_id"],
-                                                        timestamp=comments_json[comment_id]["timestamp"],
-                                                        vote_dir=comment_vote_directory)
-                except:
-                   comments = {}
-
-                # Comment Section
-                    # Replies
-                try:
-                    replies = {}
-                    #reply_ids = list(document_dict["comment_section"]["replies"].keys())
-                    reply_to_comment_ids = list(document_dict["comment_section"]["replies"].keys())
-                    comments_json = document_dict["comment_section"]["comments"]
-                    
-                    for reply_to_comment_id in reply_to_comment_ids:
-                        for reply_id in document_dict["comment_section"]["replies"][reply_to_comment_id]:
-                            try:
-                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory", vote_directory_id=comments_json["vote_directory"]["vote_directory_id"])
-
-                            except:
-                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory")
-
-                            replies[reply_id] = Comment(user_id=comments_json["user_id"],
-                                                        text=comments_json["text"],
-                                                        comment_id=comments_json["comment_id"],
-                                                        timestamp=comments_json["timestamp"],
-                                                        vote_dir=reply_vote_directory)
-                except:
-                    replies = {}
-
-                comment_section = CommentSection(comment_section_id=document_dict["comment_section"]["comment_section_id"],
-                                                     comments=comments,
-                                                     replies=replies)
-                
-                document = Document(document_id=document_id,
-                                    pdf_url=document_dict["content"]["pdf_url"],
-                                    user_id=document_dict["content"]["user_id"],
-                                    grade=document_dict["content"]["grade"],
-                                    
-                                    write_date=document_dict["content"]["write_date"],
-                                    validated=document_dict["categorization"]["validated"],
-                                    university=document_dict["categorization"]["university"],
-                                    document_type=document_dict["categorization"]["document_type"],
-                                    course_name=document_dict["categorization"]["course_name"],
-                                    subject=document_dict["categorization"]["subject"],
-
-                                    vote_directory=vote_directory,
-                                    comment_section=comment_section,
-
-                                    timestamp=document_dict["timestamp"])
-                
-                documents.append(document)
-
-        return documents
-
-class FirebaseManager:
-    _firebase_manager = None
-    _storage = FirebaseStorage()
-    _database = FirebaseDatabase()
-
-    def __new__(cls):
-        # Make sure there is only one instance of FirebseManager
-        if cls._firebase_manager == None:
-            # Sync with firebase
-            cls._firebase_manager = super(FirebaseManager, cls).__new__(cls)
-        
-        return cls._firebase_manager
-
-    def get_from_database_path(self, path):
-        data = self._database.get_from_path(path)
-
-        return data if data else None
-
-    def _set_from_firebase(self):
-        
-        users = {}
-        db_users = self._database.get_users()
-
-        for user in db_users:
-            self._user_dir.add(users[user])
-        
-    def get_all_courses(self) -> list[Course]:
-        return self._database.get_courses()
-
-    def get_all_documents(self) -> list[Document]:
-        return self._database.get_documents()
-
-    def get_all_users(self) -> list[User]:
-        return self._database.get_users()
-
-    def add_document(self, document: Document, user_id: str, course_name:str):
-        self._database.add_document(document=document, user_id=user_id, course_name=course_name)
-    
-    def update_document_votes(self, document_id, vote_directory_json):
-        self._database.update_document_votes(document_id=document_id, vote_directory_json=vote_directory_json)
-
-    def update_document_comment_sectino_votes(self, document_id, document_comment_section_json):
-        self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
-
-    def update_document_comment_section(self, document_id, document_comment_section_json):
-        self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
-
-    #methods below needs to move/change
-    def add_user(self, user_id, username, add_to_db=True):
-        """Create user and add to database."""
-
-        # Create a new user
-        user = User(user_id=user_id, username=username)
-
-        # Add user to dict
-        self._users[user_id] = user
-
-        # Save user in database
-        if add_to_db:
-            self._add_to_db(ref="/Users/", json=user.to_json())
-
-    def add_course(self, course: Course):
-        self._database.add_course(course=course)
-
 class Main:
     _main = None
     _firebase_manager = FirebaseManager()
@@ -1221,7 +1271,7 @@ class Main:
             print("FirebaseRealtimeDatabase sync initiated")
             self._set_user_directory_from_firebase(self)
             self._set_course_directory_from_firebase(self)
-            self._set_documents_from_firebase(self)
+            #self._set_documents_from_firebase(self)
             print("FirebaseRealtimeDatabase sync completed")
         except:
             print("Error: FirebaseRealtimeDatabase sync failed")
@@ -1324,18 +1374,26 @@ def test_course_search(search_controller):
 
 #test_course_search()
 
+
+
+
+
+
 main = Main()
+#print(main._course_dir.course_exists("Test 101"))
+#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "second")
+#main._user_dir.get("GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
+
+
+
+
+
+
 
 
 
 # is able to add documents where the user doesnt exist
-
-
-
-
-
-
-
+#directorys handle stuff=
 
 
 #main.add_course(course_name="Test 101", university="Blekinge Institute of Technology", subject="Mathematics")
@@ -1357,8 +1415,8 @@ def test_document() -> Document:
     
 #document = test_document()
 #main._document_dir.add(document=document)
-document = main._document_dir.get("8412bdf6c94f4aebb23e1ab485a110e9")
-document.add_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", False)
+#document = main._document_dir.get("8412bdf6c94f4aebb23e1ab485a110e9")
+#document.add_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", False)
 
 
 
