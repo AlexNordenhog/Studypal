@@ -192,9 +192,21 @@ class FirebaseDatabase(Firebase):
                 
                 if "comment_section" in list(current_course.keys()):
                     comment_section_id = current_course["comment_section"]["comment_section_id"]
+                    comments = {}
 
                     try:
-                        comments = current_course["comment_section"]["comments"]
+                        # Course Comments
+                        if current_course["comment_section"]["comments"].keys():
+                            for comment_id in list(current_course["comment_section"]["comments"].keys()):
+                                comment_json = current_course["comment_section"]["comments"][comment_id]
+                                comment = Comment(comment_id=comment_id,
+                                                  user_id=comment_json["user_id"],
+                                                  parent_path=comment_json["parent_path"],
+                                                  timestamp=comment_json["timestamp"],
+                                                  vote_dir=comment_json["vote_directory"],
+                                                  text=comment_json["text"])
+
+                                comments[comment_id] = comment
                     except:
                         comments = {}
 
@@ -460,12 +472,15 @@ class CommentSection():
         self._comments[comment.get_id()] = comment
 
     def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
-        reply = Comment(user_id=user_id, text=text)
-        if reply_to_comment_id not in self._replies.keys():
-            self._replies[reply_to_comment_id] = {}
-            self._replies[reply_to_comment_id][reply.get_id()] = reply
-        else:
-            self._replies[reply_to_comment_id][reply.get_id()] = reply
+        reply = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/replies/{reply_to_comment_id}")
+        FirebaseDatabase().push_to_path(reply._db_path, data=reply.to_json())
+        self._replies[reply.get_id()] = reply
+
+        #if reply_to_comment_id not in self._replies.keys():
+        #    self._replies[reply_to_comment_id] = {}
+        #    self._replies[reply_to_comment_id][reply.get_id()] = reply
+        #else:
+        #    self._replies[reply_to_comment_id][reply.get_id()] = reply
 
     def get_comment(self, comment_id):
         
@@ -578,7 +593,8 @@ class Comment:
             "user_id": self._user_id,
             "text":self._text,
             "timestamp":self._timestamp,
-            "vote_directory":self._vote_dir.to_json()
+            "vote_directory":self._vote_dir.to_json(),
+            "parent_path":self._db_path.replace(f"/{self._comment_id}", "")
         }
 
         return json
@@ -769,12 +785,26 @@ class Course:
         Updates the course object as well as firebase database.
         '''
         
-        #try:
-        self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
+        try:
+            self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
             #FirebaseDatabase().push_to_path(path=path, data=data)
-        self._comment_section.add_comment(user_id=user_id, text=text)
-        #except:
-        print(f"Failed to add comment to {self._course_name}")
+            self._comment_section.add_comment(user_id=user_id, text=text)
+        except:
+            print(f"Course: Failed to add comment to {self._course_name}")
+
+    def add_reply(self, user_id, reply_to_comment_id, text):
+        '''
+        Adds a comment to the course.
+
+        Updates the course object as well as firebase database.
+        '''
+        
+        try:
+            self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
+            #FirebaseDatabase().push_to_path(path=path, data=data)
+            self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
+        except:
+            print(f"Failed to add reply to {self._course_name}")
 
     def get_university(self):
         '''
@@ -796,7 +826,7 @@ class Course:
 
     def to_json(self):
         json = {
-            self.course_name:{
+            self._course_name:{
                 "Documents":{
                     "Graded Exams":(self._documents["Graded Exams"]),
                     "Exams":(self._documents["Exams"]),
@@ -806,7 +836,7 @@ class Course:
                 },
 
                 "Course Content":{
-                    "course_name":self.course_name,
+                    "course_name":self._course_name,
                     "university":self._university,
                     "subject":self._subject,
                     "validated":self._validated,
@@ -870,16 +900,29 @@ class CourseDirectory(Directory):
 
     def add_comment(self, course_name, user_id, text):
         if course_name in list(self._courses.keys()):
-            #try:
+            try:
                 course = self.get_course(course_name=course_name)
                 course.add_comment(user_id=user_id, text=text)
-                #FirebaseDatabase().add_comment()
-            #except:
-                print(f"Failed to add comment to course {course_name}")
+            except:
+                print(f"CourseDirectory: Failed to add comment to {course_name}")
         elif course_name in list(self._pending_courses.keys()):
             print(f"'{course_name}' is awaiting validation. The course must be validated before adding comments to the course.")
         else:
             print(f"'{course_name}' does not exist.")
+    
+    def add_reply(self, course_name, user_id, reply_to_comment_id, text):
+        if course_name in list(self._courses.keys()):
+            try:
+                course = self.get_course(course_name=course_name)
+                course.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
+                #FirebaseDatabase().add_comment()
+            except:
+                print(f"CourseDirectory: Failed to add reply to {course_name}")
+        elif course_name in list(self._pending_courses.keys()):
+            print(f"'{course_name}' is awaiting validation. The course must be validated before adding comments to the course.")
+        else:
+            print(f"'{course_name}' does not exist.")
+
 
     def get_course_names(self) -> list:
         '''
@@ -1381,9 +1424,12 @@ def test_course_search(search_controller):
 
 main = Main()
 #print(main._course_dir.course_exists("Test 101"))
-#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "second")
+#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
+#main._course_dir.add_comment("Test 101", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "help")
+main._course_dir.add_reply(course_name="IY1422 Finansiell ekonomi", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reply_to_comment_id="1afcfdab49b64af191a72647305d0739", text="wow")
 #main._user_dir.get("GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
 
+#print(main._course_dir.get_course("Test 101").to_json())
 
 
 
