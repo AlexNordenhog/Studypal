@@ -104,16 +104,8 @@ def document(document_id):
 def course_page(course_name):
     course_page_dict = main.to_json('course', course_name)
 
-    #
-    # Samma sak här, kommentarsfältet
-    #
-
-    comments = d.get_course_comments(course_name)
-    
-    for comment in comments:
-        if "uid" in comment.keys():
-            uid = comment["uid"]
-            comment["username"] = d.get_user(uid)["username"]    
+    # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
+    comments = main.get_course(course_name=course_name).get_comments()
 
     return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
 
@@ -211,15 +203,10 @@ def add_course_comment():
     course_name = data.get("course_name")
     text = data.get("text")
     
-    #
-    # Comment grejer
-    #
-
     # Add the comment to the document in the database
-    d.add_course_comment(course_name, uid, text)
+    main.get_course(course_name=course_name).add_comment(user_id=uid, text=text)
     
     return jsonify({"message": "Comment added to document successfully"})
-
 
 @views.route("/test-comment")
 def comment():

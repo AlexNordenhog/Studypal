@@ -517,18 +517,17 @@ class CommentSection():
         :page: int (1 is the first page)
         """
         comments = {}
-
+        
         # for now just returns the comments, no sorting
-        for comment_id in comments:
-            i = 1
-            username = Main._user_dir.get(self._comments[comment_id]["user_id"])
+        comment_ids = list(self._comments.keys())
 
-            comments[i] = {
-                "text":self._comments[comment_id]["text"],
-                "timestamp":self._comments[comment_id]["timestamp"],
-                "username":username,
-                "votes":self._comments[comment_id][""]
-            }
+        i = 1
+        for comment_id in comment_ids:
+            comment = self._comments[comment_id]
+            comment_json = comment.get_json()
+            username = Main._user_dir.get_username(comment_json["user_id"])
+            comment_json["username"] = username
+            comments[i] = comment_json
 
             i += 1
 
@@ -1106,6 +1105,12 @@ class UserDirectory(Directory):
         
         return user
 
+    def get_username(self, user_id):
+        try:
+            return self._users[user_id].get_username()
+        except:
+            return "removed user"
+
     def _is_unique_username(self, username) -> bool:
         """
         Returns bool wether if the username is unique.
@@ -1521,7 +1526,7 @@ def test_course_search(search_controller):
 
 
 main = Main()
-
+#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
 
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=False)
 #main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
@@ -1569,60 +1574,3 @@ def test_document() -> Document:
     
 #document = test_document()
 #main._document_dir.add(document=document)
-#document = main._document_dir.get("8412bdf6c94f4aebb23e1ab485a110e9")
-#document.add_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", False)
-
-
-
-#main.add_course("IY1422 Finansiell ekonomi", "Blekinge Institute of Technology", "Software Development")
-#main.add_course_comment("PA2576 Programvaruintensiv Produktutveckling", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
-
-#main.add_course("PA2576 Programvaruintensiv Produktutveckling",
-#                "Blekinge Institute of Technology",
-#               "Software Development")
-
-#main = Main()
-#print(main._document_dir.get("6f908051b1ca451f9790fdfcf3d8c702")._comment_section._comments["5c4dec83a0a94aa4864f00a183281d9a"])
-#main.add_document_vote("6f908051b1ca451f9790fdfcf3d8c702", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)
-#main.add_document_comment_vote("6f908051b1ca451f9790fdfcf3d8c702", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "5c4dec83a0a94aa4864f00a183281d9a", False)
-#main.add_document_comment_reply(reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="not")
-#main.add_document_comment_reply(reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="asd")
-#main.add_document_comment(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="asd")
-#main.add_document_comment_vote(document_id="6f908051b1ca451f9790fdfcf3d8c702", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", comment_id="ae468a771b204f7bb3efdc521dc14297", upvote=False)
-
-
-
-
-#main.add_document_comment_vote("6f908051b1ca451f9790fdfcf3d8c702", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "5c4dec83a0a94aa4864f00a183281d9a", True)
-#main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
-#                  university="Blekinge Institute of Technology", course_name="Analys 1", 
-#                  subject="Mathematics", write_date="2024-05-20")
-#main.add_document_comment(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", text="first")
-#main.add_document_comment_reply(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", text="what")
-#main.add_document_comment_vote(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", comment_id="5c4dec83a0a94aa4864f00a183281d9a", upvote=True)
-#main.add_document_comment_reply(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="6f908051b1ca451f9790fdfcf3d8c702", reply_to_comment_id="5c4dec83a0a94aa4864f00a183281d9a", text="second")
-
-
-
-
-
-
-#main.add_comment_vote(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="15daa9805d6040eb861acc4a012749d7", comment_id="fd3d4c6379b14d44afb16ce7cad585a6", upvote=False)
-#main.add_document_reply(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", document_id="15daa9805d6040eb861acc4a012749d7", reply_to_comment_id="fd3d4c6379b14d44afb16ce7cad585a6", text="asd")
-
-#print(list(main.get_document("15daa9805d6040eb861acc4a012749d7").get_comment_section_json()["comments"].keys()))
-#main.add_document_comment("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "15daa9805d6040eb861acc4a012749d7", "why ")
-#print(list(main.get_document("15daa9805d6040eb861acc4a012749d7").get_comment_section_json()["comments"].keys()))
-
-#main.add_document(pdf_url="https://", document_type="Assignments", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
-#                  university="Blekinge Institute of Technology", course_name="Analys 1",
-#                  subject="Mathematics", write_date="2021-05-01")
-
-#main.add_document_vote(document_id="15daa9805d6040eb861acc4a012749d7", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
-#main.add_document_vote(document_id="15daa9805d6040eb861acc4a012749d7", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=False)
-
-# DON't ACTUALLY DO THIS, PURELY TESTING
-#print(main._user_dir.get(user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2")._documents)
-
-
-#main.add_document_vote(document_id="cfa9d3c25925414ea861d6768ecf6b86", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
