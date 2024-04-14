@@ -523,13 +523,20 @@ class CommentSection():
 
         i = 1
         for comment_id in comment_ids:
-            comment = self._comments[comment_id]
-            comment_json = comment.get_json()
-            username = Main._user_dir.get_username(comment_json["user_id"])
-            comment_json["username"] = username
-            comments[i] = comment_json
+            comment = self._comments[comment_id] # comment object
+            comment_json = comment.get_json() # example { 'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 
+                                              #           'text': 'first', 
+                                              #           'timestamp': { 
+                                              #                 'date': '2024-04-13', 
+                                              #                 'time': '17:18:37'
+                                              #           } 
+                                              #         }
 
-            i += 1
+            username = Main._user_dir.get_username(comment_json["user_id"]) # returns the username of the user
+            comment_json["username"] = username # add username to comment_json
+            comments[i] = comment_json # append to dict
+
+            i += 1 # increase index
 
         return comments
         #return self._comments
