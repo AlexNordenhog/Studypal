@@ -179,17 +179,34 @@ class FirebaseDatabase(Firebase):
         ref = db.reference("/Courses", self._app)
         ref.update(course.to_json())
 
+    def get_documents_v2(self) -> list:
+        """
+        Returns a list containing all documents from firebase as :Document
+        """
+        
+        documents = []
+        documents_json = self.get_from_path("/Documents")
+        document_ids = list(documents_json.keys())
+
+        for document_id in document_ids:
+            pass
+
+
     def get_courses(self) -> list:
         """Returns list containing all courses avalable in the database."""
         courses = []
         courses_dict = self.get_from_path("/Courses")
         
         if courses_dict:
+
+            # Do for each course
             for course_name in courses_dict:
                 
                 current_course = courses_dict[course_name]["Course Content"]
-                comment_section = None
                 
+                # Comment Section
+                comment_section = None
+
                 if "comment_section" in list(current_course.keys()):
                     comment_section_id = current_course["comment_section"]["comment_section_id"]
                     comments = {}
@@ -200,10 +217,10 @@ class FirebaseDatabase(Firebase):
                             for comment_id in list(current_course["comment_section"]["comments"].keys()):
                                 comment_json = current_course["comment_section"]["comments"][comment_id]
                                 
+                                # Vote directory for each comment
                                 try:
                                     vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"],
                                                                    votes=comment_json["vote_directory"]["votes"])
-                                
                                 except:
                                     vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"])
 
@@ -218,8 +235,38 @@ class FirebaseDatabase(Firebase):
                     except:
                         comments = {}
 
+                    # Replies
+                    replies = {}
                     try:
-                        replies = current_course["comment_section"]["replies"]
+                        comment_ids = list(current_course["comment_section"]["replies"].keys())
+                        if comment_ids:
+
+                            # Replies for each comment
+                            for comment_id in comment_ids:
+                                reply_ids = list(current_course["comment_section"]["replies"][comment_id].keys())
+
+                                for reply_id in reply_ids:
+                                    reply_json = current_course["comment_section"]["replies"][comment_id][reply_id]
+                                    
+                                    # Vote directory for each reply
+                                    try:
+                                        vote_directory = VoteDirectory(vote_directory_id=reply_json["vote_directory"]["vote_directory_id"],
+                                                                    votes=reply_json["vote_directory"]["votes"])
+                                    except:
+                                        vote_directory = VoteDirectory(vote_directory_id=reply_json["vote_directory"]["vote_directory_id"])
+
+                                    reply = Comment(comment_id=reply_id,
+                                                    user_id=reply_json["user_id"],
+                                                    parent_path=reply_json["parent_path"],
+                                                    timestamp=reply_json["timestamp"],
+                                                    vote_dir=vote_directory,
+                                                    text=reply_json["text"])
+                                    
+                                    if not comment_id in replies.keys():
+                                        replies[comment_id] = {}
+                                    
+                                    replies[comment_id][reply_id] = reply
+
                     except:
                         replies = {}
                     
@@ -228,7 +275,7 @@ class FirebaseDatabase(Firebase):
                                                                      comment_section_id=comment_section_id,
                                                                      comments=comments,
                                                                      replies=replies)
-
+                
                 course = Course(course_name=course_name,
                                 university=current_course["university"],
                                 subject=current_course["subject"],
@@ -256,10 +303,10 @@ class FirebaseDatabase(Firebase):
                 document_path = f"Documents/{document_id}"
                 # Vote Directory
                 try:
-                    vote_directory = VoteDirectory(path=document_path+"/vote_directory", vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
+                    vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
                                                    votes=document_dict["vote_directory"]["votes"])
                 except:
-                    vote_directory = VoteDirectory(path=document_path+"/vote_directory")
+                    vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"])
 
                 # Cmoment section
                     # Comments
@@ -472,7 +519,11 @@ class VoteDirectory(Directory):
 
 class CommentSection():
 
-    def __init__(self, parent_path, comment_section_id = uuid.uuid4().hex, comments = {}, replies = {}) -> None:
+    def __init__(self, parent_path, 
+                       comment_section_id = uuid.uuid4().hex, 
+                       comments = {}, 
+                       replies = {}
+                       ) -> None:
         self._comment_section_id = comment_section_id
         self._comments = comments # { comment_id : Comment }
         self._replies = replies # { reply_to_comment_id : { comment_id : Comment } }
@@ -562,6 +613,8 @@ class CommentSection():
 
     def get_replies(self, comment_id: str):
         """
+        Structure of return will change to the same way comments are returned.
+
         Get replies from the comment_id.
         
         Returns a list of comments, or empty list if there are no replies.
@@ -584,12 +637,20 @@ class CommentSection():
     def get_id(self):
         return self._comment_section_id
     
-    def add_vote(self, comment_id, user_id, upvote):
+    def add_comment_vote(self, comment_id, user_id, upvote):
         try:
             comment = self._comments[comment_id]
             return comment.add_vote(user_id=user_id, upvote=upvote)
         except:
             print(f"CommentSection: Failed to add vote to comment: {comment_id}")
+
+    def add_reply_vote(self, comment_id, reply_id, user_id, upvote):
+        try:
+            reply = self._replies[comment_id][reply_id]
+            return reply.add_vote(user_id=user_id, upvote=upvote)
+        except:
+            print(f"CommentSection: Failed to add vote to reply: {reply_id}, on comment: {comment_id}")
+
 
 
     def to_json(self):
@@ -826,6 +887,9 @@ class Course:
 
         return self._comment_section.get_comments(sorting=sorting, order=order, amount=amount, page=page)
 
+    def get_replies(self, comment_id, sorting="popular", order="desc", amount: int = 10, page: int = 1):
+        return self._comment_section.get_replies(comment_id=comment_id)
+
     def approve_course(self):
         '''
         Approves the course by changing _validated to True.
@@ -895,11 +959,20 @@ class Course:
 
     def add_comment_vote(self, comment_id, user_id, upvote):
         try:
-            data = self._comment_section.add_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
+            data = self._comment_section.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
             path = f"{self._db_path}/Course Content/comment_section/comments/{comment_id}/vote_directory/votes"
             FirebaseDatabase().push_to_path(path=path, data=data)
         except:
             print(f"Course: Failed to add vote to comment: {comment_id}")
+
+    def add_reply_vote(self, comment_id, reply_id, user_id, upvote):
+        try:
+            data = self._comment_section.add_reply_vote(comment_id=comment_id, reply_id=reply_id, user_id=user_id, upvote=upvote)
+            path = f"{self._db_path}/Course Content/comment_section/replies/{comment_id}/{reply_id}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Course: Failed to add vote to reply: {reply_id}, on comment: {comment_id}")
+
 
     def to_json(self):
         json = {
@@ -1032,6 +1105,14 @@ class CourseDirectory(Directory):
             course.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
         except:
             print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
+
+    def add_reply_vote(self, course_name, comment_id, reply_id, user_id, upvote):
+        try:
+            course = self._courses[course_name]
+            course.add_reply_vote(comment_id=comment_id, reply_id=reply_id, user_id=user_id, upvote=upvote)
+        except:
+            print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
+
 
     def add_course(self, course: Course, add_to_firebase = True):
         '''
@@ -1429,6 +1510,8 @@ class Main:
         except:
             print("Error: FirebaseRealtimeDatabase sync failed")
         
+        
+        
     def to_json(self, type: str, id: str):
         '''
         Takes a type of page and converts it to json.
@@ -1533,7 +1616,12 @@ def test_course_search(search_controller):
 
 
 main = Main()
-print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
+#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
+#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_replies("22f53d4f3c2944d8a190d5ba004d9b4a"))
+#main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "22f53d4f3c2944d8a190d5ba004d9b4a", "sure")
+#main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", reply_id="5a56134e13b749d9a69cda7cda64b05e", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+
+
 
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=False)
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
