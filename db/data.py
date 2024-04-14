@@ -199,11 +199,19 @@ class FirebaseDatabase(Firebase):
                         if current_course["comment_section"]["comments"].keys():
                             for comment_id in list(current_course["comment_section"]["comments"].keys()):
                                 comment_json = current_course["comment_section"]["comments"][comment_id]
+                                
+                                try:
+                                    vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"],
+                                                                   votes=comment_json["vote_directory"]["votes"])
+                                
+                                except:
+                                    vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"])
+
                                 comment = Comment(comment_id=comment_id,
                                                   user_id=comment_json["user_id"],
                                                   parent_path=comment_json["parent_path"],
                                                   timestamp=comment_json["timestamp"],
-                                                  vote_dir=comment_json["vote_directory"],
+                                                  vote_dir=vote_directory,
                                                   text=comment_json["text"])
 
                                 comments[comment_id] = comment
@@ -443,14 +451,18 @@ class VoteDirectory(Directory):
             old_vote = self._votes[user_id]
 
             if old_vote == upvote:
-                return "User vote already stored"
+                print("User vote already stored")
+                return self._votes
             
             else:
                 self._votes[user_id] = upvote
-                return "User vote updated"
+                print("User vote updated")
+                return self._votes
+            
         except:
             self._votes[user_id] = upvote
-            return "User vote stored"
+            print("User vote stored")
+            return self._votes
         
     def to_json(self):
         return {
@@ -495,21 +507,52 @@ class CommentSection():
         
         print("404: Comment not found error")
     
-    def get_comments(self, sorting="popular"):
+    def get_comments(self, sorting="popular", order="desc", amount: int = 10, page: int = 1):
         """
-        Not yet implemented
-        
-        Sorting options: 'popular', 'latest'
+        Returns dict of comments on page :page:, if there is :amount: comments per page.
+
+        :sorting: "popular", "new"
+        :order: "desc" (descending), "asc" (ascending)
+        :amount: int
+        :page: int (1 is the first page)
         """
+        comments = {}
+
+        # for now just returns the comments, no sorting
+        for comment_id in comments:
+            i = 1
+            username = Main._user_dir.get(self._comments[comment_id]["user_id"])
+
+            comments[i] = {
+                "text":self._comments[comment_id]["text"],
+                "timestamp":self._comments[comment_id]["timestamp"],
+                "username":username,
+                "votes":self._comments[comment_id][""]
+            }
+
+            i += 1
+
+        return comments
+        #return self._comments
 
         if sorting == "popular":
-            pass
-        elif sorting == "latest":
-            pass
-        else:
-            print("Error: Sorting option not avalable")
+            if order == "desc":
+                pass
+            
+            elif order == "asc":
+                pass
 
-        return self._comments
+        elif sorting == "new":
+            if order == "desc":
+                pass
+            
+            elif order == "asc":
+                pass
+        
+        else:
+            print(f"Error: Sorting ({sorting}) or order ({order}) option not avalable")
+
+        
 
     def get_replies(self, comment_id: str):
         """
@@ -535,6 +578,14 @@ class CommentSection():
     def get_id(self):
         return self._comment_section_id
     
+    def add_vote(self, comment_id, user_id, upvote):
+        try:
+            comment = self._comments[comment_id]
+            return comment.add_vote(user_id=user_id, upvote=upvote)
+        except:
+            print(f"CommentSection: Failed to add vote to comment: {comment_id}")
+
+
     def to_json(self):
 
         comments_json = {}
@@ -757,6 +808,18 @@ class Course:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
 
 
+    def get_comments(self, sorting="popular", order="desc", amount: int = 10, page: int = 1):
+        """
+        Returns list of comments on page :page:, if there is :amount: comments per page.
+
+        :sorting: "popular", "new"
+        :order: "desc" (descending), "asc" (ascending)
+        :amount: int
+        :page: int (1 is the first page)
+        """
+
+        return self._comment_section.get_comments(sorting=sorting, order=order, amount=amount, page=page)
+
     def approve_course(self):
         '''
         Approves the course by changing _validated to True.
@@ -823,6 +886,14 @@ class Course:
         '''
         Returns a dictionary containing all the information needed to display the course in UI.
         '''
+
+    def add_comment_vote(self, comment_id, user_id, upvote):
+        try:
+            data = self._comment_section.add_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
+            path = f"{self._db_path}/Course Content/comment_section/comments/{comment_id}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Course: Failed to add vote to comment: {comment_id}")
 
     def to_json(self):
         json = {
@@ -949,6 +1020,13 @@ class CourseDirectory(Directory):
         except KeyError:
             raise ValueError(f'Could not get course for: {course_name}')
 
+    def add_comment_vote(self, course_name, comment_id, user_id, upvote):
+        try:
+            course = self._courses[course_name]
+            course.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
+        except:
+            print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
+
     def add_course(self, course: Course, add_to_firebase = True):
         '''
         Takes a course object and adds it to the course dictionary.
@@ -970,6 +1048,26 @@ class CourseDirectory(Directory):
         Takes a course object and adds it to the pending course dictionary.
         '''
         self._pending_courses.update({course.course_name : course})
+
+    def get_course_comments(self, course_name, sorting="popular", order="desc", amount: int = 10, page: int = 1):
+        """
+        Returns list of comments on page :page:, if there is :amount: comments per page.
+
+        :sorting: "popular", "new"
+        :order: "desc" (descending), "asc" (ascending)
+        :amount: int
+        :page: int (1 is the first page)
+        """
+
+        if course_name in list(self._courses):
+            course = self._courses[course_name]
+        else:
+            print(f"CourseDirectory: Could not find {course_name}.")
+            return
+        
+        comments = course.get_comments(sorting=sorting, order=order, amount=amount, page=page)
+
+        return comments
 
     def course_exists(self, course_name: str) -> bool:
         """
@@ -1423,11 +1521,21 @@ def test_course_search(search_controller):
 
 
 main = Main()
+
+
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=False)
+#main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+
+#main._course_dir.get_course_comments("IY1422 Finansiell ekonomi")
 #print(main._course_dir.course_exists("Test 101"))
 #main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
 #main._course_dir.add_comment("Test 101", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "help")
-main._course_dir.add_reply(course_name="IY1422 Finansiell ekonomi", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reply_to_comment_id="1afcfdab49b64af191a72647305d0739", text="wow")
+#main._course_dir.add_reply(course_name="IY1422 Finansiell ekonomi", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reply_to_comment_id="1afcfdab49b64af191a72647305d0739", text="another")
 #main._user_dir.get("GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
+
+
+
+
 
 #print(main._course_dir.get_course("Test 101").to_json())
 
