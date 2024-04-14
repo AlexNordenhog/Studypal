@@ -1526,14 +1526,22 @@ def test_course_search(search_controller):
 
 
 main = Main()
-#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
+print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
 
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=False)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=True)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="HufctBjyzkSdSOpm94q4Pk71OBX2", upvote=True)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="uvkNLsaTVDR9yg8JuTikKUkZv9y1", upvote=True)
 #main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+
+#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "like this")
+
+
 
 #main._course_dir.get_course_comments("IY1422 Finansiell ekonomi")
 #print(main._course_dir.course_exists("Test 101"))
-#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
+
 #main._course_dir.add_comment("Test 101", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "help")
 #main._course_dir.add_reply(course_name="IY1422 Finansiell ekonomi", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reply_to_comment_id="1afcfdab49b64af191a72647305d0739", text="another")
 #main._user_dir.get("GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
