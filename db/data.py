@@ -1617,7 +1617,6 @@ def test_course_search(search_controller):
 
 main = Main()
 
-main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments()
 #print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
 #print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_replies("7ad10a9b14c04f84817ac0579520f3a1"))
 #main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "7ad10a9b14c04f84817ac0579520f3a1", "sure")
