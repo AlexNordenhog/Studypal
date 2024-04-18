@@ -566,10 +566,8 @@ class CommentSection():
             comment = self._comments[comment_id] # comment object
             comment_json = comment.get_json() # example { 'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 
                                               #           'text': 'first', 
-                                              #           'timestamp': { 
-                                              #                 'date': '2024-04-13', 
-                                              #                 'time': '17:18:37'
-                                              #           } 
+                                              #           'timestamp': 2024-04-08 12:53:22,
+                                              #           'votes': {...}
                                               #         }
 
             username = Main._user_dir.get_username(comment_json["user_id"]) # returns the username of the user
@@ -686,7 +684,8 @@ class Comment:
         json = {
             "user_id": self._user_id,
             "text":self._text,
-            "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+            "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "votes":self._vote_dir.get()
         }
         return json
 
