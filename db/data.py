@@ -1613,6 +1613,26 @@ class Main:
         document = self._document_dir.get(document_id)
         document.validate_document()
 
+class TechnologicallyAdvancements:
+    def quicksort_lomutos(self, lst):
+        self._quicksort_lomutos(lst, 0, len(lst) - 1)
+
+    def _quicksort_lomutos(self, lst, start, end):
+        if start < end:
+            pivot = self.partition_lomutos(self, lst, start, end)
+            self._quicksort_lomutos(lst, start, pivot - 1)
+            self._quicksort_lomutos(lst, pivot + 1, end)
+
+    def partition_lomutos(self, lst: list, start: int, end: int) -> int:
+        pivot = lst[end]
+        i = start - 1
+        for j in range(start, end):
+            if lst[j] <= pivot:
+                i += 1
+                lst[i], lst[j] = lst[j], lst[i]
+        lst[i + 1], lst[end] = lst[end], lst[i + 1]
+        return i + 1
+
 def test_document():
     main = Main()
 
