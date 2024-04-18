@@ -566,16 +566,26 @@ class CommentSection():
             i += 1
 
         if sorting == 'popular':
-            pass
+            votes = []
+            for comment in self.comments:
+                vote_dir = comment.get_votes()
+                vote_score = vote_dir['upvotes'] - vote_dir['downvotes']
+                votes.append(vote_score)
+
+            if order == 'asc':
+                TechnologicallyAdvancements.quicksort_lomutos()
+
+            elif order == 'desc':
+                pass
 
         elif sorting == 'new':
             pass
 
-        if order == 'asc':
-            pass
+            if order == 'asc':
+                pass
 
-        elif order == 'desc':
-            pass
+            elif order == 'desc':
+                pass
 
         
         # # for now just returns the comments, no sorting
@@ -1614,23 +1624,33 @@ class Main:
         document.validate_document()
 
 class TechnologicallyAdvancements:
-    def quicksort_lomutos(self, lst):
-        self._quicksort_lomutos(lst, 0, len(lst) - 1)
+    def quicksort_lomutos(self, lst, ascdesc):
+        self._quicksort_lomutos(self, lst, 0, len(lst) - 1, ascdesc)
 
-    def _quicksort_lomutos(self, lst, start, end):
+    def _quicksort_lomutos(self, lst, start, end, ascdesc):
         if start < end:
-            pivot = self.partition_lomutos(self, lst, start, end)
-            self._quicksort_lomutos(lst, start, pivot - 1)
-            self._quicksort_lomutos(lst, pivot + 1, end)
+            if ascdesc == 'asc':
+                pivot = self.partition_lomutos(self, lst, start, end, ascdesc = 'asc')
+            else:
+                pivot = self.partition_lomutos(self, lst, start, end, ascdesc = 'desc')
+            self._quicksort_lomutos(self, lst, start, pivot - 1, ascdesc)
+            self._quicksort_lomutos(self, lst, pivot + 1, end, ascdesc)
 
-    def partition_lomutos(self, lst: list, start: int, end: int) -> int:
+    def partition_lomutos(lst: list, start: int, end: int, ascdesc: str) -> int:
         pivot = lst[end]
         i = start - 1
-        for j in range(start, end):
-            if lst[j] <= pivot:
-                i += 1
-                lst[i], lst[j] = lst[j], lst[i]
-        lst[i + 1], lst[end] = lst[end], lst[i + 1]
+        if ascdesc == 'asc':
+            for j in range(start, end):
+                if lst[j] <= pivot:
+                    i += 1
+                    lst[i], lst[j] = lst[j], lst[i]
+            lst[i + 1], lst[end] = lst[end], lst[i + 1]
+        else:
+            for j in range(start, end):
+                if lst[j] >= pivot:
+                    i += 1
+                    lst[i], lst[j] = lst[j], lst[i]
+            lst[i + 1], lst[end] = lst[end], lst[i + 1]
         return i + 1
 
 def test_document():
