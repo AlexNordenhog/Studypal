@@ -1,9 +1,10 @@
 import firebase_admin, os
 from firebase_admin import db, credentials, storage
-import datetime
+from datetime import datetime
 from pathlib import Path
 import uuid
 import difflib
+import time
 
 
 class Firebase:
@@ -227,7 +228,7 @@ class FirebaseDatabase(Firebase):
                                 comment = Comment(comment_id=comment_id,
                                                   user_id=comment_json["user_id"],
                                                   parent_path=comment_json["parent_path"],
-                                                  timestamp=comment_json["timestamp"],
+                                                  timestamp=datetime.strptime(comment_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
                                                   vote_dir=vote_directory,
                                                   text=comment_json["text"])
 
@@ -258,7 +259,7 @@ class FirebaseDatabase(Firebase):
                                     reply = Comment(comment_id=reply_id,
                                                     user_id=reply_json["user_id"],
                                                     parent_path=reply_json["parent_path"],
-                                                    timestamp=reply_json["timestamp"],
+                                                    timestamp=datetime.strptime(reply_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
                                                     vote_dir=vote_directory,
                                                     text=reply_json["text"])
                                     
@@ -301,6 +302,7 @@ class FirebaseDatabase(Firebase):
             for document_id in documents_dict:
                 document_dict = documents_dict[document_id]
                 document_path = f"Documents/{document_id}"
+                
                 # Vote Directory
                 try:
                     vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"],
@@ -326,7 +328,7 @@ class FirebaseDatabase(Firebase):
                         comments[comment_id] = Comment(user_id=comments_json[comment_id]["user_id"],
                                                         text=comments_json[comment_id]["text"],
                                                         comment_id=comments_json[comment_id]["comment_id"],
-                                                        timestamp=comments_json[comment_id]["timestamp"],
+                                                        timestamp=datetime.strptime(comments_json[comment_id]["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
                                                         vote_dir=comment_vote_directory)
                 except:
                    comments = {}
@@ -350,14 +352,16 @@ class FirebaseDatabase(Firebase):
                             replies[reply_id] = Comment(user_id=comments_json["user_id"],
                                                         text=comments_json["text"],
                                                         comment_id=comments_json["comment_id"],
-                                                        timestamp=comments_json["timestamp"],
+                                                        timestamp=datetime.strptime(comments_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
                                                         vote_dir=reply_vote_directory)
                 except:
                     replies = {}
 
+                parent_path = f"Documents/{document_id}/comment_section"
                 comment_section = CommentSection(comment_section_id=document_dict["comment_section"]["comment_section_id"],
-                                                     comments=comments,
-                                                     replies=replies)
+                                                 comments=comments,
+                                                 replies=replies,
+                                                 parent_path=parent_path)
                 
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
@@ -374,7 +378,7 @@ class FirebaseDatabase(Firebase):
                                     vote_directory=vote_directory,
                                     comment_section=comment_section,
 
-                                    timestamp=document_dict["timestamp"])
+                                    timestamp=datetime.strptime(document_dict["timestamp"], "%Y-%m-%d %H:%M:%S.%f"))
                 
                 documents.append(document)
 
@@ -444,21 +448,6 @@ class FirebaseManager:
     def add_course(self, course):
         self._database.add_course(course=course)
 
-
-
-class IDHandler:
-    #_used_ids = []
-    _id_handler = None
-
-    def __new__(cls):
-        if cls._id_handler == None:
-            cls._id_handler = super(IDHandler, cls).__new__(cls)
-        return cls._id_handler
-    
-    def get_new_id(self) -> str:
-        id = uuid.uuid4().hex
-        #self._used_ids.append(id)
-        return id
 
 class Timestamp:
     def __init__(self) -> None:
@@ -680,7 +669,7 @@ class CommentSection():
 
 class Comment:
 
-    def __init__(self, user_id, text, parent_path, comment_id = uuid.uuid4().hex, timestamp = Timestamp().timestamp, vote_dir = None):
+    def __init__(self, user_id, text, parent_path, comment_id = uuid.uuid4().hex, timestamp = datetime.now(), vote_dir = None):
         self._user_id = user_id
         self._comment_id = comment_id
         self._text = text
@@ -697,9 +686,12 @@ class Comment:
         json = {
             "user_id": self._user_id,
             "text":self._text,
-            "timestamp":self._timestamp
+            "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
         }
         return json
+
+    def get_timestamp(self):
+        return self._timestamp
 
     def to_json(self):
         """
@@ -710,7 +702,7 @@ class Comment:
             "comment_id":self._comment_id,
             "user_id": self._user_id,
             "text":self._text,
-            "timestamp":self._timestamp,
+            "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
             "vote_directory":self._vote_dir.to_json(),
             "parent_path":self._db_path.replace(f"/{self._comment_id}", "")
         }
@@ -743,7 +735,7 @@ class Document:
                  vote_directory: VoteDirectory = None, 
                  comment_section: CommentSection = None, 
                  document_id: str = uuid.uuid4().hex,
-                 timestamp = Timestamp().timestamp,
+                 timestamp = datetime.now(),
                  reported = False) -> None:
                 
         
@@ -761,6 +753,7 @@ class Document:
         self._subject = subject
         self._validated = validated
         self._document_id = document_id
+        self._db_path = f"Documents/{self._document_id}"
 
         self._timestamp = timestamp
 
@@ -785,8 +778,13 @@ class Document:
         """Returns the course name as str"""
         return self._course_name
 
-    def add_vote(self, user_id, upvote):
-        self._vote_directory.add(user_id=user_id, upvote=upvote)
+    def add_document_vote(self, user_id, upvote):
+        try:
+            data = self._vote_directory.add(user_id=user_id, upvote=upvote)
+            path = f"{self._db_path}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Document: Failed to add vote to document: {self._document_id}")
 
     def add_comment(self, user_id, text):
         self._comment_section.add_comment(user_id=user_id, text=text)
@@ -827,6 +825,14 @@ class Document:
         '''
         self._validated = True
     
+    def add_comment_vote(self, user_id, comment_id, upvote):
+        try:
+            data = self._comment_section.add_comment_vote(user_id=user_id, comment_id=comment_id, upvote=upvote)
+            path = f"{self._db_path}/comment_sectoin/comments/{comment_id}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Document: Failed to add vote to comment: {self._document_id}")
+
     def to_json(self):
         json = {
             self._document_id:{
@@ -850,7 +856,7 @@ class Document:
 
                 "comment_section":self._comment_section.to_json(),
 
-                "timestamp":self._timestamp
+                "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
             }
         }
     
@@ -998,7 +1004,7 @@ class Course:
         return json
 
 class User:
-    def __init__(self, user_id, username, role = "student", sign_up_timestamp=Timestamp().timestamp, documents: list = []) -> None:
+    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), documents: list = []) -> None:
         self._id = user_id
         self._username = username
         self._sign_up_timestamp = sign_up_timestamp
@@ -1048,6 +1054,23 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
+
+    def add_course(self, course: Course, add_to_firebase = True):
+        '''
+        Takes a course object and adds it to the course dictionary.
+        '''
+        if "/" in course.get_course_name():
+            print(f"Failed to add course. The course, {course.course_name}, containts invalid characters.")
+            return "Failed to add course, course contains invalid characters"
+
+        if not self.course_exists(course_name=course._course_name):
+            self._courses.update({course._course_name : course})
+            
+            if add_to_firebase:
+                FirebaseManager().add_course(course=course)
+        else:
+            print(f"Failed to add course. The course, {course.course_name}, already exists.")
+
     def add_comment(self, course_name, user_id, text):
         if course_name in list(self._courses.keys()):
             try:
@@ -1065,13 +1088,26 @@ class CourseDirectory(Directory):
             try:
                 course = self.get_course(course_name=course_name)
                 course.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
-                #FirebaseDatabase().add_comment()
             except:
                 print(f"CourseDirectory: Failed to add reply to {course_name}")
         elif course_name in list(self._pending_courses.keys()):
             print(f"'{course_name}' is awaiting validation. The course must be validated before adding comments to the course.")
         else:
             print(f"'{course_name}' does not exist.")
+
+    def add_comment_vote(self, course_name, comment_id, user_id, upvote):
+        try:
+            course = self._courses[course_name]
+            course.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
+        except:
+            print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
+
+    def add_reply_vote(self, course_name, comment_id, reply_id, user_id, upvote):
+        try:
+            course = self._courses[course_name]
+            course.add_reply_vote(comment_id=comment_id, reply_id=reply_id, user_id=user_id, upvote=upvote)
+        except:
+            print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
 
 
     def get_course_names(self) -> list:
@@ -1098,43 +1134,7 @@ class CourseDirectory(Directory):
             return self._courses[course_name]
         except KeyError:
             raise ValueError(f'Could not get course for: {course_name}')
-
-    def add_comment_vote(self, course_name, comment_id, user_id, upvote):
-        try:
-            course = self._courses[course_name]
-            course.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
-        except:
-            print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
-
-    def add_reply_vote(self, course_name, comment_id, reply_id, user_id, upvote):
-        try:
-            course = self._courses[course_name]
-            course.add_reply_vote(comment_id=comment_id, reply_id=reply_id, user_id=user_id, upvote=upvote)
-        except:
-            print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
-
-
-    def add_course(self, course: Course, add_to_firebase = True):
-        '''
-        Takes a course object and adds it to the course dictionary.
-        '''
-        if "/" in course.get_course_name():
-            print(f"Failed to add course. The course, {course.course_name}, containts invalid characters.")
-            return "Failed to add course, course contains invalid characters"
-
-        if not self.course_exists(course_name=course._course_name):
-            self._courses.update({course._course_name : course})
-            
-            if add_to_firebase:
-                FirebaseManager().add_course(course=course)
-        else:
-            print(f"Failed to add course. The course, {course.course_name}, already exists.")
-
-    def add_pending_course(self, course: Course):
-        '''
-        Takes a course object and adds it to the pending course dictionary.
-        '''
-        self._pending_courses.update({course.course_name : course})
+    
 
     def get_course_comments(self, course_name, sorting="popular", order="desc", amount: int = 10, page: int = 1):
         """
@@ -1431,7 +1431,7 @@ class Main:
                  write_date, grade = "ungraded",
                  validated = False, vote_directory = None, 
                  comment_section = None, document_id = uuid.uuid4().hex,
-                 timestamp = Timestamp().timestamp):
+                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")):
         
         document = Document(pdf_url=pdf_url, document_type=document_type, 
                  user_id=user_id, university=university, course_name=course_name, 
@@ -1501,11 +1501,12 @@ class Main:
             self._document_dir.add(document=document, add_to_firebase=False)
 
     def _set_from_firebase(self):
+        self._set_documents_from_firebase(self)
         try:
             print("FirebaseRealtimeDatabase sync initiated")
             self._set_user_directory_from_firebase(self)
             self._set_course_directory_from_firebase(self)
-            #self._set_documents_from_firebase(self)
+            
             print("FirebaseRealtimeDatabase sync completed")
         except:
             print("Error: FirebaseRealtimeDatabase sync failed")
@@ -1614,66 +1615,27 @@ def test_course_search(search_controller):
 
 
 
-
 main = Main()
+
+main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments()
 #print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
-#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_replies("22f53d4f3c2944d8a190d5ba004d9b4a"))
-#main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "22f53d4f3c2944d8a190d5ba004d9b4a", "sure")
-#main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", reply_id="5a56134e13b749d9a69cda7cda64b05e", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_replies("7ad10a9b14c04f84817ac0579520f3a1"))
+#main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "7ad10a9b14c04f84817ac0579520f3a1", "sure")
+#main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="7ad10a9b14c04f84817ac0579520f3a1", reply_id="5a56134e13b749d9a69cda7cda64b05e", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
 
 
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=False)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=True)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="HufctBjyzkSdSOpm94q4Pk71OBX2", upvote=True)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="22f53d4f3c2944d8a190d5ba004d9b4a", user_id="uvkNLsaTVDR9yg8JuTikKUkZv9y1", upvote=True)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=True)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="HufctBjyzkSdSOpm94q4Pk71OBX2", upvote=False)
+#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="uvkNLsaTVDR9yg8JuTikKUkZv9y1", upvote=False)
 #main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
-#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "like this")
-
-
-
-#main._course_dir.get_course_comments("IY1422 Finansiell ekonomi")
-#print(main._course_dir.course_exists("Test 101"))
-
-#main._course_dir.add_comment("Test 101", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "help")
-#main._course_dir.add_reply(course_name="IY1422 Finansiell ekonomi", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reply_to_comment_id="1afcfdab49b64af191a72647305d0739", text="another")
-#main._user_dir.get("GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
 
 
 
 
+#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)
 
-#print(main._course_dir.get_course("Test 101").to_json())
-
-
-
-
-
-
-
-
-# is able to add documents where the user doesnt exist
-#directorys handle stuff=
-
-
-#main.add_course(course_name="Test 101", university="Blekinge Institute of Technology", subject="Mathematics")
-#main.add_document("https://", "Exams", "userid", "Blekinge Institute of Technology", "Test 101", "Mathematics", "2020-02-02", "A")
-#course = main._course_dir.get("Test 101")
-#course.add_document(document_type="Exams", document_id="oijoij")
-
-def test_document() -> Document: 
-
-    document = Document(pdf_url="https",
-                    document_type="Exams",
-                    user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2",
-                    university="Blekinge Institute of Technology",
-                    course_name="Test 101",
-                    subject="Mathematics",
-                    write_date="2020-02-02",
-                    grade="A")
-    return document
-    
-#document = test_document()
-#main._document_dir.add(document=document)
+# does not load comments rn
+#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "0a5823bde9a944cb9f0f5ed3ff109f3d", True)
