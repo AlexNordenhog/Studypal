@@ -557,44 +557,64 @@ class CommentSection():
         :page: int (1 is the first page)
         """
         comments = {}
-        
-        # for now just returns the comments, no sorting
-        comment_ids = list(self._comments.keys())
 
+        comment_ids = list(self.get_comments_on_page(page))
         i = 1
         for comment_id in comment_ids:
-            comment = self._comments[comment_id] # comment object
-            comment_json = comment.get_json() # example { 'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 
-                                              #           'text': 'first', 
-                                              #           'timestamp': 2024-04-08 12:53:22,
-                                              #           'votes': {...}
-                                              #         }
+            comment = self._comments[page][comment_id]
+            comments[i] = comment
+            i += 1
 
-            username = Main._user_dir.get_username(comment_json["user_id"]) # returns the username of the user
-            comment_json["username"] = username # add username to comment_json
-            comments[i] = comment_json # append to dict
+        if sorting == 'popular':
+            pass
 
-            i += 1 # increase index
+        elif sorting == 'new':
+            pass
 
-        return comments
-        #return self._comments
+        if order == 'asc':
+            pass
 
-        if sorting == "popular":
-            if order == "desc":
-                pass
-            
-            elif order == "asc":
-                pass
+        elif order == 'desc':
+            pass
 
-        elif sorting == "new":
-            if order == "desc":
-                pass
-            
-            elif order == "asc":
-                pass
         
-        else:
-            print(f"Error: Sorting ({sorting}) or order ({order}) option not avalable")
+        # # for now just returns the comments, no sorting
+        # comment_ids = list(self._comments.keys())
+
+        # i = 1
+        # for comment_id in comment_ids:
+        #     comment = self._comments[comment_id] # comment object
+        #     comment_json = comment.get_json() # example { 'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 
+        #                                       #           'text': 'first', 
+        #                                       #           'timestamp': 2024-04-08 12:53:22,
+        #                                       #           'votes': {...}
+        #                                       #         }
+
+        #     username = Main._user_dir.get_username(comment_json["user_id"]) # returns the username of the user
+        #     comment_json["username"] = username # add username to comment_json
+        #     comments[i] = comment_json # append to dict
+
+        #     i += 1 # increase index
+
+        # return comments 
+        # #return self._comments
+
+        # if sorting == "popular":
+        #     if order == "desc":
+        #         pass
+            
+        #     elif order == "asc":
+        #         pass
+
+        # elif sorting == "new":
+        #     if order == "desc":
+        #         pass
+            
+        #     elif order == "asc":
+        #         pass
+        
+        # else:
+        #     print(f"Error: Sorting ({sorting}) or order ({order}) option not avalable")
 
         
 
@@ -664,6 +684,30 @@ class CommentSection():
             "replies":replies_json,
             "comment_section_id":self._comment_section_id
         }
+    
+    def get_comments_on_page(self, page):
+        '''
+        Get the comment dictionary for a certain page.
+        Based on _comments having the following structure:
+        _comments={
+            1:{
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+            },
+            
+            2:{
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+            }
+        }
+        '''
+        return self._comments[page]
 
 class Comment:
 
