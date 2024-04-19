@@ -4,7 +4,6 @@ from datetime import datetime
 from pathlib import Path
 import uuid
 import difflib
-import time
 
 
 class Firebase:
@@ -209,74 +208,13 @@ class FirebaseDatabase(Firebase):
                 comment_section = None
 
                 if "comment_section" in list(current_course.keys()):
-                    comment_section_id = current_course["comment_section"]["comment_section_id"]
-                    comments = {}
 
-                    try:
-                        # Course Comments
-                        if current_course["comment_section"]["comments"].keys():
-                            for comment_id in list(current_course["comment_section"]["comments"].keys()):
-                                comment_json = current_course["comment_section"]["comments"][comment_id]
-                                
-                                # Vote directory for each comment
-                                try:
-                                    vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"],
-                                                                   votes=comment_json["vote_directory"]["votes"])
-                                except:
-                                    vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"])
-
-                                comment = Comment(comment_id=comment_id,
-                                                  user_id=comment_json["user_id"],
-                                                  parent_path=comment_json["parent_path"],
-                                                  timestamp=datetime.strptime(comment_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
-                                                  vote_dir=vote_directory,
-                                                  text=comment_json["text"])
-
-                                comments[comment_id] = comment
-                    except:
-                        comments = {}
-
-                    # Replies
-                    replies = {}
-                    try:
-                        comment_ids = list(current_course["comment_section"]["replies"].keys())
-                        if comment_ids:
-
-                            # Replies for each comment
-                            for comment_id in comment_ids:
-                                reply_ids = list(current_course["comment_section"]["replies"][comment_id].keys())
-
-                                for reply_id in reply_ids:
-                                    reply_json = current_course["comment_section"]["replies"][comment_id][reply_id]
-                                    
-                                    # Vote directory for each reply
-                                    try:
-                                        vote_directory = VoteDirectory(vote_directory_id=reply_json["vote_directory"]["vote_directory_id"],
-                                                                    votes=reply_json["vote_directory"]["votes"])
-                                    except:
-                                        vote_directory = VoteDirectory(vote_directory_id=reply_json["vote_directory"]["vote_directory_id"])
-
-                                    reply = Comment(comment_id=reply_id,
-                                                    user_id=reply_json["user_id"],
-                                                    parent_path=reply_json["parent_path"],
-                                                    timestamp=datetime.strptime(reply_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
-                                                    vote_dir=vote_directory,
-                                                    text=reply_json["text"])
-                                    
-                                    if not comment_id in replies.keys():
-                                        replies[comment_id] = {}
-                                    
-                                    replies[comment_id][reply_id] = reply
-
-                    except:
-                        replies = {}
-                    
+                    #comment_section_id = current_course["comment_section"]["comment_section_id"]
                     parent_path = f"Courses/{course_name}/Course Content/comment_section"
-                    comment_section = comment_section=CommentSection(parent_path=parent_path,
-                                                                     comment_section_id=comment_section_id,
-                                                                     comments=comments,
-                                                                     replies=replies)
+                    comment_section = self._load_comment_section(comment_section_json=current_course["comment_section"],
+                                                                 parent_path=parent_path)
                 
+                # Create the course
                 course = Course(course_name=course_name,
                                 university=current_course["university"],
                                 subject=current_course["subject"],
@@ -286,6 +224,78 @@ class FirebaseDatabase(Firebase):
                 courses.append(course)
         
         return courses
+
+    def _load_comment_section(self, comment_section_json, parent_path):
+        
+        # Comment Section
+        comment_section = None
+        comments = {}
+        comment_section_id = comment_section_json
+
+        try:
+            # Course Comments
+            if comment_section_json["comments"].keys():
+                for comment_id in list(comment_section_json["comments"].keys()):
+                    comment_json = comment_section_json["comments"][comment_id]
+                    
+                    # Vote directory for each comment
+                    try:
+                        vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"],
+                                                        votes=comment_json["vote_directory"]["votes"])
+                    except:
+                        vote_directory = VoteDirectory(vote_directory_id=comment_json["vote_directory"]["vote_directory_id"])
+
+                    comment = Comment(comment_id=comment_id,
+                                        user_id=comment_json["user_id"],
+                                        parent_path=comment_json["parent_path"],
+                                        timestamp=datetime.strptime(comment_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
+                                        vote_dir=vote_directory,
+                                        text=comment_json["text"])
+
+                    comments[comment_id] = comment
+        except:
+            comments = {}
+
+        # Replies
+        replies = {}
+        try:
+            comment_ids = list(comment_section_json["replies"].keys())
+            if comment_ids:
+
+                # Replies for each comment
+                for comment_id in comment_ids:
+                    reply_ids = list(comment_section_json["replies"][comment_id].keys())
+
+                    for reply_id in reply_ids:
+                        reply_json = comment_section_json["replies"][comment_id][reply_id]
+                        
+                        # Vote directory for each reply
+                        try:
+                            vote_directory = VoteDirectory(vote_directory_id=reply_json["vote_directory"]["vote_directory_id"],
+                                                        votes=reply_json["vote_directory"]["votes"])
+                        except:
+                            vote_directory = VoteDirectory(vote_directory_id=reply_json["vote_directory"]["vote_directory_id"])
+
+                        reply = Comment(comment_id=reply_id,
+                                        user_id=reply_json["user_id"],
+                                        parent_path=reply_json["parent_path"],
+                                        timestamp=datetime.strptime(reply_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
+                                        vote_dir=vote_directory,
+                                        text=reply_json["text"])
+                        
+                        if not comment_id in replies.keys():
+                            replies[comment_id] = {}
+                        
+                        replies[comment_id][reply_id] = reply
+
+        except:
+            replies = {}
+        
+        comment_section = comment_section=CommentSection(parent_path=parent_path,
+                                                            comment_section_id=comment_section_id,
+                                                            comments=comments,
+                                                            replies=replies)
+        return comment_section
 
     def update(self, path, json):
         """
@@ -310,58 +320,15 @@ class FirebaseDatabase(Firebase):
                 except:
                     vote_directory = VoteDirectory(vote_directory_id=document_dict["vote_directory"]["vote_directory_id"])
 
-                # Cmoment section
-                    # Comments
-                try:
-                    comments = {}
-                    comment_ids = list(document_dict["comment_section"]["comments"].keys())
-                    comments_json = document_dict["comment_section"]["comments"]
-                    
-                    for comment_id in comment_ids:
-                        try:
-                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory", vote_directory_id=comments_json[comment_id]["vote_directory"]["vote_directory_id"],
-                                                                   votes=comments_json[comment_id]["vote_directory"]["votes"])
-
-                        except:
-                            comment_vote_directory = VoteDirectory(path=document_path+f"/comment_section/comments/{comment_id}/vote_directory")
-
-                        comments[comment_id] = Comment(user_id=comments_json[comment_id]["user_id"],
-                                                        text=comments_json[comment_id]["text"],
-                                                        comment_id=comments_json[comment_id]["comment_id"],
-                                                        timestamp=datetime.strptime(comments_json[comment_id]["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
-                                                        vote_dir=comment_vote_directory)
-                except:
-                   comments = {}
-
                 # Comment Section
-                    # Replies
-                try:
-                    replies = {}
-                    #reply_ids = list(document_dict["comment_section"]["replies"].keys())
-                    reply_to_comment_ids = list(document_dict["comment_section"]["replies"].keys())
-                    comments_json = document_dict["comment_section"]["comments"]
-                    
-                    for reply_to_comment_id in reply_to_comment_ids:
-                        for reply_id in document_dict["comment_section"]["replies"][reply_to_comment_id]:
-                            try:
-                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory", vote_directory_id=comments_json["vote_directory"]["vote_directory_id"])
+                comment_section = None
 
-                            except:
-                                reply_vote_directory = VoteDirectory(path=document_path+f"/comment_section/replies/{reply_to_comment_id}/{reply_id}/vote_directory")
+                if "comment_section" in list(document_dict.keys()):
 
-                            replies[reply_id] = Comment(user_id=comments_json["user_id"],
-                                                        text=comments_json["text"],
-                                                        comment_id=comments_json["comment_id"],
-                                                        timestamp=datetime.strptime(comments_json["timestamp"], "%Y-%m-%d %H:%M:%S.%f"),
-                                                        vote_dir=reply_vote_directory)
-                except:
-                    replies = {}
-
-                parent_path = f"Documents/{document_id}/comment_section"
-                comment_section = CommentSection(comment_section_id=document_dict["comment_section"]["comment_section_id"],
-                                                 comments=comments,
-                                                 replies=replies,
-                                                 parent_path=parent_path)
+                    #comment_section_id = current_course["comment_section"]["comment_section_id"]
+                    parent_path = f"Documents/{document_id}/comment_section"
+                    comment_section = self._load_comment_section(comment_section_json=document_dict["comment_section"],
+                                                                 parent_path=parent_path)
                 
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
@@ -759,8 +726,8 @@ class Document:
         if vote_directory:
             self._vote_directory = vote_directory
         else:
-            path = f"Documents/{self._document_id}/vote_directory"
-            self._vote_directory = VoteDirectory(path=path)
+            #path = f"Documents/{self._document_id}/vote_directory"
+            self._vote_directory = VoteDirectory()
 
         if comment_section:
             self._comment_section = comment_section
@@ -827,7 +794,7 @@ class Document:
     def add_comment_vote(self, user_id, comment_id, upvote):
         try:
             data = self._comment_section.add_comment_vote(user_id=user_id, comment_id=comment_id, upvote=upvote)
-            path = f"{self._db_path}/comment_sectoin/comments/{comment_id}/vote_directory/votes"
+            path = f"{self._db_path}/comment_section/comments/{comment_id}/vote_directory/votes"
             FirebaseDatabase().push_to_path(path=path, data=data)
         except:
             print(f"Document: Failed to add vote to comment: {self._document_id}")
@@ -1631,9 +1598,20 @@ main = Main()
 
 
 
+document = Document(pdf_url="https://", 
+                    document_type="Exams", 
+                    user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", 
+                    course_name="IY1422 Finansiell ekonomi",
+                    university="Blekinge Institute of Technology",
+                    subject="Economics",
+                    write_date="2020-01-03")
+#main._document_dir.add(document)
+#main._document_dir.get("7b1c74bca89b4d00b2b5bd15e385acf8").add_comment_reply("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "ty", "ced3703221124114a3f1441795a66aba")
+#main._document_dir.get("7b1c74bca89b4d00b2b5bd15e385acf8").add_comment_vote("6dZ517M5qoSdg740CJ2ThtzlJMx2", "ced3703221124114a3f1441795a66aba", True)
+
+#main._document_dir.get("728889c5e19a47a29715eee66163bd92").add_comment("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first comment")
+#main._document_dir.get("728889c5e19a47a29715eee66163bd92").add_comment_reply("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "ok", "cc7e2bcc776846efab4319b12a2f4332")
+#main._document_dir.get("728889c5e19a47a29715eee66163bd92").add_document_vote("6dZ517M5qoSdg740CJ2ThtzlJMx2", True)
 
 
-#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)
-
-# does not load comments rn
-#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "0a5823bde9a944cb9f0f5ed3ff109f3d", True)
+#main._document_dir.get("7b1c74bca89b4d00b2b5bd15e385acf8").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "ced3703221124114a3f1441795a66aba", False)

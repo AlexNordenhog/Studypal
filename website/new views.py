@@ -83,12 +83,7 @@ def document(document_id):
     #
     # Detta med kommentarer och grejer måste vi lösa här
     #
-    comments = d.get_document_comments(document_id)
-    
-    for comment in comments:
-        if "uid" in comment.keys():
-            uid = comment["uid"]
-            comment["username"] = d.get_user(uid)["username"]
+    comments = main.get_document(document_id=document_id).get_comments() # ej klar
         
     download_url = document_dict['upload']['pdf_url']
     
@@ -168,13 +163,9 @@ def add_document_comment():
     document_id = data.get("document_id")
     text = data.get("text")
 
-    #
-    #Hampoos comment
-    #
-
     # Add the comment to the document in the database
-    document = document_directory.get(document_id) # The document object
-    document.add_comment(uid, text)
+    document = main.get_document(document_id) # The document object
+    document.add_comment(user_id=uid, text=text)
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -191,6 +182,7 @@ def add_document_report():
     # Report behöver implementeras i data
     #
 
+    #main.add_document_report()
     d.add_document_report(document_id, uid, reason, text)
 
     return jsonify({"message": "Comment added to document successfully"})
@@ -221,7 +213,7 @@ def vote_document():
     is_upvote = data.get("is_upvote")
     
     # Add vote to the document in the database
-    main.add_document_vote(document_id, uid, is_upvote)
+    main.get_document(document_id=document_id).add_document_vote(user_id=uid, upvote=is_upvote)
     
     return jsonify({"message": "Vote added successfully"})
 
@@ -268,12 +260,7 @@ def upload_document_v2():
         subject=request.form['uploadSubject'],
         subject=request.form['uploadSubject'],
         write_date=request.form["documentDate"],
-        grade = 'ungraded',
-        validated = False,
-        vote_directory = None, # Hampos
-        comment_section = None, # Hampos
-        document_id = None,
-        timestamp = None
+        grade = 'ungraded' # should be what user specified
     ))
 
     return render_template("thank_you.html")
