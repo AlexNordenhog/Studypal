@@ -743,69 +743,6 @@ class Document:
 
         self._reported = reported
     
-    def get_author(self) -> str:
-        """Returns the author user id as str"""
-        return self._user_id
-
-    def get_course_name(self) -> str:
-        """Returns the course name as str"""
-        return self._course_name
-
-    def add_document_vote(self, user_id, upvote):
-        try:
-            data = self._vote_directory.add(user_id=user_id, upvote=upvote)
-            path = f"{self._db_path}/vote_directory/votes"
-            FirebaseDatabase().push_to_path(path=path, data=data)
-        except:
-            print(f"Document: Failed to add vote to document: {self._document_id}")
-
-    def add_comment(self, user_id, text):
-        self._comment_section.add_comment(user_id=user_id, text=text)
-
-    def get_vote_directory_json(self):
-        return self._vote_directory.to_json()
-
-    def get_id(self) -> int:
-        return self._document_id
-
-    def get_header(self) -> str:
-        return self._header()
-
-    def get_validation(self) -> bool:
-        return self._validated
-
-    def get_type(self):
-        return self._document_type
-    
-    def add_comment_reply(self, user_id, text, reply_to_comment_id):
-        self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
-
-    def get_comment_section_json(self):
-        return self._comment_section.to_json()
-
-    def get_comment(self, comment_id):
-        return self._comment_section.get_comment(comment_id=comment_id)
-
-    def get_report_status(self):
-        '''
-        Find out if the comment is reported.
-        '''
-        return self._reported
-    
-    def validate_document(self):
-        '''
-        Validate the document.
-        '''
-        self._validated = True
-    
-    def add_comment_vote(self, user_id, comment_id, upvote):
-        try:
-            data = self._comment_section.add_comment_vote(user_id=user_id, comment_id=comment_id, upvote=upvote)
-            path = f"{self._db_path}/comment_section/comments/{comment_id}/vote_directory/votes"
-            FirebaseDatabase().push_to_path(path=path, data=data)
-        except:
-            print(f"Document: Failed to add vote to comment: {self._document_id}")
-
     def to_json(self):
         json = {
             self._document_id:{
@@ -834,6 +771,70 @@ class Document:
         }
     
         return json
+
+    def get_author(self) -> str:
+        """Returns the author user id as str"""
+        return self._user_id
+
+    def get_course_name(self) -> str:
+        """Returns the course name as str"""
+        return self._course_name
+
+    def get_comment_section_json(self):
+        return self._comment_section.to_json()
+
+    def get_report_status(self):
+        '''
+        Find out if the comment is reported.
+        '''
+        return self._reported
+    
+    def validate_document(self):
+        '''
+        Validate the document.
+        '''
+        self._validated = True
+
+    # document votes
+
+    def add_document_vote(self, user_id, upvote):
+        try:
+            data = self._vote_directory.add(user_id=user_id, upvote=upvote)
+            path = f"{self._db_path}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Document: Failed to add vote to document: {self._document_id}")
+
+    def get_vote_directory_json(self):
+        return self._vote_directory.to_json()
+        return self._document_type
+       
+    # comment section
+
+    def add_comment(self, user_id, text):
+        self._comment_section.add_comment(user_id=user_id, text=text)
+
+    def add_comment_vote(self, user_id, comment_id, upvote):
+        try:
+            data = self._comment_section.add_comment_vote(user_id=user_id, comment_id=comment_id, upvote=upvote)
+            path = f"{self._db_path}/comment_section/comments/{comment_id}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Document: Failed to add vote to comment: {self._document_id}")
+
+    def get_comment(self, comment_id):
+        return self._comment_section.get_comment(comment_id=comment_id)
+    
+    def add_comment_reply(self, user_id, text, reply_to_comment_id):
+        self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
+
+    def add_reply_vote(self, user_id, comment_id, reply_id, upvote):
+        try:
+            data = self._comment_section.add_reply_vote(user_id=user_id, comment_id=comment_id, reply_id=reply_id, upvote=upvote)
+            path = f"{self._db_path}/comment_section/replies/{comment_id}/{reply_id}/vote_directory/votes"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+        except:
+            print(f"Document: Failed to add vote to reply: {self._document_id}")
 
 class Course:
     '''
