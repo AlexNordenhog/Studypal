@@ -1504,11 +1504,6 @@ class Main:
             user = self.get_user(id)
             json = user.to_json()
             return json
-        
-        elif type == 'document_comments':
-            self.get_document(document_id=id)
-            json = document.get_comments()
-            return json
 
         else:
             return 'Failed to get course/document json.'
