@@ -4,7 +4,8 @@ from datetime import datetime
 from pathlib import Path
 import uuid
 import difflib
-
+import time
+import operator
 
 class Firebase:
     _firebase = None
@@ -501,10 +502,10 @@ class CommentSection():
         #else:
         #    self._replies[reply_to_comment_id][reply.get_id()] = reply
 
-    def get_comment(self, comment_id):
-        
-        if comment_id in list(self._comments.keys()):
-            return self._comments[comment_id]
+    def get_comment(self, page, comment_id):
+
+        if comment_id in list(self._comments[page].keys()):
+            return self._comments[page][comment_id]
         else:
             replied_to_comment_ids = list(self._replies.keys())
             for replied_to_comment_id in replied_to_comment_ids:
@@ -514,7 +515,7 @@ class CommentSection():
         
         print("404: Comment not found error")
     
-    def get_comments(self, sorting="popular", order="desc", amount: int = 10, page: int = 1):
+    def get_comments(self, sorting, order, amount: int = 10, page: int = 1):
         """
         Returns dict of comments on page :page:, if there is :amount: comments per page.
 
@@ -523,47 +524,39 @@ class CommentSection():
         :amount: int
         :page: int (1 is the first page)
         """
-        comments = {}
-        
-        # for now just returns the comments, no sorting
-        comment_ids = list(self._comments.keys())
 
-        i = 1
+        _comments = {}
+        _sorted_comments = {}
+        comment_ids = list(self.get_comments_on_page(page))
+
         for comment_id in comment_ids:
-            comment = self._comments[comment_id] # comment object
-            comment_json = comment.get_json() # example { 'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 
-                                              #           'text': 'first', 
-                                              #           'timestamp': 2024-04-08 12:53:22,
-                                              #           'votes': {...}
-                                              #         }
+            comment = self.get_comment(page, comment_id)
+            _comments.update({comment_id : comment})
 
-            username = Main._user_dir.get_username(comment_json["user_id"]) # returns the username of the user
-            comment_json["username"] = username # add username to comment_json
-            comments[i] = comment_json # append to dict
+        if sorting == 'popular':
 
-            i += 1 # increase index
+            if order == 'asc':
+                for comment in (sorted(_comments.values(), key = operator.attrgetter('rating'))):
+                    _sorted_comments.update({comment.get_id() : comment})
 
-        return comments
-        #return self._comments
+            elif order == 'desc':
+                for comment in (sorted(_comments.values(), key = operator.attrgetter('rating'), reverse=True)):
+                    _sorted_comments.update({comment.get_id() : comment})
 
-        if sorting == "popular":
-            if order == "desc":
-                pass
-            
-            elif order == "asc":
-                pass
+        elif sorting == 'new':
 
-        elif sorting == "new":
-            if order == "desc":
-                pass
-            
-            elif order == "asc":
-                pass
-        
+            if order == 'asc':
+                for comment in (sorted(_comments.values(), key = operator.attrgetter('timestamp'))):
+                    _sorted_comments.update({comment.get_id() : comment})
+
+            elif order == 'desc':
+                for comment in (sorted(_comments.values(), key = operator.attrgetter('timestamp'), reverse=True)):
+                    _sorted_comments.update({comment.get_id() : comment})
+
         else:
             print(f"Error: Sorting ({sorting}) or order ({order}) option not avalable")
 
-        
+        return _sorted_comments
 
     def get_replies(self, comment_id: str):
         """
@@ -631,6 +624,30 @@ class CommentSection():
             "replies":replies_json,
             "comment_section_id":self._comment_section_id
         }
+    
+    def get_comments_on_page(self, page):
+        '''
+        Get the comment dictionary for a certain page.
+        Based on _comments having the following structure:
+        _comments={
+            1:{
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+            },
+            
+            2:{
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+                id:comment,
+            }
+        }
+        '''
+        return self._comments[page]
 
 class Comment:
 
@@ -638,7 +655,7 @@ class Comment:
         self._user_id = user_id
         self._comment_id = comment_id
         self._text = text
-        self._timestamp = timestamp
+        self.timestamp = timestamp
         self._db_path = f"{parent_path}/{comment_id}"
 
         if vote_dir:
@@ -646,6 +663,9 @@ class Comment:
 
         else:
             self._vote_dir = VoteDirectory()
+
+        votes = self._vote_dir.get()
+        self.rating = votes['upvotes'] - votes['downvotes']
 
     def get_json(self) -> str:
         json = {
@@ -668,7 +688,7 @@ class Comment:
             "comment_id":self._comment_id,
             "user_id": self._user_id,
             "text":self._text,
-            "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "timestamp":self.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
             "vote_directory":self._vote_dir.to_json(),
             "parent_path":self._db_path.replace(f"/{self._comment_id}", "")
         }
@@ -1598,20 +1618,40 @@ main = Main()
 
 
 
-document = Document(pdf_url="https://", 
-                    document_type="Exams", 
-                    user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", 
-                    course_name="IY1422 Finansiell ekonomi",
-                    university="Blekinge Institute of Technology",
-                    subject="Economics",
-                    write_date="2020-01-03")
-#main._document_dir.add(document)
-#main._document_dir.get("7b1c74bca89b4d00b2b5bd15e385acf8").add_comment_reply("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "ty", "ced3703221124114a3f1441795a66aba")
-#main._document_dir.get("7b1c74bca89b4d00b2b5bd15e385acf8").add_comment_vote("6dZ517M5qoSdg740CJ2ThtzlJMx2", "ced3703221124114a3f1441795a66aba", True)
-
-#main._document_dir.get("728889c5e19a47a29715eee66163bd92").add_comment("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first comment")
-#main._document_dir.get("728889c5e19a47a29715eee66163bd92").add_comment_reply("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "ok", "cc7e2bcc776846efab4319b12a2f4332")
-#main._document_dir.get("728889c5e19a47a29715eee66163bd92").add_document_vote("6dZ517M5qoSdg740CJ2ThtzlJMx2", True)
 
 
-#main._document_dir.get("7b1c74bca89b4d00b2b5bd15e385acf8").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "ced3703221124114a3f1441795a66aba", False)
+#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)
+
+# does not load comments rn
+#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "0a5823bde9a944cb9f0f5ed3ff109f3d", True)
+
+
+# Test comment section sorting
+def test_comment_sorting():
+    vote_dir1 = VoteDirectory('id', {'upvotes' : 17, 'downvotes' : 3})
+    vote_dir2 = VoteDirectory('id', {'upvotes' : 50, 'downvotes' : 10})
+    vote_dir3 = VoteDirectory('id', {'upvotes' : 30, 'downvotes' : 20})
+    vote_dir4 = VoteDirectory('id', {'upvotes' : 40, 'downvotes' : 10})
+    vote_dir5 = VoteDirectory('id', {'upvotes' : 100, 'downvotes' : 0})
+    comment1 = Comment(1, 'Första kommentaren', None, comment_id='id1', timestamp = '2024-04-18 15:30:00.000000', vote_dir=vote_dir1)
+    comment2 = Comment(1, 'Vad säger du??', None, comment_id='id2', timestamp = '2024-04-18 16:30:00.000000', vote_dir=vote_dir5)
+    comment3 = Comment(1, 'Nee va?', None, comment_id='id3', timestamp = '2024-04-18 14:30:00.000000', vote_dir=vote_dir2)
+    comment4 = Comment(1, 'Bra dokument tyckte jag iallafall.', None, comment_id='id4', timestamp = '2024-04-18 20:30:00.000000', vote_dir=vote_dir4)
+    comment5 = Comment(1, 'Cool hemsida', None, comment_id='id5', timestamp = '2024-04-18 18:30:00.000000', vote_dir=vote_dir3)
+
+    comment_section = CommentSection(None, comment_section_id='id', comments = {
+
+    1:{
+        'id1':comment1,
+        'id2':comment2,
+        'id3':comment3,
+        'id4':comment4,
+        'id5':comment5,
+    }
+    }, 
+    replies = {})
+
+    comments = comment_section.get_comments('new', 'asc', 10, 1)
+
+    for comment in comments.values():
+        print(comment._text)
