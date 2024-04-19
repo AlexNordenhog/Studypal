@@ -180,19 +180,6 @@ class FirebaseDatabase(Firebase):
         ref = db.reference("/Courses", self._app)
         ref.update(course.to_json())
 
-    def get_documents_v2(self) -> list:
-        """
-        Returns a list containing all documents from firebase as :Document
-        """
-        
-        documents = []
-        documents_json = self.get_from_path("/Documents")
-        document_ids = list(documents_json.keys())
-
-        for document_id in document_ids:
-            pass
-
-
     def get_courses(self) -> list:
         """Returns list containing all courses avalable in the database."""
         courses = []
@@ -1624,34 +1611,3 @@ main = Main()
 
 # does not load comments rn
 #main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "0a5823bde9a944cb9f0f5ed3ff109f3d", True)
-
-
-# Test comment section sorting
-def test_comment_sorting():
-    vote_dir1 = VoteDirectory('id', {'upvotes' : 17, 'downvotes' : 3})
-    vote_dir2 = VoteDirectory('id', {'upvotes' : 50, 'downvotes' : 10})
-    vote_dir3 = VoteDirectory('id', {'upvotes' : 30, 'downvotes' : 20})
-    vote_dir4 = VoteDirectory('id', {'upvotes' : 40, 'downvotes' : 10})
-    vote_dir5 = VoteDirectory('id', {'upvotes' : 100, 'downvotes' : 0})
-    comment1 = Comment(1, 'Första kommentaren', None, comment_id='id1', timestamp = '2024-04-18 15:30:00.000000', vote_dir=vote_dir1)
-    comment2 = Comment(1, 'Vad säger du??', None, comment_id='id2', timestamp = '2024-04-18 16:30:00.000000', vote_dir=vote_dir5)
-    comment3 = Comment(1, 'Nee va?', None, comment_id='id3', timestamp = '2024-04-18 14:30:00.000000', vote_dir=vote_dir2)
-    comment4 = Comment(1, 'Bra dokument tyckte jag iallafall.', None, comment_id='id4', timestamp = '2024-04-18 20:30:00.000000', vote_dir=vote_dir4)
-    comment5 = Comment(1, 'Cool hemsida', None, comment_id='id5', timestamp = '2024-04-18 18:30:00.000000', vote_dir=vote_dir3)
-
-    comment_section = CommentSection(None, comment_section_id='id', comments = {
-
-    1:{
-        'id1':comment1,
-        'id2':comment2,
-        'id3':comment3,
-        'id4':comment4,
-        'id5':comment5,
-    }
-    }, 
-    replies = {})
-
-    comments = comment_section.get_comments('new', 'asc', 10, 1)
-
-    for comment in comments.values():
-        print(comment._text)
