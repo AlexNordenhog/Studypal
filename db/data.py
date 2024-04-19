@@ -210,7 +210,7 @@ class FirebaseDatabase(Firebase):
                                 comment_section=comment_section)
                 
                 courses.append(course)
-        
+
         return courses
 
     def _load_comment_section(self, comment_section_json, parent_path):
@@ -279,10 +279,22 @@ class FirebaseDatabase(Firebase):
         except:
             replies = {}
         
+        try:
+            comment_pages = comment_section_json["comment_pages"]
+        except:
+            comment_pages = {}
+
+        try:
+            reply_pages = comment_section_json["reply_pages"]
+        except:
+            reply_pages = {}
+
         comment_section = comment_section=CommentSection(parent_path=parent_path,
                                                             comment_section_id=comment_section_id,
                                                             comments=comments,
-                                                            replies=replies)
+                                                            replies=replies,
+                                                            comment_pages=comment_pages,
+                                                            reply_pages=reply_pages)
         return comment_section
 
     def update(self, path, json):
@@ -291,7 +303,6 @@ class FirebaseDatabase(Firebase):
         """
         db.reference(path, self._app).update(json)
 
-    ##### WIP #####
     def get_documents(self) -> list:
         """Returns list containing all documents avalable in the database."""
         documents = []
@@ -466,28 +477,65 @@ class CommentSection():
     def __init__(self, parent_path, 
                        comment_section_id = uuid.uuid4().hex, 
                        comments = {}, 
-                       replies = {}
+                       replies = {},
+                       comment_pages = {},
+                       reply_pages = {}
                        ) -> None:
+        
         self._comment_section_id = comment_section_id
         self._comments = comments # { comment_id : Comment }
-        self._replies = replies # { reply_to_comment_id : { comment_id : Comment } }
+        self._replies = replies # { reply_to_comment_id : { reply_id : Comment } }
         self._db_path = f"{parent_path}"
+        self._comment_pages = comment_pages # { 1: [comment_id, comment_id], 2: [comment_id] }
+        self._reply_pages = reply_pages # { 1: [reply_id, reply_id], 2: [reply_id] }
+        self._comments_per_page = 10
+
+    def _add_comment_to_page(self, comment_id):
+        print(self._comment_pages)
+        pages = list(self._comment_pages.keys())
+        if pages:
+            page = max(pages) # last page
+
+            if len(self._comment_pages[page]) < self._comments_per_page:
+                self._comment_pages[page].append(comment_id)
+
+            else: # all pages have max comments
+                page = page + 1
+                self._comment_pages[page] = [comment_id]
+                    
+        else: # there are no pages, create the first one
+            page = 1
+            self._comment_pages[page] = []
+            self._comment_pages[page].append(comment_id)
+        
+        return page
+        
+    def _add_reply_to_page(self, reply_id, reply_to_comment_id):
+        pages = list(self._reply_pages[reply_to_comment_id].keys())
+        if pages:
+            page = max(pages) # last page
+
+            if len(self._reply_pages[reply_to_comment_id][page]) < self._comments_per_page:
+                self._reply_pages[reply_to_comment_id][page].append(reply_id)
+
+            else: # all pages have max comments
+                self._reply_pages[reply_to_comment_id][page + 1] = [reply_id]
+                    
+        else: # there are no pages, create the first one
+            self._reply_pages[reply_to_comment_id][1] = [reply_id]
 
     def add_comment(self, user_id: str, text: str):
         comment = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/comments")
         FirebaseDatabase().push_to_path(comment._db_path, data=comment.to_json())
+        page = self._add_comment_to_page(comment_id=comment.get_id())
         self._comments[comment.get_id()] = comment
+        FirebaseDatabase().push_to_path(f"{self._db_path}/comment_pages", {page:self._comment_pages[page]})
 
     def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
         reply = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/replies/{reply_to_comment_id}")
         FirebaseDatabase().push_to_path(reply._db_path, data=reply.to_json())
+        self._add_reply_to_page(reply_id=reply.get_id())
         self._replies[reply.get_id()] = reply
-
-        #if reply_to_comment_id not in self._replies.keys():
-        #    self._replies[reply_to_comment_id] = {}
-        #    self._replies[reply_to_comment_id][reply.get_id()] = reply
-        #else:
-        #    self._replies[reply_to_comment_id][reply.get_id()] = reply
 
     def get_comment(self, page, comment_id):
 
@@ -585,8 +633,6 @@ class CommentSection():
         except:
             print(f"CommentSection: Failed to add vote to reply: {reply_id}, on comment: {comment_id}")
 
-
-
     def to_json(self):
 
         comments_json = {}
@@ -609,7 +655,9 @@ class CommentSection():
         return {
             "comments":comments_json,
             "replies":replies_json,
-            "comment_section_id":self._comment_section_id
+            "comment_section_id":self._comment_section_id,
+            "comment_pages":self._comment_pages,
+            "reply_pages":self._reply_pages
         }
     
     def get_comments_on_page(self, page):
@@ -745,6 +793,12 @@ class Document:
     
     def get_id(self):
         return self._document_id
+
+    def get_header(self):
+        return self._header
+
+    def get_validation(self):
+        return self._validated
 
     def to_json(self):
         json = {
@@ -897,12 +951,12 @@ class Course:
         Updates the course object as well as firebase database.
         '''
         
-        try:
-            self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
+        #try:
+        #self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
             #FirebaseDatabase().push_to_path(path=path, data=data)
-            self._comment_section.add_comment(user_id=user_id, text=text)
-        except:
-            print(f"Course: Failed to add comment to {self._course_name}")
+        self._comment_section.add_comment(user_id=user_id, text=text)
+        #except:
+        #    print(f"Course: Failed to add comment to {self._course_name}")
 
     def add_reply(self, user_id, reply_to_comment_id, text):
         '''
@@ -992,12 +1046,10 @@ class User:
 
     def to_json(self) -> str:
         json = {
-            self._user_id:{
                 "username":self._username,
                 "creation_date":self._sign_up_timestamp,
                 "documents":self._documents,
                 "role":self._role
-            }
         }
 
         return json
@@ -1040,17 +1092,22 @@ class CourseDirectory(Directory):
             self._courses.update({course._course_name : course})
             
             if add_to_firebase:
+                path = f"/Universities/{course.get_university()}/{course.get_subject()}"
+                data = {
+                    course.get_course_name():False
+                }
                 FirebaseManager().add_course(course=course)
+                FirebaseDatabase().push_to_path(path=path, data=data)
         else:
-            print(f"Failed to add course. The course, {course.course_name}, already exists.")
+            print(f"Failed to add course. The course, {course.get_course_name()}, already exists.")
 
     def add_comment(self, course_name, user_id, text):
         if course_name in list(self._courses.keys()):
-            try:
+            #try:
                 course = self.get_course(course_name=course_name)
                 course.add_comment(user_id=user_id, text=text)
-            except:
-                print(f"CourseDirectory: Failed to add comment to {course_name}")
+            #except:
+             #   print(f"CourseDirectory: Failed to add comment to {course_name}")
         elif course_name in list(self._pending_courses.keys()):
             print(f"'{course_name}' is awaiting validation. The course must be validated before adding comments to the course.")
         else:
@@ -1234,6 +1291,11 @@ class DocumentDirectory(Directory):
         return reported_documents
 
 class SearchController:
+
+    def __init__(self) -> None:
+        self._course_dict = {
+            "Universities":FirebaseDatabase().get_from_path(path="Universities")
+        }
 
     def search(self, query, course_directory: CourseDirectory, university=None, subject=None, course=None):
         '''
@@ -1504,6 +1566,11 @@ class Main:
             user = self.get_user(id)
             json = user.to_json()
             return json
+        
+        elif type == 'document_comments':
+            document = self.get_document(document_id=id)
+            json = document.get_comments()
+            return json
 
         else:
             return 'Failed to get course/document json.'
@@ -1519,8 +1586,22 @@ class Main:
         Calls on the relevant user object to return a list of the documents
         uploaded by the user.
         '''
-        user = UserDirectory.get(user_id)
-        return user.get_documents()
+        user = self._user_dir.get(user_id)
+        document_ids = user.get_documents()
+
+        documents = []
+
+        for document_id in document_ids:
+            document = self._document_dir.get(document_id)
+
+            documents.append({
+                    document_id:{
+                        "header":f"{document.get_course_name()} - {document.get_header()}",
+                        "validated":document.get_validation()
+                    }
+                })
+
+        return documents
     
     def get_waiting_documents(self):
         '''
@@ -1584,14 +1665,23 @@ def test_course_search(search_controller):
 
 #test_course_search()
 
-
-
-
 # add document reports
 
 
-main = Main()
 
+main = Main()
+#course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
+#main._course_dir.add_course(course)
+#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "I don't like this course")
+main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
+print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comment_pages)
+print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comments)
+
+
+
+
+#print(main.get_user_documents("GrG6hgFUKHbQtNxKpSpGM6Sw84n2"))
+#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
 #print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
 #print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_replies("7ad10a9b14c04f84817ac0579520f3a1"))
 #main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "7ad10a9b14c04f84817ac0579520f3a1", "sure")
@@ -1605,8 +1695,8 @@ main = Main()
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="uvkNLsaTVDR9yg8JuTikKUkZv9y1", upvote=False)
 #main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
-
-
+#course = Course(course_name="PA2576 Programvaruintensiv produktutveckling", university="Blekinge Institute of Technology", subject="Software Development")
+#main._course_dir.add_course(course)
 
 
 #main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)

@@ -83,14 +83,14 @@ def document(document_id):
     #
     # Detta med kommentarer och grejer måste vi lösa här
     #
-    comments = document_dict[document_id]["comment_section"]["comments"]
+    comments = main.to_json("document_comments", document_id) #document_dict[document_id]["comment_section"]["comments"]
         
     download_url = document_dict['upload']['pdf_url']
     
     # pdf id instead of download url
     if 'https://' not in download_url:
-        file_storage = d.file_storage
-        download_url = file_storage.generate_download_url(document_id)
+        #file_storage = d.file_storage
+        download_url = ''#file_storage.generate_download_url(document_id)
 
     return render_template("document.html", document_dict=document_dict, download_url=download_url, comments=comments)
 
@@ -183,7 +183,8 @@ def add_document_report():
     #
 
     #main.add_document_report()
-    d.add_document_report(document_id, uid, reason, text)
+    #d.add_document_report(document_id, uid, reason, text)
+    print("supposed to add document report, (not implemented)")
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -226,7 +227,12 @@ def get_user():
     user = main.to_json('user', uid)
 
     if user != None:
-        return jsonify({"username":user["username"],"creation_date":user["creation_date"],"role":user["role"]})
+        return jsonify(
+            {
+                "username":user["username"],
+                "creation_date":user["creation_date"]["date"],
+                "role":user["role"]
+            })
     else:
         return jsonify({"username":'unregistered user', "creation_date":"none"})
 
@@ -258,7 +264,6 @@ def upload_document_v2():
         university=request.form['uploadUniversity'],
         course_name=course,
         subject=request.form['uploadSubject'],
-        subject=request.form['uploadSubject'],
         write_date=request.form["documentDate"],
         grade = 'ungraded' # should be what user specified
     ))
@@ -273,14 +278,26 @@ def get_user_documents_view():
     if uid is None:
         return jsonify({"error": "UID is required"}), 400
 
-    documents = main.get_user_documents(uid)
+    try:
+        documents = main.get_user_documents(uid)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # Handle unexpected errors from the database call
 
     if documents is not None:
-        # Format the list of IDs into a list of dictionaries
-        formatted_documents = [{"id": doc_id} for doc_id in documents]
+        # Transforming the documents into a more accessible format
+        formatted_documents = []
+        for document in documents:
+            for doc_id, details in document.items():
+                formatted_documents.append({
+                    "id": doc_id,
+                    "header": details.get('header', 'No Title'),
+                    "validated": details.get('validated', 'False')
+                })
         return jsonify(formatted_documents)
     else:
         return jsonify([])  # Return an empty list if no documents are found
+
+
 
 
 @views.route("/upload_v2")
@@ -299,7 +316,8 @@ def upload_temp_pdf():
     #
 
     if temp_url and temp_id and uid:
-        d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
+        #d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
+        print("temp pdf not implemented")
         return "Success"
     else:
         return "Missing parameters", 400
@@ -313,7 +331,7 @@ def upload_specificatoins(temp_id):
     # Temp pdf???
     #
 
-    temp_url = d.get_temp_pdf(temp_id)
+    temp_url = ''#d.get_temp_pdf(temp_id)
 
     universities = [
         'Blekinge Institute of Technology', 'Chalmers University of Technology', 'Dalarna University', 'GIH - the Swedish School of Sport and Health Sciences', 'Halmstad University', 
@@ -369,7 +387,7 @@ def validate_document(document_id):
 
 @views.route("validation/<document_id>")
 def validation(document_id):
-    document_dict = d.get_document(document_id)
+    document_dict = main.to_json(document, document_id)
     if document_dict is None:
         return "Document dict doesnt work", 404
     else:
@@ -379,15 +397,16 @@ def validation(document_id):
     
     # pdf id instead of download url
     if 'https://' not in download_url:
-        file_storage = d.file_storage
-        download_url = file_storage.generate_download_url(document_id)
+        #file_storage = d.file_storage
+        download_url = ''#file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
 
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):
-    reports = d.get_document_reports(document_id)
+    reports = ''
+    print("get document reports not implemented")
     return jsonify(reports)
 
 @views.route('/status')
