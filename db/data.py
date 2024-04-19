@@ -743,6 +743,9 @@ class Document:
 
         self._reported = reported
     
+    def get_id(self):
+        return self._document_id
+
     def to_json(self):
         json = {
             self._document_id:{
@@ -828,13 +831,8 @@ class Document:
     def add_comment_reply(self, user_id, text, reply_to_comment_id):
         self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
 
-    def add_reply_vote(self, user_id, comment_id, reply_id, upvote):
-        try:
-            data = self._comment_section.add_reply_vote(user_id=user_id, comment_id=comment_id, reply_id=reply_id, upvote=upvote)
-            path = f"{self._db_path}/comment_section/replies/{comment_id}/{reply_id}/vote_directory/votes"
-            FirebaseDatabase().push_to_path(path=path, data=data)
-        except:
-            print(f"Document: Failed to add vote to reply: {self._document_id}")
+    
+
 
 class Course:
     '''
