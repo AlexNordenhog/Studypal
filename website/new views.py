@@ -83,7 +83,7 @@ def document(document_id):
     #
     # Detta med kommentarer och grejer måste vi lösa här
     #
-    comments = main.get_document(document_id=document_id).get_comments() # ej klar
+    comments = document_dict[document_id]["comment_section"]["comments"]
         
     download_url = document_dict['upload']['pdf_url']
     

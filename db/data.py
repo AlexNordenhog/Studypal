@@ -502,7 +502,7 @@ class CommentSection():
         
         print("404: Comment not found error")
     
-    def get_comments(self, sorting, order, amount: int = 10, page: int = 1):
+    def get_comments(self, sorting='popular', order='desc', amount: int = 10, page: int = 1):
         """
         Returns dict of comments on page :page:, if there is :amount: comments per page.
 
@@ -831,7 +831,8 @@ class Document:
     def add_comment_reply(self, user_id, text, reply_to_comment_id):
         self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
 
-    
+    def get_comments(self, sorting='popular', order="desc"):
+        return self._comment_section.get_comments(sorting=sorting, order=order)
 
 
 class Course:
@@ -1502,6 +1503,11 @@ class Main:
         elif type == 'user':
             user = self.get_user(id)
             json = user.to_json()
+            return json
+        
+        elif type == 'document_comments':
+            self.get_document(document_id=id)
+            json = document.get_comments()
             return json
 
         else:
