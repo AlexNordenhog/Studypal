@@ -851,6 +851,18 @@ class Course:
         else:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
 
+    def validate(self):
+        path = f"Courses/{self._course_name}/Course Content"
+        data = {
+            "validated":True
+        }
+        self._validated = True
+        FirebaseDatabase().push_to_path(path=path, data=data)
+        path = f"Universities/{self._university}/{self._subject}"
+        data = {
+            self._course_name:True
+        }
+        FirebaseDatabase().push_to_path(path=path, data=data)
 
     def get_comments(self, sorting="popular", order="desc", amount: int = 10, page: int = 1):
         """
@@ -1023,6 +1035,9 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
+    def validate_course(self, course_name):
+        course = self.get_course(course_name=course_name)
+        course.validate()
 
     def add_course(self, course: Course, add_to_firebase = True):
         '''
@@ -1355,6 +1370,9 @@ class Main:
 
         return cls._main
 
+    def validate_course(self, course_name):
+        self._course_dir.validate_course(course_name=course_name)
+
     def add_user(self, user_id, username):
         user = User(user_id=user_id, username=username)
         self._user_dir.add(user=user)
@@ -1617,6 +1635,8 @@ def test_course_search(search_controller):
 
 
 main = Main()
+
+
 #course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
 #main._course_dir.add_course(course)
 #main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "I don't like this course")

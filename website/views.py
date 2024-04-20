@@ -402,7 +402,6 @@ def validation(document_id):
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
 
-
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):
     reports = ''
