@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block title %} {{ document_dict['upload']['header']
-}} {% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %} {{ content.header }} {% endblock %}
+{% block content %}
 
 <div class="grid">
   <div class="blankTop">
@@ -17,31 +17,28 @@
     </div>
   </div>
   <div class="leftInfo">
-    <h1 class="courseName">{{document_dict['categorization']['course']}}</h1>
-    <h3>{{ document_dict['upload']['header'] }}</h3>
-    <p>University: {{ document_dict['categorization']['school'] }}</p>
+    <h1 class="courseName">{{ categorization.course_name }}</h1>
+    <h3>{{ content.header }}</h3>
+    <p>University: {{ categorization.university }}</p>
   </div>
   <div class="rightInfo">
-    <p>Author: <strong>{{ document_dict['upload']['author']}}</strong></p>
-    <p>Uploaded: {{document_dict['timestamp']['date']}}</p>
+    <p>Author: <strong>{{ content.username }}</strong></p>
+    <p>Uploaded: {{ timestamp.date }}</p>
   </div>
   <div class="infoBlankTop"></div>
   <div class="infoBar">
     <div class="infoBarBox">
       <div class="content1">
         <!-- Koppla så när jag klickar på ämnet kommer jag till söksidan för ämnet? -->
-        <strong> Subject: &nbsp;</strong
-        >{{document_dict['categorization']['subject']}}
+        <strong> Subject: &nbsp;</strong>{{ categorization.subject }}
       </div>
       <div class="verticalDivider1"></div>
       <div class="content2">
-        <strong> Rating: &nbsp;</strong> {{ (document_dict['votes']['upvotes'] -
-        document_dict['votes']['downvotes']) }}
+        <strong> Rating: &nbsp;</strong> {{ votes.upvotes - votes.downvotes }}
       </div>
       <div class="verticalDivider2"></div>
       <div class="content3">
-        <strong> Comment: &nbsp;</strong> {{
-        document_dict['comments']['upload_comment']}}
+        <strong> Comment: &nbsp;</strong> {{ content.upload_comment }}
       </div>
     </div>
   </div>
@@ -55,10 +52,10 @@
       ></i>
       <!-- Man ska bara kunna gilla ett dokument en gång -->
       <div class="hands">
-        <div id="likes">{{document_dict['votes']['upvotes']}}</div>
+        <div id="likes">{{ votes.upvotes }}</div>
         <i id="likeBtn" class="bi bi-hand-thumbs-up"></i>
         <i id="dislikeBtn" class="bi bi-hand-thumbs-down"></i>
-        <div id="dislikes">{{document_dict['votes']['downvotes']}}</div>
+        <div id="dislikes">{{ votes.downvotes }}</div>
       </div>
       <i
         id="flagIcon"
@@ -84,7 +81,7 @@
         <!-- Comments will be dynamically added here from our firebase database -->
         <!-- Som moderator ska man kunna gå in på en användares profil samt ta bort kommentarer... -->
         <!-- Display of comments -->
-        {% for comment in comments %}
+        {% for comment_id, comment in comments.items() %}
         <div class="comment">
           <div class="comment-avatar">
             <!-- If we want it later -->
@@ -655,7 +652,7 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const document_id = "{{document_dict['id']}}";
+  const document_id = "{{ document_id }}";
 
   // Function to check if user exists in the database
   function userExists(uid) {
@@ -741,7 +738,7 @@
   }
 
   function castVote(isUpvote, uid) {
-    var documentId = "{{ document_dict['id'] }}";
+    var documentId = "{{ document_id }}";
     if (!documentId) {
       alert("Document ID not available!");
       return;
@@ -780,7 +777,7 @@
           method: "POST",
           body: JSON.stringify({
             uid: auth.currentUser.uid,
-            document_id: "{{ document_dict['id'] }}",
+            document_id: "{{ document_id }}",
             text: commentText,
           }),
           headers: {
@@ -811,7 +808,7 @@
 
       // Assuming the user is already signed in and you have their UID
       const uid = auth.currentUser ? auth.currentUser.uid : null;
-      const documentId = "{{ document_dict['id'] }}";
+      const documentId = "{{ document_id }}";
 
       if (!uid) {
         alert("You must be signed in to submit a report.");
