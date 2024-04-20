@@ -1,15 +1,17 @@
 from flask import Blueprint, request, render_template, jsonify
-from .search import s, SearchError
-from db.database import d
+from db.data import Main
+from db.data import SearchController
 from .categorization import c
 
 views = Blueprint("views", __name__)
 
+main = Main()
+search_controller = SearchController()
 
 @views.route("/")
 def home():
-    universities = d.get_all_universities()
-    subjects = d.get_all_unique_subjects()
+    universities = main.get_universities()
+    subjects = main.get_subjects()
     return render_template("home.html",
                            universities=universities,
                            subjects=subjects)
@@ -31,14 +33,14 @@ def search_results():
         course = None
     query = request.args.get('query', '')
 
-    results = s.search(query, university, subject, course)  
+    results = search_controller.search(query, university, subject, course)  
     return render_template('search.html', query=query, results=results)
 
 
 @views.route("/upload")
 def upload():
-    universities = d.get_all_universities()
-    subjects = d.get_all_unique_subjects()
+    universities = main.get_universities()
+    subjects = main.get_subjects()
     return render_template("upload.html", universities=universities, subjects=subjects)
 
 
@@ -52,80 +54,65 @@ def profile():
 def get_courses():
     university = request.args.get('university')
     subject = request.args.get('subject')
-    courses = d.get_courses_from_subject_at_university(university, subject)
+    courses = search_controller.get_courses_from_subject_at_university(university, subject)
     return jsonify(courses)
 
 
 @views.route('/get-subjects')
 def get_subjects():
     university = request.args.get('university')
-    uni_subjects = d.get_all_subjects_from_university(university)
+    uni_subjects = search_controller.get_all_subjects_from_university(university)
     return jsonify(uni_subjects)
 
 
 @views.route('/get-universities')
 def get_universities():
     subject = request.args.get('subject')
-    subject_unis = d.get_subject_universities(subject)
+    subject_unis = search_controller.get_subject_universities(subject)
     return jsonify(subject_unis)
 
 
 @views.route("document/<document_id>")
 def document(document_id):
-    document_dict = d.get_document(document_id)
+    document_dict = main.to_json('document', document_id)
     if document_dict is None:
         return "Document dict doesnt work", 404
     else:
         pass
 
-    comments = d.get_document_comments(document_id)
-    
-    for comment in comments:
-        if "uid" in comment.keys():
-            uid = comment["uid"]
-            comment["username"] = d.get_user(uid)["username"]
+    #
+    # Detta med kommentarer och grejer måste vi lösa här
+    #
+    comments = main.to_json("document_comments", document_id) #document_dict[document_id]["comment_section"]["comments"]
         
     download_url = document_dict['upload']['pdf_url']
     
     # pdf id instead of download url
     if 'https://' not in download_url:
-        file_storage = d.file_storage
-        download_url = file_storage.generate_download_url(document_id)
+        #file_storage = d.file_storage
+        download_url = ''#file_storage.generate_download_url(document_id)
 
     return render_template("document.html", document_dict=document_dict, download_url=download_url, comments=comments)
 
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):
-    course_page_dict = d.get_course_data(course_name)
+    course_page_dict = main.to_json('course', course_name)
 
-    comments = d.get_course_comments(course_name)
-    
-    for comment in comments:
-        if "uid" in comment.keys():
-            uid = comment["uid"]
-            comment["username"] = d.get_user(uid)["username"]    
+    # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
+    comments = main.get_course(course_name=course_name).get_comments()
 
     return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
-
-
-@views.app_errorhandler(SearchError)
-def handle_search_error(error):
-    '''
-    Redirects the user to the search_error page if there is an issue with 
-    executing the search() function when they press on the search button.
-    '''
-    return render_template('search_error.html')
-
 
 @views.route("/add_user", methods=["POST"])
 def add_user():
     data = request.json
-    uid = data.get("uid")
+    user_id = data.get("uid")
     username = data.get("username")
     
     # Add the user to the database
-    d.add_user(uid, username)
+    main.add_user(user_id=user_id,
+                  username=username)
     
     return jsonify({"message": "User added successfully"})
 
@@ -140,15 +127,14 @@ def get_document():
     data = request.json
     document_id = data.get("document_id")
     
-    # Get the document from the database
-    document = d.get_document(document_id)
+    document_dict = main.to_json('document', document_id)
     
     if document:
-        categorization = document.get("categorization", {})
-        comments = document.get("comments", {})
-        upload = document.get("upload", {})
-        votes = document.get("votes", {})
-        timestamp = document.get("timestamp", {})
+        categorization = document_dict.get("categorization", {})
+        comments = document_dict.get("comments", {})
+        upload = document_dict.get("upload", {})
+        votes = document_dict.get("votes", {})
+        timestamp = document_dict.get("timestamp", {})
         
         # Return specific values from the document
         return jsonify({
@@ -178,7 +164,8 @@ def add_document_comment():
     text = data.get("text")
 
     # Add the comment to the document in the database
-    d.add_document_comment(document_id, uid, text)
+    document = main.get_document(document_id) # The document object
+    document.add_comment(user_id=uid, text=text)
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -191,7 +178,13 @@ def add_document_report():
     text = data.get("text")
     reason = data.get("reason")
 
-    d.add_document_report(document_id, uid, reason, text)
+    #
+    # Report behöver implementeras i data
+    #
+
+    #main.add_document_report()
+    #d.add_document_report(document_id, uid, reason, text)
+    print("supposed to add document report, (not implemented)")
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -204,10 +197,9 @@ def add_course_comment():
     text = data.get("text")
     
     # Add the comment to the document in the database
-    d.add_course_comment(course_name, uid, text)
+    main.get_course(course_name=course_name).add_comment(user_id=uid, text=text)
     
     return jsonify({"message": "Comment added to document successfully"})
-
 
 @views.route("/test-comment")
 def comment():
@@ -222,7 +214,7 @@ def vote_document():
     is_upvote = data.get("is_upvote")
     
     # Add vote to the document in the database
-    d.add_document_vote(document_id, uid, is_upvote)
+    main.get_document(document_id=document_id).add_document_vote(user_id=uid, upvote=is_upvote)
     
     return jsonify({"message": "Vote added successfully"})
 
@@ -232,10 +224,15 @@ def get_user():
     data = request.json
     uid = data.get("uid")
 
-    user = d.get_user(uid)
+    user = main.to_json('user', uid)
 
     if user != None:
-        return jsonify({"username":user["username"],"creation_date":user["creation_date"],"role":user["role"]})
+        return jsonify(
+            {
+                "username":user["username"],
+                "creation_date":user["creation_date"]["date"],
+                "role":user["role"]
+            })
     else:
         return jsonify({"username":'unregistered user', "creation_date":"none"})
 
@@ -243,33 +240,6 @@ def get_user():
 @views.route("/test-vote")
 def test_comment():
     return render_template("/test-vote.html")
-
-
-@views.route('/upload_document', methods=['POST'])
-def upload_document():
-    if 'pdf_file' not in request.files:
-        return "No file part"
-    
-    pdf_file = request.files['pdf_file']
-
-    # Check if the file is selected
-    if pdf_file.filename == '':
-        return "No selected file"
-
-    # Add document to db
-    d.add_document(
-        pdf_url=request.form['downloadURL'],
-        course=request.form['course'],
-        school=request.form['school'],
-        upload_comment=request.form['upload_comment'],
-        subject=request.form['subject'],
-        uid=request.form['uid'],
-        header=request.form['header'],
-        type_of_document=request.form['type_of_document'],
-        tags=request.form.getlist('tags')
-    )
-    
-    return "Document uploaded successfully"
 
 @views.route('/upload_document_v2', methods=['POST'])
 def upload_document_v2():
@@ -287,17 +257,15 @@ def upload_document_v2():
 
     # Add document to db
     status = (
-        d.add_document(
+        main.add_document(
         pdf_url=request.form['tempURL'],
-        course=course,
-        school=request.form['uploadUniversity'],
-        upload_comment=request.form['documentComment'],
+        document_type=request.form['documentType'],
+        user_id=request.form['uid'],
+        university=request.form['uploadUniversity'],
+        course_name=course,
         subject=request.form['uploadSubject'],
-        uid=request.form['uid'],
-        header='none',
-        type_of_document=request.form['documentType'],
-        tags=[],
-        document_date=request.form["documentDate"]
+        write_date=request.form["documentDate"],
+        grade = 'ungraded' # should be what user specified
     ))
 
     return render_template("thank_you.html")
@@ -310,14 +278,26 @@ def get_user_documents_view():
     if uid is None:
         return jsonify({"error": "UID is required"}), 400
 
-    documents = d.get_user_documents(uid)
+    try:
+        documents = main.get_user_documents(uid)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # Handle unexpected errors from the database call
 
     if documents is not None:
-        # Format the list of IDs into a list of dictionaries
-        formatted_documents = [{"id": doc_id} for doc_id in documents]
+        # Transforming the documents into a more accessible format
+        formatted_documents = []
+        for document in documents:
+            for doc_id, details in document.items():
+                formatted_documents.append({
+                    "id": doc_id,
+                    "header": details.get('header', 'No Title'),
+                    "validated": details.get('validated', 'False')
+                })
         return jsonify(formatted_documents)
     else:
         return jsonify([])  # Return an empty list if no documents are found
+
+
 
 
 @views.route("/upload_v2")
@@ -331,8 +311,13 @@ def upload_temp_pdf():
     temp_id = request.json.get('temp_id')
     uid = request.json.get('uid')
 
+    #
+    # Temp pdf??
+    #
+
     if temp_url and temp_id and uid:
-        d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
+        #d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
+        print("temp pdf not implemented")
         return "Success"
     else:
         return "Missing parameters", 400
@@ -340,7 +325,13 @@ def upload_temp_pdf():
 
 @views.route('upload/specifications/<temp_id>', methods=["GET"])
 def upload_specificatoins(temp_id):
-    temp_url = d.get_temp_pdf(temp_id)
+
+
+    #
+    # Temp pdf???
+    #
+
+    temp_url = ''#d.get_temp_pdf(temp_id)
 
     universities = [
         'Blekinge Institute of Technology', 'Chalmers University of Technology', 'Dalarna University', 'GIH - the Swedish School of Sport and Health Sciences', 'Halmstad University', 
@@ -372,32 +363,10 @@ def upload_specificatoins(temp_id):
                            subjects=subjects,
                            document_types=document_types)
 
-@views.route('/submit-document', methods=['POST'])
-def submit_document():
-    pdf_url = request.form.get('tempURL')
-    uid = int(0)
-    document_type = request.form.get('documentType')
-    document_date = request.form.get('documentDate')
-    university = request.form.get('uploadUniversity')
-    subject = request.form.get('uploadSubject')
-    course = request.form.get('uploadCourse')
-    if course == 'Choose a course...':
-        course = request.form.get('manualUploadCourse')
-    comment = request.form.get('documentComment', '')
-    if document_type == 'Assignment':
-        grading_system = request.form.get('gradingSystem', '')
-        document_grade = request.form.get('documentGrade', '')
-        c.categorize(pdf_url, uid, document_type, document_date, university, subject, course, comment)
-    else:
-        c.categorize(pdf_url, uid, document_type, document_date, university, subject, course, comment)
-
-    return render_template("thank_you.html")
-
-
 @views.route("/documents_awaiting_validation")
 def get_waiting_documents():
-    document_ids = d._get_id_lst(waiting=True)
-    reported_ids = d.get_reported_document_ids()
+    document_ids = main.get_waiting_documents()
+    reported_ids = main.get_reported_documents()
 
     return render_template("documents_awaiting_validation.html",
                            documents_ids=document_ids, reported_ids=reported_ids)
@@ -411,14 +380,14 @@ def validate_document(document_id):
     if approve not in [True, False]:
         return "Error: Approve/Disapprove not provided."
     else:
-        d.validate_document(document_id, approve)
+        main.validate_document(document_id)
     
     return jsonify({"status":"success"})
 
 
 @views.route("validation/<document_id>")
 def validation(document_id):
-    document_dict = d.get_document(document_id)
+    document_dict = main.to_json(document, document_id)
     if document_dict is None:
         return "Document dict doesnt work", 404
     else:
@@ -428,15 +397,16 @@ def validation(document_id):
     
     # pdf id instead of download url
     if 'https://' not in download_url:
-        file_storage = d.file_storage
-        download_url = file_storage.generate_download_url(document_id)
+        #file_storage = d.file_storage
+        download_url = ''#file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
 
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):
-    reports = d.get_document_reports(document_id)
+    reports = ''
+    print("get document reports not implemented")
     return jsonify(reports)
 
 @views.route('/status')
