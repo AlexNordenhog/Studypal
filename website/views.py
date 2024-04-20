@@ -178,13 +178,7 @@ def add_document_report():
     text = data.get("text")
     reason = data.get("reason")
 
-    #
-    # Report behöver implementeras i data
-    #
-
-    #main.add_document_report()
-    #d.add_document_report(document_id, uid, reason, text)
-    print("supposed to add document report, (not implemented)")
+    main.add_document_report(document_id=document_id, user_id=uid, reason=reason, text=text)
 
     return jsonify({"message": "Comment added to document successfully"})
 

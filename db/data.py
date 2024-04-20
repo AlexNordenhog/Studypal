@@ -299,6 +299,7 @@ class FirebaseDatabase(Firebase):
             for document_id in documents_dict:
                 document_dict = documents_dict[document_id]
                 document_path = f"Documents/{document_id}"
+                dict_keys = list(document_dict.keys())
                 
                 # Vote Directory
                 try:
@@ -310,13 +311,26 @@ class FirebaseDatabase(Firebase):
                 # Comment Section
                 comment_section = None
 
-                if "comment_section" in list(document_dict.keys()):
+                if "comment_section" in dict_keys:
 
                     #comment_section_id = current_course["comment_section"]["comment_section_id"]
                     parent_path = f"Documents/{document_id}/comment_section"
                     comment_section = self._load_comment_section(comment_section_json=document_dict["comment_section"],
                                                                  parent_path=parent_path)
                 
+                if "reports" in document_dict["categorization"]:
+                    reports = {}
+                    reports_ids = list(document_dict["categorization"]["reports"].keys())
+                    for report_id in reports_ids:
+                        report = Report(document_id=document_id,
+                                        user_id=document_dict["categorization"]["reports"][report_id]["user_id"],
+                                        reason=document_dict["categorization"]["reports"][report_id]["reason"],
+                                        text=document_dict["categorization"]["reports"][report_id]["text"],
+                                        report_id=report_id)
+                        reports[report_id] = report
+                else:
+                    reports = {}
+
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
                                     user_id=document_dict["content"]["user_id"],
@@ -331,6 +345,9 @@ class FirebaseDatabase(Firebase):
 
                                     vote_directory=vote_directory,
                                     comment_section=comment_section,
+
+                                    reports=reports,
+                                    reported=document_dict["categorization"]["reported"],
 
                                     timestamp=datetime.strptime(document_dict["timestamp"], "%Y-%m-%d %H:%M:%S.%f"))
                 
@@ -402,6 +419,27 @@ class FirebaseManager:
     def add_course(self, course):
         self._database.add_course(course=course)
 
+
+class Report:
+    def __init__(self, document_id, user_id, reason, text, report_id = uuid.uuid4().hex) -> None:
+        self._document_id = document_id
+        self._user_id = user_id
+        self._reason = reason
+        self._text = text
+        self._report_id = report_id
+    
+    def get_id(self):
+        return self._report_id
+
+    def to_json(self):
+        json = {
+            "document_id":self._document_id,
+            "user_id":self._user_id,
+            "reason":self._reason,
+            "text":self._text
+        }
+
+        return json
 
 class Timestamp:
     def __init__(self) -> None:
@@ -696,12 +734,14 @@ class Document:
                  subject: str,
                  write_date: str,
                  grade: str = "ungraded",
-                 validated: bool = False, 
+                 validated: bool = False,
                  vote_directory: VoteDirectory = None, 
                  comment_section: CommentSection = None, 
                  document_id: str = uuid.uuid4().hex,
                  timestamp = datetime.now(),
-                 reported = False) -> None:
+                 reported = False,
+                 reports = {}
+                 ) -> None:
                 
         
         # document content
@@ -734,7 +774,11 @@ class Document:
             self._comment_section = CommentSection(parent_path="")
 
         self._reported = reported
+        self._reports = reports
     
+    def get_type(self):
+        return self._document_type
+
     def get_id(self):
         return self._document_id
 
@@ -760,7 +804,9 @@ class Document:
                     "course_name":self._course_name,
                     "subject":self._subject,
                     "validated":self._validated,
-                    "document_type":self._document_type
+                    "document_type":self._document_type,
+                    "reports":self._reports,
+                    "reported":self._reported
                 },
 
                 "vote_directory":self._vote_directory.to_json(),
@@ -783,6 +829,19 @@ class Document:
 
     def get_comment_section_json(self):
         return self._comment_section.to_json()
+
+    def add_report(self, user_id, reason, text):
+        report = Report(document_id=self._document_id, user_id=user_id, reason=reason, text=text)
+        
+        if not self._reported:
+            self._reported = True
+            FirebaseDatabase().push_to_path(path = f"Documents/{self._document_id}/categorization", data = {"reported":True})
+        
+        self._reports[report.get_id()] = report
+        data = {report.get_id():report.to_json()}
+        path = f"Documents/{self._document_id}/categorization/reports"
+        FirebaseDatabase().push_to_path(data=data, path=path)
+        
 
     def get_report_status(self):
         '''
@@ -1442,7 +1501,7 @@ class Main:
         
         else:
             # add to document dir and firebase
-            course = self._course_dir.get(course_name=course_name)
+            course = self._course_dir.get_course(course_name=course_name)
             self._document_dir.add(document=document)
 
             # add reference in course
@@ -1589,6 +1648,11 @@ class Main:
         document = self._document_dir.get(document_id)
         document.validate_document()
 
+    def add_document_report(self, document_id, user_id, reason, text):
+        """Add a report to a document"""
+        document = self._document_dir.get(document_id=document_id)
+        document.add_report(user_id, reason, text)
+
 def test_document():
     main = Main()
 
@@ -1635,6 +1699,9 @@ def test_course_search(search_controller):
 
 
 main = Main()
+
+#main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", university="Blekinge Institute of Technology", course_name="IY1422 Finansiell ekonomi", subject="Economics", write_date="2020-01-01")
+#main.add_document_report(document_id="7c9098967be84e70a4f0e8218dfab378", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reason="stolen", text="this is my exam, why")
 
 
 #course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
