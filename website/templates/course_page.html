@@ -1,14 +1,14 @@
-{% extends "base.html" %} {% block title %}{{ course_page_dict['course_name']
+{% extends "base.html" %} {% block title %}{{ content.course_name
 }}{% endblock %} {% block content %}
 
 <div class="grid">
   <div class="blankTop"></div>
   <div class="leftInfo">
     <h1 class="courseName">
-      <strong> {{course_page_dict['course_name']}} </strong>
+      <strong> {{ content.course_name }} </strong>
     </h1>
-    <h3>{{ course_page_dict['course_university']}}</h3>
-    <p>Subject: {{ course_page_dict['course_subject'] }}</p>
+    <h3>{{ content.university }}</h3>
+    <p>Subject: {{ content.subject }}</p>
   </div>
   <div class="rightInfo">
     <p>Något</p>
@@ -32,39 +32,21 @@
   </div>
   <div class="infoBlankBottom"></div>
   <div class="documentArea">
-    <!-- kanske lägga till ett filter om det skulle finnas många dokument? -->
-    <div id="content1" class="content">
-      {% for doc_type, doc_names in
-      course_page_dict['course_documents_name_dict'].items() %}
-      <h3><strong> {{ doc_type }} </strong></h3>
-      <ul class="documentList">
-        {% for doc_name in doc_names %}
+    <!-- Loop through each document type and its corresponding documents -->
+    {% for doc_type, doc_ids in documents.items() %}
+    <h3><strong> {{ doc_type }} </strong></h3>
+    <ul class="documentList">
+        {% for doc_id, doc_name in doc_ids.items() %}
         <li class="documentResult">
-          {% set doc_id =
-          course_page_dict['course_documents_id_dict'][doc_type][loop.index0] %}
-          <a href="{{ url_for('views.document', document_id=doc_id) }}"
-            >{{ doc_name }}</a
-          >
-          <div class="vote-counters">
-            {% if doc_id in course_page_dict['course_documents_votes_dict'] %}
-            <span class="badge bg-success mx-1"
-              >{{ course_page_dict['course_documents_votes_dict'][doc_id][0]
-              }}</span
-            >
-            <span class="badge bg-danger mx-1"
-              >{{ course_page_dict['course_documents_votes_dict'][doc_id][1]
-              }}</span
-            >
-            {% else %}
-            <span class="badge bg-success mx-1">0</span>
-            <span class="badge bg-danger mx-1">0</span>
-            {% endif %}
-          </div>
+            <a href="{{ url_for('views.document', document_id=doc_id) }}">
+                {{ doc_name }}
+            </a>
+            <!-- Add your logic here to display votes or other properties -->
         </li>
         {% endfor %}
-      </ul>
-      {% endfor %}
-    </div>
+    </ul>
+    {% endfor %}
+</div>
   </div>
   <div class="documentFacts">
     <div class="documentFactsBox">
@@ -88,7 +70,7 @@
       <div class="comments-display">
         <!-- Comments will be dynamically added here from our database -->
         <!-- Display of comments -->
-        {% for comment in comments %}
+        {% for comment_id, comment in comments.items() %}
         <div class="comment">
           <div class="comment-avatar">
             <!-- If we want it later -->
@@ -389,7 +371,7 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const course_name = "{{course_page_dict['course_name']}}";
+  const course_name = "{{ content.course_name }}";
 
   // Function to check if user exists in the database
   function userExists(uid) {
@@ -418,7 +400,7 @@
           method: "POST",
           body: JSON.stringify({
             uid: auth.currentUser.uid,
-            course_name: "{{ course_page_dict['course_name'] }}",
+            course_name: "{{ content.course_name }}",
             text: commentText,
           }),
           headers: {

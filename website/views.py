@@ -91,26 +91,6 @@ def document(document_id):
     votes = document_data.get('votes', {})
     timestamp = document_data.get('timestamp', '')
 
-    print("content:")
-    print(content)
-    print()
-    print("categorization")
-    print(categorization)
-    print()
-    print("comments")
-    print(comments)
-    print()
-    print("download_url")
-    print(download_url)
-    print()
-    print("votes")
-    print(votes)
-    print()
-    print("timestamp")
-    print(timestamp)
-    print()
-
-
     # Pass the data to the template
     return render_template("document.html", 
                            content=content, 
@@ -125,12 +105,21 @@ def document(document_id):
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):
-    course_page_dict = main.to_json('course_page', course_name, main)
+    course_data = main.to_json('course_page', course_name)
 
+    if not course_data:
+        return "Course not found", 404
+
+    content = course_data.get('content', {})
+    documents = course_data.get("Documents", {})
     # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
-    comments = main.get_course(course_name=course_name).get_comments()
+    comments = main.to_json("course_comments", course_name)
+    print(comments)
 
-    return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
+    return render_template("course_page.html", 
+                           content=content,
+                           documents=documents,
+                           comments=comments)
 
 @views.route("/add_user", methods=["POST"])
 def add_user():

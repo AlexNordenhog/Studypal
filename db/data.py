@@ -209,6 +209,14 @@ class FirebaseDatabase(Firebase):
                                 validated=current_course["validated"],
                                 comment_section=comment_section)
                 
+                if "Documents" in list(courses_dict[course_name].keys()):
+                    print(list(courses_dict[course_name]["Documents"].keys()))
+                    for document_type in courses_dict[course_name]["Documents"].keys():
+                        document_ids = courses_dict[course_name]["Documents"][document_type].keys()
+                        for document_id in document_ids:
+                            document_name = courses_dict[course_name]["Documents"][document_type][document_id]
+                            course.add_document(document_id=document_id, document_type=document_type, document_name=document_name, add_to_firebase = False)
+                
                 courses.append(course)
 
         return courses
@@ -942,7 +950,7 @@ class Course:
         self._course_name = course_name # id
         self._university = university
         self._subject = subject
-        self._documents = {'Graded Exams' : [], 'Exams' : [], 'Lecture Materials' : [], 'Assignments' : [], 'Other Documents' : []}
+        self._documents = {'Graded Exams' : {}, 'Exams' : {}, 'Lecture Materials' : {}, 'Assignments' : {}, 'Other Documents' : {}}
         self._validated = validated
         self._db_path = f"/Courses/{self._course_name}/"
 
@@ -970,7 +978,7 @@ class Course:
         }
         FirebaseDatabase().push_to_path(path=path, data=data)
 
-    def get_comments(self, sorting="popular", order="desc", amount: int = 10, page: int = 1):
+    def get_comments(self, sorting="popular", order="desc"):
         """
         Returns list of comments on page :page:, if there is :amount: comments per page.
 
@@ -979,8 +987,7 @@ class Course:
         :amount: int
         :page: int (1 is the first page)
         """
-
-        return self._comment_section.get_comments(sorting=sorting, order=order, amount=amount, page=page)
+        return self._comment_section.get_comments(sorting=sorting, order=order)
 
     def get_replies(self, comment_id, sorting="popular", order="desc", amount: int = 10, page: int = 1):
         return self._comment_section.get_replies(comment_id=comment_id)
@@ -997,14 +1004,21 @@ class Course:
         '''
         return self._course_name
 
-    def add_document(self, document_type, document_id):
+    def add_document(self, document_type, document_id, document_name, add_to_firebase=True):
         '''
         Adds a document id to the _documents dict.
         '''
         try:
-            self._documents[document_type].append(document_id)
+            self._documents[document_type][document_id] = document_name
         except:
-            print('Could not add document.')
+            self._documents[document_type] = {}
+            self._documents[document_type][document_id] = document_name
+
+        if add_to_firebase:
+            path = f"Courses/{self._course_name}/Documents/{document_type}"
+            data = {document_id:document_name}
+            FirebaseDatabase().push_to_path(path=path, data=data)
+
 
     def add_comment(self, user_id, text):
         '''
@@ -1091,7 +1105,27 @@ class Course:
         }
         
         return json
-    
+
+    def to_display_json(self):
+        json = {
+            "Documents":{
+                "Graded Exams":(self._documents["Graded Exams"]),
+                "Exams":(self._documents["Exams"]),
+                "Lecture Materials":(self._documents["Lecture Materials"]),
+                "Assignments":(self._documents["Assignments"]),
+                "Other Documents":(self._documents["Other Documents"])
+            },
+
+            "Content":{
+                "course_name":self._course_name,
+                "university":self._university,
+                "subject":self._subject,
+                "validated":self._validated
+            }
+        }
+        
+        return json
+
     def get_course_data(self, course_name, main):
         '''
         Returns dictionary used to display course page.
@@ -1101,9 +1135,6 @@ class Course:
         course_documents_id_dict = self._documents
         course_documents_name_dict = self._get_document_names_for_course(course_documents_id_dict, main)
         course_documents_votes_dict = self._get_document_votes_for_course(course_documents_id_dict, main)
-        print(course_documents_id_dict)
-        print(course_documents_name_dict)
-        print(course_documents_votes_dict)
         course_data_dict = {
             "course_name": course_name,
             "course_university": course_university,
@@ -1691,7 +1722,8 @@ class Main:
         elif type == 'course_page':
             course = self.get_course(id)
             course_name = course.get_course_name()
-            json = course.get_course_data(course_name, main)
+            return course.to_display_json()
+            #json = course.get_course_data(course_name, main)
         
         elif type == 'user':
             user = self.get_user(id)
@@ -1701,6 +1733,17 @@ class Main:
         elif type == 'document_comments':
             document = self.get_document(document_id=id)
             comments = document.get_comments()
+
+            json = {}
+
+            for comment_id in comments:
+                json[comment_id] = comments[comment_id].to_display_json()
+
+            return json
+        
+        elif type == 'course_comments':
+            course = self.get_course(course_name=id)
+            comments = course.get_comments()
 
             json = {}
 
@@ -1812,6 +1855,9 @@ def test_course_search(search_controller):
 
 
 main = Main()
+print(main.to_json("course_page", "IY1422 Finansiell ekonomi"))
+
+#print(main.to_json("course_page", "IY1422 Finansiell ekonomi"))
 
 #main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", university="Blekinge Institute of Technology", course_name="IY1422 Finansiell ekonomi", subject="Economics", write_date="2020-01-01")
 #main.add_document_report(document_id="7c9098967be84e70a4f0e8218dfab378", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reason="stolen", text="this is my exam, why")
@@ -1834,7 +1880,7 @@ main = Main()
 #main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "7ad10a9b14c04f84817ac0579520f3a1", "sure")
 #main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="7ad10a9b14c04f84817ac0579520f3a1", reply_id="5a56134e13b749d9a69cda7cda64b05e", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
-main = Main()
+
 
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=True)
@@ -1880,5 +1926,5 @@ def test_comment_sorting():
     for comment in comments.values():
         print(comment._text)
 
-sök_kontrollant = SearchController()
-sök_kontrollant.print_course_dict()
+#sök_kontrollant = SearchController()
+#sök_kontrollant.print_course_dict()
