@@ -278,23 +278,11 @@ class FirebaseDatabase(Firebase):
 
         except:
             replies = {}
-        
-        try:
-            comment_pages = comment_section_json["comment_pages"]
-        except:
-            comment_pages = {}
-
-        try:
-            reply_pages = comment_section_json["reply_pages"]
-        except:
-            reply_pages = {}
 
         comment_section = comment_section=CommentSection(parent_path=parent_path,
                                                             comment_section_id=comment_section_id,
                                                             comments=comments,
-                                                            replies=replies,
-                                                            comment_pages=comment_pages,
-                                                            reply_pages=reply_pages)
+                                                            replies=replies)
         return comment_section
 
     def update(self, path, json):
@@ -477,64 +465,22 @@ class CommentSection():
     def __init__(self, parent_path, 
                        comment_section_id = uuid.uuid4().hex, 
                        comments = {}, 
-                       replies = {},
-                       comment_pages = {},
-                       reply_pages = {}
+                       replies = {}
                        ) -> None:
         
         self._comment_section_id = comment_section_id
         self._comments = comments # { comment_id : Comment }
         self._replies = replies # { reply_to_comment_id : { reply_id : Comment } }
         self._db_path = f"{parent_path}"
-        self._comment_pages = comment_pages # { 1: [comment_id, comment_id], 2: [comment_id] }
-        self._reply_pages = reply_pages # { 1: [reply_id, reply_id], 2: [reply_id] }
-        self._comments_per_page = 10
-
-    def _add_comment_to_page(self, comment_id):
-        print(self._comment_pages)
-        pages = list(self._comment_pages.keys())
-        if pages:
-            page = max(pages) # last page
-
-            if len(self._comment_pages[page]) < self._comments_per_page:
-                self._comment_pages[page].append(comment_id)
-
-            else: # all pages have max comments
-                page = page + 1
-                self._comment_pages[page] = [comment_id]
-                    
-        else: # there are no pages, create the first one
-            page = 1
-            self._comment_pages[page] = []
-            self._comment_pages[page].append(comment_id)
-        
-        return page
-        
-    def _add_reply_to_page(self, reply_id, reply_to_comment_id):
-        pages = list(self._reply_pages[reply_to_comment_id].keys())
-        if pages:
-            page = max(pages) # last page
-
-            if len(self._reply_pages[reply_to_comment_id][page]) < self._comments_per_page:
-                self._reply_pages[reply_to_comment_id][page].append(reply_id)
-
-            else: # all pages have max comments
-                self._reply_pages[reply_to_comment_id][page + 1] = [reply_id]
-                    
-        else: # there are no pages, create the first one
-            self._reply_pages[reply_to_comment_id][1] = [reply_id]
 
     def add_comment(self, user_id: str, text: str):
         comment = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/comments")
         FirebaseDatabase().push_to_path(comment._db_path, data=comment.to_json())
-        page = self._add_comment_to_page(comment_id=comment.get_id())
         self._comments[comment.get_id()] = comment
-        FirebaseDatabase().push_to_path(f"{self._db_path}/comment_pages", {page:self._comment_pages[page]})
 
     def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
         reply = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/replies/{reply_to_comment_id}")
         FirebaseDatabase().push_to_path(reply._db_path, data=reply.to_json())
-        self._add_reply_to_page(reply_id=reply.get_id())
         self._replies[reply.get_id()] = reply
 
     def get_comment(self, page, comment_id):
@@ -560,13 +506,13 @@ class CommentSection():
         :page: int (1 is the first page)
         """
 
-        _comments = {}
+        _comments = self._comments # {}
         _sorted_comments = {}
-        comment_ids = list(self.get_comments_on_page(page))
+        #comment_ids = list(self._comments.keys()) #list(self.get_comments_on_page(page))
 
-        for comment_id in comment_ids:
-            comment = self.get_comment(page, comment_id)
-            _comments.update({comment_id : comment})
+        #for comment_id in comment_ids:
+        #    comment = self._comments[comment_id] #self.get_comment(page, comment_id)
+        #    _comments.update({comment_id : comment})
 
         if sorting == 'popular':
 
@@ -655,9 +601,7 @@ class CommentSection():
         return {
             "comments":comments_json,
             "replies":replies_json,
-            "comment_section_id":self._comment_section_id,
-            "comment_pages":self._comment_pages,
-            "reply_pages":self._reply_pages
+            "comment_section_id":self._comment_section_id
         }
     
     def get_comments_on_page(self, page):
@@ -1673,9 +1617,10 @@ main = Main()
 #course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
 #main._course_dir.add_course(course)
 #main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "I don't like this course")
-main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
-print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comment_pages)
-print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comments)
+#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "third")
+#comments = main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments(sorting="new", order="desc")
+#for comment in comments:
+#    print(comments[comment]._text)
 
 
 

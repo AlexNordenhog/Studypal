@@ -100,7 +100,7 @@ def course_page(course_name):
     course_page_dict = main.to_json('course', course_name)
 
     # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
-    comments = main.get_course(course_name=course_name).get_comments()
+    comments = main.get_course(course_name=course_name).get_comments(sorting="new", order="asc")
 
     return render_template("course_page.html", course_page_dict=course_page_dict, comments=comments)
 
