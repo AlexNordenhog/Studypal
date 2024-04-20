@@ -1297,6 +1297,9 @@ class SearchController:
             "Universities":FirebaseDatabase().get_from_path(path="Universities")
         }
 
+    def print_course_dict(self):
+        print(self._course_dict)
+
     def search(self, query, course_directory: CourseDirectory, university=None, subject=None, course=None):
         '''
         Search function to search for courses in the database.
