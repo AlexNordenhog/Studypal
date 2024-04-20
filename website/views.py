@@ -33,7 +33,7 @@ def search_results():
         course = None
     query = request.args.get('query', '')
 
-    results = search_controller.search(query, university, subject, course)  
+    results = search_controller.search(query=query, course_directory=main._course_dir, university=university, subject=subject, course=course)  
     return render_template('search.html', query=query, results=results)
 
 

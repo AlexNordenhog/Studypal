@@ -1298,7 +1298,7 @@ class SearchController:
         }
 
     def print_course_dict(self):
-        print(self._course_dict)
+        print('Course dict: ', self._course_dict)
 
     def search(self, query, course_directory: CourseDirectory, university=None, subject=None, course=None):
         '''
@@ -1313,7 +1313,7 @@ class SearchController:
         Returns a list of matching courses based on the search criteria.
         '''
         filtered_courses = []
-        all_courses = course_directory.get_course_names()
+        all_courses = course_directory.get_courses().values()
 
         if university and subject and course:
             for c in all_courses:
@@ -1363,7 +1363,7 @@ class SearchController:
                     course = course_directory.get(course_name)
                     matching_courses.append(course)
         else:
-            matching_courses = filtered_courses
+            matching_courses = [course.get_course_name() for course in filtered_courses]
 
         return matching_courses
 
@@ -1372,7 +1372,8 @@ class SearchController:
         Returns a list of all courses from a specific subject at a specific university.
         '''
 
-        subject_courses = self._get_keys(f'Universities/{university}/{subject}')
+        subject_courses = list(self._course_dict['Universities'][university][subject])
+        print(subject_courses)
 
         return subject_courses
     
@@ -1380,7 +1381,8 @@ class SearchController:
         '''
         Returns a list of all subjects for a certain university.
         '''
-        university_subjects = self._get_keys(f'Universities/{university}')
+        university_subjects = list(self._course_dict['Universities'][university])
+        print(university_subjects)
 
         return university_subjects
     
@@ -1389,12 +1391,14 @@ class SearchController:
         Returns a list of all universities for a certain subject.
         '''
         subject_universities = []
-        universities = self.get_all_universities()
+        universities = list(self._course_dict['Universities'])
+        print(universities)
         for u in universities:
             university_subjects = self.get_all_subjects_from_university(u)
             for s in university_subjects:
                 if s == subject:
                     subject_universities.append(u)
+        print(subject_universities)
         return subject_universities
 
 class Main:
@@ -1676,7 +1680,7 @@ main = Main()
 #course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
 #main._course_dir.add_course(course)
 #main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "I don't like this course")
-main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
+# main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
 print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comment_pages)
 print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comments)
 
@@ -1735,3 +1739,6 @@ def test_comment_sorting():
 
     for comment in comments.values():
         print(comment._text)
+
+sök_kontrollant = SearchController()
+sök_kontrollant.print_course_dict()
