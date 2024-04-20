@@ -97,7 +97,7 @@ def document(document_id):
 
 @views.route('course_page/<course_name>')
 def course_page(course_name):
-    course_page_dict = main.to_json('course', course_name)
+    course_page_dict = main.to_json('course_page', course_name, main)
 
     # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
     comments = main.get_course(course_name=course_name).get_comments()

@@ -910,6 +910,11 @@ class Course:
         else:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
 
+        self.print_documents()
+
+    def print_documents(self):
+        print(self._documents)
+
     def validate(self):
         path = f"Courses/{self._course_name}/Course Content"
         data = {
@@ -1044,6 +1049,57 @@ class Course:
         }
         
         return json
+    
+    def get_course_data(self, course_name, main):
+        '''
+        Returns dictionary used to display course page.
+        '''
+        course_university = self._university
+        course_subject = self._subject
+        course_documents_id_dict = self._documents
+        course_documents_name_dict = self._get_document_names_for_course(course_documents_id_dict, main)
+        course_documents_votes_dict = self._get_document_votes_for_course(course_documents_id_dict, main)
+        print(course_documents_id_dict)
+        print(course_documents_name_dict)
+        print(course_documents_votes_dict)
+        course_data_dict = {
+            "course_name": course_name,
+            "course_university": course_university,
+            "course_subject": course_subject,
+            "course_documents_id_dict": course_documents_id_dict,
+            "course_documents_name_dict": course_documents_name_dict,
+            "course_documents_votes_dict": course_documents_votes_dict,
+        }
+        return course_data_dict
+    
+    def _get_document_votes_for_course(self, course_documents_id_dict, main):
+        '''
+        Takes a course_documents_id_dict and returns a list of dictionaries with document votes.
+        '''
+        course_documents_votes_dict = {}
+        for document_type, ids in course_documents_id_dict.items():
+            for id in ids:
+                document = main.get_document(id)
+                votes_dict = document.get_vote_directory_json()
+                print(votes_dict)
+                upvotes = votes_dict.get('upvotes')
+                downvotes = votes_dict.get('downvotes')
+                course_documents_votes_dict.update({id : [upvotes, downvotes]})
+        return course_documents_votes_dict
+    
+    def _get_document_names_for_course(self, course_documents_id_dict, main):
+        '''
+        Returns the corresponding document name dict to the document id dict.
+        '''
+        course_documents_name_dict = {}
+        for document_type in course_documents_id_dict.keys():
+            document_names_for_document_type = []
+            for id in course_documents_id_dict.get(document_type):
+                document = main.get_document(id)
+                document_name = document.get_header()
+                document_names_for_document_type.append(document_name)
+            course_documents_name_dict.update({document_type : document_names_for_document_type})
+        return course_documents_name_dict
 
 class User:
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), documents: list = []) -> None:
@@ -1487,7 +1543,7 @@ class Main:
         return self._document_dir.get(document_id=document_id)
     
     def get_course(self, course_name: str) -> Course:
-        return self._course_dir.get(course_name=course_name)
+        return self._course_dir.get_course(course_name=course_name)
 
     def add_document(self, pdf_url, document_type, 
                  user_id, university, course_name, subject,
@@ -1576,7 +1632,7 @@ class Main:
         
         
         
-    def to_json(self, type: str, id: str):
+    def to_json(self, type: str, id: str, main=None):
         '''
         Takes a type of page and converts it to json.
         '''
@@ -1589,6 +1645,11 @@ class Main:
             course = self.get_course(id)
             json = course.to_json()
             return json
+        
+        elif type == 'course_page':
+            course = self.get_course(id)
+            course_name = course.get_course_name()
+            json = course.get_course_data(course_name, main)
         
         elif type == 'user':
             user = self.get_user(id)
@@ -1700,10 +1761,6 @@ def test_course_search(search_controller):
 
 # add document reports
 
-
-
-main = Main()
-
 #main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", university="Blekinge Institute of Technology", course_name="IY1422 Finansiell ekonomi", subject="Economics", write_date="2020-01-01")
 #main.add_document_report(document_id="7c9098967be84e70a4f0e8218dfab378", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reason="stolen", text="this is my exam, why")
 
@@ -1725,7 +1782,7 @@ main = Main()
 #main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "7ad10a9b14c04f84817ac0579520f3a1", "sure")
 #main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="7ad10a9b14c04f84817ac0579520f3a1", reply_id="5a56134e13b749d9a69cda7cda64b05e", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 
-
+main = Main()
 
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
 #main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=True)
