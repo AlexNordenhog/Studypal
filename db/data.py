@@ -335,8 +335,9 @@ class FirebaseDatabase(Firebase):
                                     pdf_url=document_dict["content"]["pdf_url"],
                                     user_id=document_dict["content"]["user_id"],
                                     grade=document_dict["content"]["grade"],
-                                    
                                     write_date=document_dict["content"]["write_date"],
+                                    upload_comment=document_dict["content"]["upload_comment"],
+
                                     validated=document_dict["categorization"]["validated"],
                                     university=document_dict["categorization"]["university"],
                                     document_type=document_dict["categorization"]["document_type"],
@@ -672,7 +673,7 @@ class Comment:
         self._user_id = user_id
         self._comment_id = comment_id
         self._text = text
-        self.timestamp = timestamp
+        self._timestamp = timestamp
         self._db_path = f"{parent_path}/{comment_id}"
 
         if vote_dir:
@@ -693,6 +694,18 @@ class Comment:
         }
         return json
 
+    def to_display_json(self) -> str:
+        json = {
+            "username": Main().get_user(user_id=self._user_id).get_username(),
+            "text":self._text,
+            "timestamp":{
+                "time":self._timestamp.strftime("%H:%M"),
+                "date":self._timestamp.strftime("%Y-%m-%d")
+            },
+            "votes":self._vote_dir.get()
+        }
+        return json
+
     def get_timestamp(self):
         return self._timestamp
 
@@ -705,7 +718,7 @@ class Comment:
             "comment_id":self._comment_id,
             "user_id": self._user_id,
             "text":self._text,
-            "timestamp":self.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "timestamp":self._timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
             "vote_directory":self._vote_dir.to_json(),
             "parent_path":self._db_path.replace(f"/{self._comment_id}", "")
         }
@@ -733,6 +746,7 @@ class Document:
                  course_name: str, 
                  subject: str,
                  write_date: str,
+                 upload_comment: str,
                  grade: str = "ungraded",
                  validated: bool = False,
                  vote_directory: VoteDirectory = None, 
@@ -751,6 +765,7 @@ class Document:
         self._document_type = document_type
         self._grade = grade
         self._write_date = write_date
+        self._upload_comment = upload_comment
 
         # categorization
         self._university = university
@@ -776,6 +791,33 @@ class Document:
         self._reported = reported
         self._reports = reports
     
+    def to_display_json(self):
+        return {
+            "content":{
+                "header":self._header,
+                "pdf_url":self._pdf_url,
+                "username":Main().get_user(self._user_id).get_username(),
+                "grade":self._grade,
+                "write_date":self._write_date
+            },
+
+            "categorization":{
+                "university":self._university,
+                "course_name":self._course_name,
+                "subject":self._subject,
+                "validated":self._validated,
+                "document_type":self._document_type,
+                "reported":self._reported
+            },
+
+            "votes":self._vote_directory.get(),
+
+            "timestamp":{
+                "time":self._timestamp.strftime("%H:%M"),
+                "date":self._timestamp.strftime("%Y-%m-%d")
+            }
+        }
+
     def get_type(self):
         return self._document_type
 
@@ -1638,7 +1680,7 @@ class Main:
         '''
         if type == 'document':
             document = self.get_document(id)
-            json = document.to_json()
+            json = document.to_display_json()
             return json
 
         elif type == 'course':
@@ -1658,7 +1700,13 @@ class Main:
         
         elif type == 'document_comments':
             document = self.get_document(document_id=id)
-            json = document.get_comments()
+            comments = document.get_comments()
+
+            json = {}
+
+            for comment_id in comments:
+                json[comment_id] = comments[comment_id].to_display_json()
+
             return json
 
         else:
@@ -1760,6 +1808,10 @@ def test_course_search(search_controller):
 #test_course_search()
 
 # add document reports
+
+
+
+main = Main()
 
 #main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", university="Blekinge Institute of Technology", course_name="IY1422 Finansiell ekonomi", subject="Economics", write_date="2020-01-01")
 #main.add_document_report(document_id="7c9098967be84e70a4f0e8218dfab378", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reason="stolen", text="this is my exam, why")

@@ -72,27 +72,55 @@ def get_universities():
     return jsonify(subject_unis)
 
 
-@views.route("document/<document_id>")
+
+
+@views.route("/document/<document_id>")
 def document(document_id):
-    document_dict = main.to_json('document', document_id)
-    if document_dict is None:
-        return "Document dict doesnt work", 404
-    else:
-        pass
-
-    #
-    # Detta med kommentarer och grejer måste vi lösa här
-    #
-    comments = main.to_json("document_comments", document_id) #document_dict[document_id]["comment_section"]["comments"]
-        
-    download_url = document_dict['upload']['pdf_url']
+    # Fetch the document data
+    document_data = main.to_json('document', document_id)
     
-    # pdf id instead of download url
-    if 'https://' not in download_url:
-        #file_storage = d.file_storage
-        download_url = ''#file_storage.generate_download_url(document_id)
+    # Check if the document data is found
+    if not document_data:
+        return "Document not found", 404
+    
+    # Extract the components you need to pass to the template
+    content = document_data.get('content', {})
+    categorization = document_data.get('categorization', {})
+    comments = main.to_json("document_comments", document_id)
+    download_url = content.get('pdf_url', '')
+    votes = document_data.get('votes', {})
+    timestamp = document_data.get('timestamp', '')
 
-    return render_template("document.html", document_dict=document_dict, download_url=download_url, comments=comments)
+    print("content:")
+    print(content)
+    print()
+    print("categorization")
+    print(categorization)
+    print()
+    print("comments")
+    print(comments)
+    print()
+    print("download_url")
+    print(download_url)
+    print()
+    print("votes")
+    print(votes)
+    print()
+    print("timestamp")
+    print(timestamp)
+    print()
+
+
+    # Pass the data to the template
+    return render_template("document.html", 
+                           content=content, 
+                           categorization=categorization,
+                           comments=comments,
+                           download_url=download_url,
+                           votes=votes,
+                           timestamp=timestamp,
+                           document_id=document_id)
+
 
 
 @views.route('course_page/<course_name>')
@@ -132,7 +160,7 @@ def get_document():
     if document:
         categorization = document_dict.get("categorization", {})
         comments = document_dict.get("comments", {})
-        upload = document_dict.get("upload", {})
+        content = document_dict.get("content", {})
         votes = document_dict.get("votes", {})
         timestamp = document_dict.get("timestamp", {})
         
@@ -143,14 +171,14 @@ def get_document():
             "subject": categorization.get("subject"),
             "tags": categorization.get("tags"),
             "upload_comment": comments.get("upload_comment"),
-            "author": upload.get("author"),
-            "header": upload.get("header"),
-            "pdf_url": upload.get("pdf_url"),
+            "author": content.get("author"),
+            "header": content.get("header"),
+            "pdf_url": content.get("pdf_url"),
             "upvotes": votes.get("upvotes"),
             "downvotes": votes.get("downvotes"),
             "date":timestamp.get("date"),
             "time":timestamp.get("time"),
-            "validated":upload.get("validated")
+            "validated":content.get("validated")
         })
     else:
         return jsonify({"error": "Document not found"})
