@@ -1850,52 +1850,10 @@ def test_course_search(search_controller):
 
 #test_course_search()
 
-# add document reports
-
-
 
 main = Main()
-print(main.to_json("course_page", "IY1422 Finansiell ekonomi"))
-
-#print(main.to_json("course_page", "IY1422 Finansiell ekonomi"))
-
-#main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", university="Blekinge Institute of Technology", course_name="IY1422 Finansiell ekonomi", subject="Economics", write_date="2020-01-01")
-#main.add_document_report(document_id="7c9098967be84e70a4f0e8218dfab378", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reason="stolen", text="this is my exam, why")
 
 
-#course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
-#main._course_dir.add_course(course)
-#main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "I don't like this course")
-# main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
-# print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comment_pages)
-# print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comments)
-
-
-
-
-#print(main.get_user_documents("GrG6hgFUKHbQtNxKpSpGM6Sw84n2"))
-#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
-#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_comments())
-#print(main._course_dir.get_course("IY1422 Finansiell ekonomi").get_replies("7ad10a9b14c04f84817ac0579520f3a1"))
-#main._course_dir.add_reply("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "7ad10a9b14c04f84817ac0579520f3a1", "sure")
-#main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="7ad10a9b14c04f84817ac0579520f3a1", reply_id="5a56134e13b749d9a69cda7cda64b05e", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
-
-
-
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="6dZ517M5qoSdg740CJ2ThtzlJMx2", upvote=True)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="HufctBjyzkSdSOpm94q4Pk71OBX2", upvote=False)
-#main._course_dir.add_comment_vote(course_name="IY1422 Finansiell ekonomi", comment_id="cb83822fea1243539687d70f264038f6", user_id="uvkNLsaTVDR9yg8JuTikKUkZv9y1", upvote=False)
-#main._course_dir.add_reply_vote(course_name="IY1422 Finansiell ekonomi", comment_id="1afcfdab49b64af191a72647305d0739", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", upvote=True)
-
-#course = Course(course_name="PA2576 Programvaruintensiv produktutveckling", university="Blekinge Institute of Technology", subject="Software Development")
-#main._course_dir.add_course(course)
-
-
-#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", True)
-
-# does not load comments rn
-#main._document_dir.get("37d779249c2f4086986514c2dc4b7330").add_comment_vote("GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "0a5823bde9a944cb9f0f5ed3ff109f3d", True)
 
 def test_comment_sorting():
     vote_dir1 = VoteDirectory('id', {'upvotes' : 17, 'downvotes' : 3})
