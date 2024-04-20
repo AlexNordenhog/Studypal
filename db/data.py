@@ -278,23 +278,11 @@ class FirebaseDatabase(Firebase):
 
         except:
             replies = {}
-        
-        try:
-            comment_pages = comment_section_json["comment_pages"]
-        except:
-            comment_pages = {}
-
-        try:
-            reply_pages = comment_section_json["reply_pages"]
-        except:
-            reply_pages = {}
 
         comment_section = comment_section=CommentSection(parent_path=parent_path,
                                                             comment_section_id=comment_section_id,
                                                             comments=comments,
-                                                            replies=replies,
-                                                            comment_pages=comment_pages,
-                                                            reply_pages=reply_pages)
+                                                            replies=replies)
         return comment_section
 
     def update(self, path, json):
@@ -311,6 +299,7 @@ class FirebaseDatabase(Firebase):
             for document_id in documents_dict:
                 document_dict = documents_dict[document_id]
                 document_path = f"Documents/{document_id}"
+                dict_keys = list(document_dict.keys())
                 
                 # Vote Directory
                 try:
@@ -322,13 +311,26 @@ class FirebaseDatabase(Firebase):
                 # Comment Section
                 comment_section = None
 
-                if "comment_section" in list(document_dict.keys()):
+                if "comment_section" in dict_keys:
 
                     #comment_section_id = current_course["comment_section"]["comment_section_id"]
                     parent_path = f"Documents/{document_id}/comment_section"
                     comment_section = self._load_comment_section(comment_section_json=document_dict["comment_section"],
                                                                  parent_path=parent_path)
                 
+                if "reports" in document_dict["categorization"]:
+                    reports = {}
+                    reports_ids = list(document_dict["categorization"]["reports"].keys())
+                    for report_id in reports_ids:
+                        report = Report(document_id=document_id,
+                                        user_id=document_dict["categorization"]["reports"][report_id]["user_id"],
+                                        reason=document_dict["categorization"]["reports"][report_id]["reason"],
+                                        text=document_dict["categorization"]["reports"][report_id]["text"],
+                                        report_id=report_id)
+                        reports[report_id] = report
+                else:
+                    reports = {}
+
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
                                     user_id=document_dict["content"]["user_id"],
@@ -343,6 +345,9 @@ class FirebaseDatabase(Firebase):
 
                                     vote_directory=vote_directory,
                                     comment_section=comment_section,
+
+                                    reports=reports,
+                                    reported=document_dict["categorization"]["reported"],
 
                                     timestamp=datetime.strptime(document_dict["timestamp"], "%Y-%m-%d %H:%M:%S.%f"))
                 
@@ -415,6 +420,27 @@ class FirebaseManager:
         self._database.add_course(course=course)
 
 
+class Report:
+    def __init__(self, document_id, user_id, reason, text, report_id = uuid.uuid4().hex) -> None:
+        self._document_id = document_id
+        self._user_id = user_id
+        self._reason = reason
+        self._text = text
+        self._report_id = report_id
+    
+    def get_id(self):
+        return self._report_id
+
+    def to_json(self):
+        json = {
+            "document_id":self._document_id,
+            "user_id":self._user_id,
+            "reason":self._reason,
+            "text":self._text
+        }
+
+        return json
+
 class Timestamp:
     def __init__(self) -> None:
         datetime_now = datetime.datetime.utcnow()
@@ -477,64 +503,22 @@ class CommentSection():
     def __init__(self, parent_path, 
                        comment_section_id = uuid.uuid4().hex, 
                        comments = {}, 
-                       replies = {},
-                       comment_pages = {},
-                       reply_pages = {}
+                       replies = {}
                        ) -> None:
         
         self._comment_section_id = comment_section_id
         self._comments = comments # { comment_id : Comment }
         self._replies = replies # { reply_to_comment_id : { reply_id : Comment } }
         self._db_path = f"{parent_path}"
-        self._comment_pages = comment_pages # { 1: [comment_id, comment_id], 2: [comment_id] }
-        self._reply_pages = reply_pages # { 1: [reply_id, reply_id], 2: [reply_id] }
-        self._comments_per_page = 10
-
-    def _add_comment_to_page(self, comment_id):
-        print(self._comment_pages)
-        pages = list(self._comment_pages.keys())
-        if pages:
-            page = max(pages) # last page
-
-            if len(self._comment_pages[page]) < self._comments_per_page:
-                self._comment_pages[page].append(comment_id)
-
-            else: # all pages have max comments
-                page = page + 1
-                self._comment_pages[page] = [comment_id]
-                    
-        else: # there are no pages, create the first one
-            page = 1
-            self._comment_pages[page] = []
-            self._comment_pages[page].append(comment_id)
-        
-        return page
-        
-    def _add_reply_to_page(self, reply_id, reply_to_comment_id):
-        pages = list(self._reply_pages[reply_to_comment_id].keys())
-        if pages:
-            page = max(pages) # last page
-
-            if len(self._reply_pages[reply_to_comment_id][page]) < self._comments_per_page:
-                self._reply_pages[reply_to_comment_id][page].append(reply_id)
-
-            else: # all pages have max comments
-                self._reply_pages[reply_to_comment_id][page + 1] = [reply_id]
-                    
-        else: # there are no pages, create the first one
-            self._reply_pages[reply_to_comment_id][1] = [reply_id]
 
     def add_comment(self, user_id: str, text: str):
         comment = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/comments")
         FirebaseDatabase().push_to_path(comment._db_path, data=comment.to_json())
-        page = self._add_comment_to_page(comment_id=comment.get_id())
         self._comments[comment.get_id()] = comment
-        FirebaseDatabase().push_to_path(f"{self._db_path}/comment_pages", {page:self._comment_pages[page]})
 
     def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
         reply = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/replies/{reply_to_comment_id}")
         FirebaseDatabase().push_to_path(reply._db_path, data=reply.to_json())
-        self._add_reply_to_page(reply_id=reply.get_id())
         self._replies[reply.get_id()] = reply
 
     def get_comment(self, page, comment_id):
@@ -560,13 +544,13 @@ class CommentSection():
         :page: int (1 is the first page)
         """
 
-        _comments = {}
+        _comments = self._comments # {}
         _sorted_comments = {}
-        comment_ids = list(self.get_comments_on_page(page))
+        #comment_ids = list(self._comments.keys()) #list(self.get_comments_on_page(page))
 
-        for comment_id in comment_ids:
-            comment = self.get_comment(page, comment_id)
-            _comments.update({comment_id : comment})
+        #for comment_id in comment_ids:
+        #    comment = self._comments[comment_id] #self.get_comment(page, comment_id)
+        #    _comments.update({comment_id : comment})
 
         if sorting == 'popular':
 
@@ -655,9 +639,7 @@ class CommentSection():
         return {
             "comments":comments_json,
             "replies":replies_json,
-            "comment_section_id":self._comment_section_id,
-            "comment_pages":self._comment_pages,
-            "reply_pages":self._reply_pages
+            "comment_section_id":self._comment_section_id
         }
     
     def get_comments_on_page(self, page):
@@ -752,12 +734,14 @@ class Document:
                  subject: str,
                  write_date: str,
                  grade: str = "ungraded",
-                 validated: bool = False, 
+                 validated: bool = False,
                  vote_directory: VoteDirectory = None, 
                  comment_section: CommentSection = None, 
                  document_id: str = uuid.uuid4().hex,
                  timestamp = datetime.now(),
-                 reported = False) -> None:
+                 reported = False,
+                 reports = {}
+                 ) -> None:
                 
         
         # document content
@@ -790,7 +774,11 @@ class Document:
             self._comment_section = CommentSection(parent_path="")
 
         self._reported = reported
+        self._reports = reports
     
+    def get_type(self):
+        return self._document_type
+
     def get_id(self):
         return self._document_id
 
@@ -816,7 +804,9 @@ class Document:
                     "course_name":self._course_name,
                     "subject":self._subject,
                     "validated":self._validated,
-                    "document_type":self._document_type
+                    "document_type":self._document_type,
+                    "reports":self._reports,
+                    "reported":self._reported
                 },
 
                 "vote_directory":self._vote_directory.to_json(),
@@ -839,6 +829,19 @@ class Document:
 
     def get_comment_section_json(self):
         return self._comment_section.to_json()
+
+    def add_report(self, user_id, reason, text):
+        report = Report(document_id=self._document_id, user_id=user_id, reason=reason, text=text)
+        
+        if not self._reported:
+            self._reported = True
+            FirebaseDatabase().push_to_path(path = f"Documents/{self._document_id}/categorization", data = {"reported":True})
+        
+        self._reports[report.get_id()] = report
+        data = {report.get_id():report.to_json()}
+        path = f"Documents/{self._document_id}/categorization/reports"
+        FirebaseDatabase().push_to_path(data=data, path=path)
+        
 
     def get_report_status(self):
         '''
@@ -907,6 +910,18 @@ class Course:
         else:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
 
+    def validate(self):
+        path = f"Courses/{self._course_name}/Course Content"
+        data = {
+            "validated":True
+        }
+        self._validated = True
+        FirebaseDatabase().push_to_path(path=path, data=data)
+        path = f"Universities/{self._university}/{self._subject}"
+        data = {
+            self._course_name:True
+        }
+        FirebaseDatabase().push_to_path(path=path, data=data)
 
     def get_comments(self, sorting="popular", order="desc", amount: int = 10, page: int = 1):
         """
@@ -1079,6 +1094,9 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
+    def validate_course(self, course_name):
+        course = self.get_course(course_name=course_name)
+        course.validate()
 
     def add_course(self, course: Course, add_to_firebase = True):
         '''
@@ -1415,6 +1433,9 @@ class Main:
 
         return cls._main
 
+    def validate_course(self, course_name):
+        self._course_dir.validate_course(course_name=course_name)
+
     def add_user(self, user_id, username):
         user = User(user_id=user_id, username=username)
         self._user_dir.add(user=user)
@@ -1484,7 +1505,7 @@ class Main:
         
         else:
             # add to document dir and firebase
-            course = self._course_dir.get(course_name=course_name)
+            course = self._course_dir.get_course(course_name=course_name)
             self._document_dir.add(document=document)
 
             # add reference in course
@@ -1631,6 +1652,11 @@ class Main:
         document = self._document_dir.get(document_id)
         document.validate_document()
 
+    def add_document_report(self, document_id, user_id, reason, text):
+        """Add a report to a document"""
+        document = self._document_dir.get(document_id=document_id)
+        document.add_report(user_id, reason, text)
+
 def test_document():
     main = Main()
 
@@ -1677,12 +1703,17 @@ def test_course_search(search_controller):
 
 
 main = Main()
+
+#main.add_document(pdf_url="https://", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", university="Blekinge Institute of Technology", course_name="IY1422 Finansiell ekonomi", subject="Economics", write_date="2020-01-01")
+#main.add_document_report(document_id="7c9098967be84e70a4f0e8218dfab378", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2", reason="stolen", text="this is my exam, why")
+
+
 #course = Course(course_name="IY1422 Finansiell ekonomi", university="Blekinge Institute of Technology", subject="Economics")
 #main._course_dir.add_course(course)
 #main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "I don't like this course")
 # main._course_dir.add_comment("IY1422 Finansiell ekonomi", "GrG6hgFUKHbQtNxKpSpGM6Sw84n2", "first")
-print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comment_pages)
-print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comments)
+# print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comment_pages)
+# print(main._course_dir.get_course("IY1422 Finansiell ekonomi")._comment_section._comments)
 
 
 

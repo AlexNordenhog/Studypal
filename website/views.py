@@ -178,13 +178,7 @@ def add_document_report():
     text = data.get("text")
     reason = data.get("reason")
 
-    #
-    # Report behöver implementeras i data
-    #
-
-    #main.add_document_report()
-    #d.add_document_report(document_id, uid, reason, text)
-    print("supposed to add document report, (not implemented)")
+    main.add_document_report(document_id=document_id, user_id=uid, reason=reason, text=text)
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -401,7 +395,6 @@ def validation(document_id):
         download_url = ''#file_storage.generate_download_url(document_id)
 
     return render_template("validation.html", document_dict=document_dict, download_url=download_url)
-
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):
