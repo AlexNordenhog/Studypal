@@ -1421,9 +1421,8 @@ class DocumentDirectory(Directory):
         Returns a list of document ids awaiting validation.
         '''
         waiting_documents = []
-        for document in self._documents:
-            if document.get_validation():
-                document_id = document.get_id()
+        for document_id in self._documents:
+            if not self._documents[document_id].get_validation():
                 waiting_documents.append(document_id)
 
         return waiting_documents
@@ -1433,9 +1432,8 @@ class DocumentDirectory(Directory):
         Returns a list of all document ids that are reported.
         '''
         reported_documents = []
-        for document in self._documents:
-            if document.get_report_status():
-                document_id = document.get_id()
+        for document_id in self._documents:
+            if not self._documents[document_id].get_report_status():
                 reported_documents.append(document_id)
 
         return reported_documents
@@ -1873,6 +1871,8 @@ def test_course_search(search_controller):
 
 
 main = Main()
+
+print(main.get_waiting_documents())
 
 
 
