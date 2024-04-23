@@ -377,6 +377,9 @@ class FirebaseManager:
         
         return cls._firebase_manager
 
+    def push_to_path(self, path, data):
+        self._database.push_to_path(path=path, data=data)
+
     def get_from_database_path(self, path):
         data = self._database.get_from_path(path)
 
@@ -1808,6 +1811,24 @@ class Main:
         """Add a report to a document"""
         document = self._document_dir.get(document_id=document_id)
         document.add_report(user_id, reason, text)
+    
+    def add_user_upload(self, pdf_id, pdf_url):
+        
+        path = f"/Files/Uploads/PDF"
+        data = {
+            pdf_id: pdf_url
+        }
+
+        self._firebase_manager.push_to_path(path=path, data=data)
+
+    def get_user_upload_pdf(self, pdf_id):
+        path = f"Files/Uploads/PDF/{pdf_id}"
+        try:
+            url = self._firebase_manager.get_from_database_path(path=path)
+        except:
+            print("404: No file found")
+            url = None
+        return url
 
 def test_document():
     main = Main()

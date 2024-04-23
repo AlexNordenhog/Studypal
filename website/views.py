@@ -216,6 +216,29 @@ def add_course_comment():
 def comment():
     return render_template("test-comment.html")
 
+@views.route("/vote_course_comment", methods=["POST"])
+def vote_course_comment():
+    data = request.json
+    uid = data.get("uid")
+    comment_id = data.get("comment_id")
+    course_name = data.get("course_name")
+    is_upvote = data.get("is_upvote")
+
+    main.get_course(course_name=course_name).add_comment_vote(comment_id=comment_id, user_id=uid, upvote=is_upvote)
+
+    return jsonify({"message": "Vote added successfully"})
+
+@views.route("/vote_document_comment", methods=["POST"])
+def vote_document_comment():
+    data = request.json
+    uid = data.get("uid")
+    comment_id = data.get("comment_id")
+    document_id = data.get("document_id")
+    is_upvote = data.get("is_upvote")
+
+    main.get_document(document_id=document_id).add_comment_vote(comment_id=comment_id, user_id=uid, upvote=is_upvote)
+
+    return jsonify({"message": "Vote added successfully"})
 
 @views.route("/vote_document", methods=["POST"])
 def vote_document():
@@ -309,40 +332,27 @@ def get_user_documents_view():
         return jsonify([])  # Return an empty list if no documents are found
 
 
-
-
-@views.route("/upload_v2")
+@views.route("/upload")
 def upload_v2():
-    return render_template("upload_v2.html")
+    return render_template("upload.html")
 
-
-@views.route("/upload/temp", methods=["POST"])
-def upload_temp_pdf():
-    temp_url = request.json.get('temp_url')
-    temp_id = request.json.get('temp_id')
+@views.route("/upload/pdf", methods=["POST"])
+def upload_pdf():
+    pdf_url = request.json.get('pdf_url')
+    pdf_id = request.json.get('pdf_id')
     uid = request.json.get('uid')
 
-    #
-    # Temp pdf??
-    #
-
-    if temp_url and temp_id and uid:
-        #d.add_temp_pdf(temp_id=temp_id, temp_url=temp_url, uid=uid)
-        print("temp pdf not implemented")
+    if pdf_url and pdf_id and uid:
+        main.add_user_upload(pdf_id=pdf_id, 
+                             pdf_url=pdf_url)
         return "Success"
     else:
         return "Missing parameters", 400
 
+@views.route('upload/specifications/<pdf_id>', methods=["GET"])
+def upload_specificatoins(pdf_id):
 
-@views.route('upload/specifications/<temp_id>', methods=["GET"])
-def upload_specificatoins(temp_id):
-
-
-    #
-    # Temp pdf???
-    #
-
-    temp_url = ''#d.get_temp_pdf(temp_id)
+    pdf_url = main.get_user_upload_pdf(pdf_id=pdf_id)
 
     universities = [
         'Blekinge Institute of Technology', 'Chalmers University of Technology', 'Dalarna University', 'GIH - the Swedish School of Sport and Health Sciences', 'Halmstad University', 
@@ -369,7 +379,7 @@ def upload_specificatoins(temp_id):
     ]
     document_types = ['Assignment', 'Exam', 'Graded Exam (not part of MVP)', 'Lecture Materials', 'Other Document']
 
-    return render_template("upload_specifications.html", url=temp_url, 
+    return render_template("upload_specifications.html", url=pdf_url, 
                            universities=universities,
                            subjects=subjects,
                            document_types=document_types)
@@ -418,19 +428,3 @@ def get_document_reports(document_id):
     reports = ''
     print("get document reports not implemented")
     return jsonify(reports)
-
-@views.route('/status')
-def status_view():
-    return render_template('status.html')
-
-@views.route('/team')
-def team_view():
-    return render_template('team.html')
-
-@views.route('/developement_perspective')
-def developement_perspective_view():
-    return render_template('developement_perspective.html')
-
-@views.route('/timeline')
-def timeline_view():
-    return render_template('timeline.html')

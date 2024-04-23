@@ -218,7 +218,7 @@
       if (user) {
         // User is signed in, add profile and upload button
         addButtonToNavbar("Profile", "/profile");
-        addButtonToNavbar("Upload", "/upload_v2");
+        addButtonToNavbar("Upload", "/upload");
 
         // Fetch user details to check user role
         fetchUser(user.uid).then((userData) => {

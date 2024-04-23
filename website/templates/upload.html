@@ -1,0 +1,281 @@
+{% extends "base.html" %} {% block title %}Upload{% endblock %} {% block content
+%}
+
+<head>
+  <br />
+  <br />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Document</title>
+  <style>
+    .centered-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: flex;
+      font-family: Arial, sans-serif;
+    }
+
+    #uploadForm {
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    #drop-area {
+      border: 2px dashed #583737;
+      background-color: #f2f2f2;
+      border-radius: 20px;
+      padding: 20px;
+      width: 80%;
+      margin: 0 auto;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .my-form {
+      margin-top: 0;
+      text-align: center;
+    }
+    .submit-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      width: 30%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 10px;
+    }
+
+    .submit-button:hover {
+      background-color: #0056b3;
+    }
+
+    #fileElem {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="centered-content">
+    <div id="uploadForm">
+      <h1>Upload Document</h1>
+      <br />
+      <div id="drop-area">
+        <form class="centered-content">
+          <p style="font-weight: bold; text-decoration: underline">
+            Upload your file here
+          </p>
+          <div class="centered-content">
+            <input
+              style="margin-left: 110px"
+              type="file"
+              id="pdf_file"
+              name="pdf_file"
+              accept=".pdf, image/png, image/jpeg, image/jpg, image/HEIC"
+              onchange="previewPDF()"
+              required
+            />
+            <br /><br />
+          </div>
+
+          <div type="my-form" id="previewContainer" class="center-align">
+            <iframe
+              id="pdfPreview"
+              style="display: none; width: 100%; height: 500px"
+              frameborder="0"
+            ></iframe>
+          </div>
+          <br />
+          <button type="button" id="submitUploadBtn" class="submit-button">
+            Continue
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function previewPDF() {
+      var file = document.getElementById("pdf_file").files[0];
+      var previewContainer = document.getElementById("previewContainer");
+
+      // Töm tidigare innehåll i förhandsgranskningsbehållaren
+      previewContainer.innerHTML = "";
+
+      if (file) {
+        var blobUrl = URL.createObjectURL(file);
+
+        if (file.type === "application/pdf") {
+          // Skapar en ny iframe för PDF
+          var iframe = document.createElement("iframe");
+          iframe.style.width = "100%";
+          iframe.style.height = "500px";
+          iframe.src = blobUrl;
+          previewContainer.appendChild(iframe);
+          iframe.style.display = "block";
+        } else if (file.type.match("image.*")) {
+          // Skapar ett nytt img-element för bilder
+          var img = document.createElement("img");
+          img.style.maxWidth = "100%";
+          img.style.height = "auto";
+          img.src = blobUrl;
+          previewContainer.appendChild(img);
+          img.style.display = "block";
+        }
+      }
+    }
+  </script>
+
+  <script type="module">
+    // Firebase configuration and initialization
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL,
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { app, auth, userExists } from "../static/index.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+
+        userExists(uid).then((exists) => {
+          if (exists) {
+            document
+              .getElementById("submitUploadBtn")
+              .addEventListener("click", function (event) {
+                var fileInput = document.getElementById("pdf_file");
+                if (fileInput.files.length === 0) {
+                  alert("Please add a document before continuing.");
+                  // Prevent the default form submission if no file is selected
+                  event.preventDefault();
+                } else {
+                  // File is chosen, proceed with the upload
+                  uploadDocument(uid); // Make sure that 'uid' is defined in this context
+                }
+              });
+          } else {
+            window.location.href = "/create_profile";
+          }
+        });
+      } else {
+        window.location.href = "/login";
+      }
+    });
+
+    function uploadDocument(uid) {
+      var fileInput = document.getElementById("pdf_file");
+      var file = fileInput.files[0];
+      const uuid = generateUUID();
+
+      // Create a storage reference
+      var storage = getStorage(app);
+      var storageRef = ref(storage, `temp/${uid}/${uuid}`);
+
+      // Upload file to Firebase Storage
+      var uploadTask = uploadBytesResumable(storageRef, file);
+
+      // Listen for state changes, errors, and completion of the upload.
+      uploadTask.on(
+        "state_changed",
+        function (snapshot) {
+          // Handle upload progress
+          var progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Upload is " + progress + "% done");
+        },
+        function (error) {
+          // Handle unsuccessful upload
+          console.error("Error uploading file:", error);
+        },
+        function () {
+          // Handle successful upload
+          getDownloadURL(uploadTask.snapshot.ref).then(function (downloadURL) {
+            console.log("File available at", downloadURL);
+            // Make a POST request to the Flask route
+            fetch("/upload/pdf", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                pdf_url: downloadURL,
+                pdf_id: uuid,
+                uid: uid,
+              }),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error("Network response was not ok");
+                }
+                return response.text();
+              })
+              .then((data) => {
+                console.log(data); // Handle success response
+                // Redirect after successful upload
+                window.location.href = `/upload/specifications/${uuid}`;
+              })
+              .catch((error) => {
+                console.error(
+                  "There was a problem with the fetch operation:",
+                  error
+                );
+              });
+          });
+        }
+      );
+    }
+
+    function submitForm(formData) {
+      // Submit the form with all data, including the downloadURL
+      fetch("/upload_document", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.text();
+        })
+        .then((data) => {
+          console.log(data); // Handle success response
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+        });
+    }
+
+    function generateUUID() {
+      let uuid = "";
+      const chars = "0123456789abcdef";
+
+      for (let i = 0; i < 36; i++) {
+        if (i === 8 || i === 13 || i === 18 || i === 23) {
+          uuid += "-";
+        } else if (i === 14) {
+          uuid += "4";
+        } else if (i === 19) {
+          uuid += chars.charAt(Math.floor(Math.random() * 4) + 8);
+        } else {
+          uuid += chars.charAt(Math.floor(Math.random() * 16));
+        }
+      }
+
+      return uuid;
+    }
+  </script>
+</body>
+{% endblock %}
