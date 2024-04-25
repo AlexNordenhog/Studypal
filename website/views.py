@@ -102,7 +102,6 @@ def document(document_id):
                            document_id=document_id)
 
 
-
 @views.route('course_page/<course_name>')
 def course_page(course_name):
     course_data = main.to_json('course_page', course_name)
@@ -282,6 +281,9 @@ def upload_document_v2():
     #if 'tempURL' not in request.files:
     #    return "No file part"
 
+    if request.form['uid'] == "":
+        return "No user id"
+
     course = request.form["uploadCourse"]
     if course == "Choose a course...":
         course = request.form["manualUploadCourse"]
@@ -418,23 +420,31 @@ def validate_document(document_id):
     
     return jsonify({"status":"success"})
 
-
 @views.route("validation/<document_id>")
 def validation(document_id):
-    document_dict = main.to_json(document, document_id)
-    if document_dict is None:
-        return "Document dict doesnt work", 404
-    else:
-        pass
-
-    download_url = document_dict['upload']['pdf_url']
+    # Fetch the document data
+    document_data = main.to_json('document', document_id)
     
-    # pdf id instead of download url
-    if 'https://' not in download_url:
-        #file_storage = d.file_storage
-        download_url = ''#file_storage.generate_download_url(document_id)
+    # Check if the document data is found
+    if not document_data:
+        return "Document not found", 404
+    
+    # Extract the components you need to pass to the template
+    content = document_data.get('content', {})
+    categorization = document_data.get('categorization', {})
+    comments = main.to_json("document_comments", document_id)
+    download_url = content.get('pdf_url', '')
+    votes = document_data.get('votes', {})
+    timestamp = document_data.get('timestamp', '')
 
-    return render_template("validation.html", document_dict=document_dict, download_url=download_url)
+    return render_template("validation.html", 
+                           content=content, 
+                           categorization=categorization,
+                           comments=comments,
+                           download_url=download_url,
+                           votes=votes,
+                           timestamp=timestamp,
+                           document_id=document_id)
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):

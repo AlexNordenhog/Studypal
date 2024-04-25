@@ -437,12 +437,12 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         const uid = user.uid;
+        document.querySelector('input[name="uid"]').value = uid;
 
         userExists(uid).then((exists) => {
           if (exists) {
             // Retrieve the tempURL parameter from the template context
             const tempURL = "{{ url }}";
-            document.querySelector('input[name="uid"]').value = uid;
 
             document
               .getElementById("submitBtn")
