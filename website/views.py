@@ -275,32 +275,32 @@ def get_user():
 def test_comment():
     return render_template("/test-vote.html")
 
+
 @views.route('/upload_document_v2', methods=['POST'])
 def upload_document_v2():
+    # this returns, but it exists?
     #if 'tempURL' not in request.files:
     #    return "No file part"
-    
-    #pdf_file = request.files['pdf_file']
 
-    # Check if the file is selected
-    #if pdf_file.filename == '':
-    #    return "No selected file"
     course = request.form["uploadCourse"]
     if course == "Choose a course...":
         course = request.form["manualUploadCourse"]
+        main.add_course(course_name=course,
+                        university=request.form['uploadUniversity'],
+                        subject=request.form['uploadSubject'])
 
     # Add document to db
-    status = (
-        main.add_document(
+    main.add_document(
         pdf_url=request.form['tempURL'],
         document_type=request.form['documentType'],
         user_id=request.form['uid'],
         university=request.form['uploadUniversity'],
         course_name=course,
         subject=request.form['uploadSubject'],
+        upload_comment=request.form['documentComment'],
         write_date=request.form["documentDate"],
         grade = 'ungraded' # should be what user specified
-    ))
+    )
 
     return render_template("thank_you.html")
 
@@ -384,13 +384,26 @@ def upload_specificatoins(pdf_id):
                            subjects=subjects,
                            document_types=document_types)
 
-@views.route("/documents_awaiting_validation")
+@views.route("/moderator_panel")
 def get_waiting_documents():
     document_ids = main.get_waiting_documents()
     reported_ids = main.get_reported_documents()
 
-    return render_template("documents_awaiting_validation.html",
+    return render_template("moderator_panel.html",
                            documents_ids=document_ids, reported_ids=reported_ids)
+
+
+@views.route("validate_course/<course_name>", methods=["POST"])
+def validate_course(course_name):
+    data = request.get_json()
+    approve = data.get("approve")
+
+    if approve not in [True, False]:
+        return "Error: Approve/Disapprove not provided."
+    else:
+        main.validate_course(course_name=course_name)
+    
+    return jsonify({"status":"success"})
 
 
 @views.route("validate_document/<document_id>", methods=["POST"])

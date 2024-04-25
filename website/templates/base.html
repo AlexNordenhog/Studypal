@@ -202,7 +202,7 @@
               alert("Document was successfully removed.");
             }
 
-            window.location.href = "/documents_awaiting_validation";
+            window.location.href = "/moderator_panel";
           } else {
             throw new Error("Failed to validate document");
           }
@@ -228,10 +228,7 @@
               console.log("User is a moderator.");
 
               // Moderator Panel
-              addButtonToNavbar(
-                "Moderator Panel",
-                "/documents_awaiting_validation"
-              );
+              addButtonToNavbar("Moderator Panel", "/moderator_panel");
             } else {
             }
           }

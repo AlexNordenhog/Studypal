@@ -849,7 +849,8 @@ class Document:
                     "pdf_url":self._pdf_url,
                     "user_id":self._user_id,
                     "grade":self._grade,
-                    "write_date":self._write_date
+                    "write_date":self._write_date,
+                    "upload_comment":self._upload_comment
                 },
 
                 "categorization":{
@@ -894,7 +895,6 @@ class Document:
         data = {report.get_id():report.to_json()}
         path = f"Documents/{self._document_id}/categorization/reports"
         FirebaseDatabase().push_to_path(data=data, path=path)
-        
 
     def get_report_status(self):
         '''
@@ -1621,14 +1621,15 @@ class Main:
 
     def add_document(self, pdf_url, document_type, 
                  user_id, university, course_name, subject,
-                 write_date, grade = "ungraded",
+                 write_date, upload_comment, grade = "ungraded",
                  validated = False, vote_directory = None, 
                  comment_section = None, document_id = uuid.uuid4().hex,
                  timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")):
         
         document = Document(pdf_url=pdf_url, document_type=document_type, 
                  user_id=user_id, university=university, course_name=course_name, 
-                 subject=subject, write_date=write_date, grade=grade)
+                 subject=subject, write_date=write_date, grade=grade, 
+                 upload_comment=upload_comment)
         
         if not self._course_dir.course_exists(course_name=course_name):
             print("Course does not exist, please create the course before (for now?)")
@@ -1639,7 +1640,7 @@ class Main:
             self._document_dir.add(document=document)
 
             # add reference in course
-            course.add_document(document_id=document_id, document_type=document_type)
+            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
 
             # add reference in user
             user = self._user_dir.get(user_id=user_id)
@@ -1872,7 +1873,6 @@ def test_course_search(search_controller):
 
 main = Main()
 
-print(main.get_waiting_documents())
 
 
 
