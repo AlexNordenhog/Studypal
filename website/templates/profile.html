@@ -120,7 +120,7 @@ content %}
 
 <div class="profile-card" id="profileContainer"></div>
 
-<!-- button class="sign-out-btn" onclick="signOutUser()">Sign Out</button -->
+<button class="sign-out-btn" onclick="signOutUser()">Sign Out</button>
 
 <div class="document-box">
   <h3>My Uploads</h3>
@@ -270,6 +270,19 @@ content %}
         console.error("Error fetching documents:", error);
         document.getElementById("documentList").innerHTML =
           '<p class="no-documents-message">Failed to load documents. Please try again.</p>';
+      });
+  }
+
+  function signOutUser() {
+    const auth = getAuth(app);
+    auth
+      .signOut()
+      .then(() => {
+        console.log("User signed out.");
+        window.location.href = "/login"; // Redirect to login or home page after logout
+      })
+      .catch((error) => {
+        console.error("Sign Out Error", error);
       });
   }
 

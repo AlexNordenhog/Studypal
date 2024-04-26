@@ -413,17 +413,27 @@ def validate_course(course_name):
     return jsonify({"status":"success"})
 
 
-@views.route("validate_document/<document_id>", methods=["POST"])
+from flask import request, jsonify
+
+@views.route("/validate_document/<document_id>", methods=["POST"])
 def validate_document(document_id):
     data = request.get_json()
     approve = data.get("approve")
 
     if approve not in [True, False]:
-        return "Error: Approve/Disapprove not provided."
+        return jsonify({"error": "Approve/Disapprove not provided."}), 400
     else:
-        main.validate_document(document_id)
+        try:
+            if approve:
+                main.validate_document(document_id)
+            else:
+                print("Disapprove not done yet.")
+        except Exception as e:
+            print(f"Error validating document {document_id}: {str(e)}")
+            return jsonify({"error": "Failed to validate document."}), 500
     
-    return jsonify({"status":"success"})
+    return jsonify({"status": "success", "approved": approve})
+
 
 @views.route("validation/<document_id>")
 def validation(document_id):
