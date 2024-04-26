@@ -969,7 +969,7 @@ class Course:
         self.print_documents()
 
     def print_documents(self):
-        print(self._documents)
+        print('Course Documents: ', self._documents)
 
     def validate(self):
         path = f"Courses/{self._course_name}/Course Content"
