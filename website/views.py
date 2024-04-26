@@ -109,7 +109,7 @@ def course_page(course_name):
     if not course_data:
         return "Course not found", 404
 
-    content = course_data.get('content', {})
+    content = course_data.get('Content', {})
     documents = course_data.get("Documents", {})
     # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
     comments = main.to_json("course_comments", course_name)
