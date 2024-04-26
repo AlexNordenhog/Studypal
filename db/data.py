@@ -907,6 +907,9 @@ class Document:
         Validate the document.
         '''
         self._validated = True
+        path = f"Documents/{self.get_id()}/categorization"
+        data = {"validated":True}
+        FirebaseDatabase().push_to_path(path=path, data=data)
 
     # document votes
 
