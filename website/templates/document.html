@@ -52,7 +52,7 @@
       <i
         id="downloadIcon"
         class="bi bi-download"
-        onclick="downloadPDF('{{ download_url }}')"
+        onclick="downloadPDF('{{ content.pdf_url }}')"
       ></i>
       <!-- Man ska bara kunna gilla ett dokument en gång -->
       <div class="hands">
@@ -68,7 +68,7 @@
         data-target="#reportModal"
       ></i>
     </div>
-    <iframe src="{{ download_url }}#toolbar=0" frameborder="0"></iframe>
+    <iframe src="{{ content.pdf_url }}#toolbar=0" frameborder="0"></iframe>
   </div>
   <div class="commentView">
     <div class="commentViewBox">
@@ -866,9 +866,18 @@
         alert("An error occurred while trying to delete the document.");
       });
   }
-
   function downloadPDF(documentUrl) {
     window.open(documentUrl, "_blank");
   }
+
+  window.downloadPDF = function (documentUrl) {
+    window.open(documentUrl, "_blank");
+  };
+
+  document.addEventListener("DOMContentLoaded", (event) => {
+    document
+      .getElementById("downloadIcon")
+      .addEventListener("click", () => downloadPDF("{{ content.pdf_url }}"));
+  });
 </script>
 {% endblock %}
