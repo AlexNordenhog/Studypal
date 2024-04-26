@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block title %}{{ content.course_name
-}}{% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}{{ content.course_name }}{% endblock
+%} {% block content %}
 
 <div class="grid">
   <div class="blankTop"></div>
@@ -36,17 +36,16 @@
     {% for doc_type, doc_ids in documents.items() %}
     <h3><strong> {{ doc_type }} </strong></h3>
     <ul class="documentList">
-        {% for doc_id, doc_name in doc_ids.items() %}
-        <li class="documentResult">
-            <a href="{{ url_for('views.document', document_id=doc_id) }}">
-                {{ doc_name }}
-            </a>
-            <!-- Add your logic here to display votes or other properties -->
-        </li>
-        {% endfor %}
+      {% for doc_id, doc_name in doc_ids.items() %}
+      <li class="documentResult">
+        <a href="{{ url_for('views.document', document_id=doc_id) }}">
+          {{ doc_name }}
+        </a>
+        <!-- Add your logic here to display votes or other properties -->
+      </li>
+      {% endfor %}
     </ul>
     {% endfor %}
-</div>
   </div>
   <div class="documentFacts">
     <div class="documentFactsBox">
@@ -102,7 +101,7 @@
   .grid {
     display: grid;
     grid-template-columns: 1.76fr 1fr;
-    grid-template-rows: 60px 200px 100px 100px auto auto;
+    grid-template-rows: 60px 200px 100px 100px 700px auto;
   }
   .blankFooter {
     grid-column: 1 / span 2;
@@ -211,13 +210,15 @@
     border: 2px solid #e4e4e4;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* min-height: 700px; */
     overflow-y: auto;
+    padding: 10px;
+    overflow-x: auto;
   }
 
   .documentFacts {
-    grid-column: 2 / 2;
-    grid-row: 5;
-    min-height: 500px;
+    grid-column: 2/2; /* Position in the second column */
+    grid-row: 5; /* Position in the fifth row */
     margin-right: 5.5%;
   }
 
@@ -225,7 +226,7 @@
     border: 2px solid #e4e4e4;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    height: 800px;
+    height: 100%;
     width: 95%;
     overflow-y: auto;
     padding: 10px;
