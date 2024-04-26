@@ -1388,7 +1388,7 @@ class DocumentDirectory(Directory):
         '''
         reported_documents = []
         for document_id in self._documents:
-            if not self._documents[document_id].get_report_status():
+            if self._documents[document_id].get_report_status():
                 reported_documents.append(document_id)
 
         return reported_documents
