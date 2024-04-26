@@ -416,6 +416,18 @@
 
       gradingSystemSelect.addEventListener("change", updateGradeOptions);
     });
+
+    document.getElementById("documentDate").addEventListener("change", function() {
+    var inputDate = new Date(this.value);
+    var currentDate = new Date();
+    currentDate.setHours(0,0,0,0); // Set time to 00:00:00 to ignore time component
+
+    // Check if the date is in the future
+    if (inputDate > currentDate) {
+        alert("The date cannot be in the future.");
+        this.value = ''; // Resets the input field
+    }
+});
   </script>
 
   <script type="module">
