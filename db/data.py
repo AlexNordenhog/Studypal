@@ -1129,54 +1129,6 @@ class Course:
         
         return json
 
-    def get_course_data(self, course_name, main):
-        '''
-        Returns dictionary used to display course page.
-        '''
-        course_university = self._university
-        course_subject = self._subject
-        course_documents_id_dict = self._documents
-        course_documents_name_dict = self._get_document_names_for_course(course_documents_id_dict, main)
-        course_documents_votes_dict = self._get_document_votes_for_course(course_documents_id_dict, main)
-        course_data_dict = {
-            "course_name": course_name,
-            "course_university": course_university,
-            "course_subject": course_subject,
-            "course_documents_id_dict": course_documents_id_dict,
-            "course_documents_name_dict": course_documents_name_dict,
-            "course_documents_votes_dict": course_documents_votes_dict,
-        }
-        return course_data_dict
-    
-    def _get_document_votes_for_course(self, course_documents_id_dict, main):
-        '''
-        Takes a course_documents_id_dict and returns a list of dictionaries with document votes.
-        '''
-        course_documents_votes_dict = {}
-        for document_type, ids in course_documents_id_dict.items():
-            for id in ids:
-                document = main.get_document(id)
-                votes_dict = document.get_vote_directory_json()
-                print(votes_dict)
-                upvotes = votes_dict.get('upvotes')
-                downvotes = votes_dict.get('downvotes')
-                course_documents_votes_dict.update({id : [upvotes, downvotes]})
-        return course_documents_votes_dict
-    
-    def _get_document_names_for_course(self, course_documents_id_dict, main):
-        '''
-        Returns the corresponding document name dict to the document id dict.
-        '''
-        course_documents_name_dict = {}
-        for document_type in course_documents_id_dict.keys():
-            document_names_for_document_type = []
-            for id in course_documents_id_dict.get(document_type):
-                document = main.get_document(id)
-                document_name = document.get_header()
-                document_names_for_document_type.append(document_name)
-            course_documents_name_dict.update({document_type : document_names_for_document_type})
-        return course_documents_name_dict
-
 class User:
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), documents: list = []) -> None:
         self._id = user_id
