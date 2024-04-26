@@ -1,122 +1,326 @@
-{% extends "base.html" %} {% block title %} {{ content.header }} {% endblock %} {% block content%}
-<div class="container my-5">
-  <!-- Banner -->
-  <div class="banner text-center py-3 mb-4 border-bottom">
-    <!-- FROM DATABASE -->
-    <h1>{{ content.header }}</h1>
+{% extends "base.html" %} {% block title %} {{ content.header }} {% endblock %}
+{% block content %}
 
-  </div>
-
-  <!-- Three-column container -->
-  <div class="row">
-    <!-- First column -->
-    <div class="col border-right">
-      <!-- FROM DATABASE -->
-      <p>Author: <strong>{{ content.author }}</strong></p>
-    </div>
-    <!-- Second column -->
-    <div class="col border-right">
-      <!-- FROM DATABASE -->
-      <p>University: {{ categorization.university }}</p>
-      <p>Course: {{ categorization.course }}</p>
-      <p>Subject: {{ categorization.subject }}</p>
-    </div>
-    <!-- Third column -->
-    <div class="col">
-      <!-- FROM DATABASE -->
-      <p>
-        Comment from Author: {{ content.upload_comment }}
-      </p>
-      <p>Uploaded: {{ timestamp.date }}</p>
+<div class="grid">
+  <div class="blankTop">
+    <!-- Ska bara synas om man är moderator -->
+    <div id="moderatorMenu">
+      <button id="moderatorBtn1">Approve</button>
+      <button id="moderatorBtn2">Dissapprove</button>
     </div>
   </div>
-  <!-- Button bar -->
-  <div
-    class="button-bar py-2 border-top border-bottom d-flex justify-content-between"
-  >
-    <!-- Left-aligned button -->
-    <div>
-      <a
-        href="{{ download_url }}"
-        type="button"
-        class="btn btn-info"
-        download
-        target="_blank"
-      >
-        Download Document
-      </a>
-    </div>
-
-    <!-- Right-aligned buttons -->
-      <button
-        type="button"
-        class="btn btn-secondary mx-1"
-        data-toggle="modal"
-        data-target="#validateModal"
-      >
-        Approve/Disapprove
-      </button>
-    </div>
+  <div class="leftInfo">
+    <h1 class="courseName">{{ categorization.course_name }}</h1>
+    <h3>{{ content.header }}</h3>
+    <p>University: {{ categorization.university }}</p>
   </div>
-
-  <!-- PDF Viewer -->
-  <div id="pdfViewer" class="pdf-viewer border-top py-2" style="display: block">
-    <iframe src="{{ download_url }}" frameborder="0" class="pdf_frame"></iframe>
+  <div class="rightInfo">
+    <p>Author: <strong>{{ content.username }}</strong></p>
+    <p>Uploaded: {{ timestamp.date }}</p>
   </div>
-</div>
-
-<!-- Validate Modal with form -->
-<div
-  class="modal fade"
-  id="validateModal"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="modelTitleId"
-  aria-hidden="true"
->
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Validate Document</h5>
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
+  <div class="infoBlankTop"></div>
+  <div class="infoBar">
+    <div class="infoBarBox">
+      <div class="content1">
+        <!-- Koppla så när jag klickar på ämnet kommer jag till söksidan för ämnet? -->
+        <strong> Subject: &nbsp;</strong>{{ categorization.subject }}
       </div>
-      <div class="modal-body">
-        <!-- Form inside the modal -->
-        <form>
-          <div class="form-group">
-            <label for="validateType">Choose below</label>
-            <select class="form-control" id="validateType">
-              <option value="Approve">Approve</option>
-              <option value="Disapprove">Disapprove</option>
-            </select>
-          </div>
-        </form>
+      <div class="verticalDivider1"></div>
+      <div class="content2">
+        <strong> Rating: &nbsp;</strong> {{ votes.upvotes - votes.downvotes }}
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Close
-        </button>
-        <button type="button" id="submit-validation" class="btn btn-primary">Submit</button>
+      <div class="verticalDivider2"></div>
+      <div class="content3">
+        <strong> Comment: &nbsp;</strong> {{ content.upload_comment }}
       </div>
     </div>
   </div>
+  <div class="infoBlankBottom"></div>
+  <div class="documentView">
+    <div class="buttonBar"></div>
+    <iframe src="{{ download_url }}#toolbar=0" frameborder="0"></iframe>
+  </div>
+  <div class="commentView">
+    <div class="commentViewBox"></div>
+  </div>
+  <div class="blankFooter"></div>
 </div>
 
 <style>
-  .banner {
-    background-color: #f8f9fa;
-    border-bottom: 2px solid #dee2e6; /* Adds a bottom border */
+  .grid {
+    display: grid;
+    grid-template-columns: 1.76fr 1fr;
+    grid-template-rows: 60px 200px 100px 100px auto 100px;
+
+    /* Vilken font vill vi ha??? */
+    font-family: "montserrat", sans-serif;
+  }
+  .blankFooter {
+    grid-column: 1 / span 2;
+    grid-row: 6;
   }
 
-  .border-right {
-    border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
+  .blankTop {
+    grid-row: 1;
+    grid-column: 1 / span 2;
+    /* background-color: #efefef; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .leftInfo,
+  .rightInfo {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    background-color: #efefef;
+  }
+
+  .leftInfo {
+    grid-column: 1;
+    grid-row: 2;
+    text-align: left;
+    padding-left: 40px;
+  }
+
+  .rightInfo {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+    padding-right: 40px;
+    font-size: large;
+  }
+
+  .infoBlankTop {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+    background-color: #efefef;
+  }
+  .infoBlankBottom {
+    grid-column: 1 / span 2;
+    grid-row: 4;
+  }
+
+  .infoBar,
+  .infoBarBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .infoBar {
+    grid-column: 1 / span 2;
+    grid-row: 3 / 5;
+  }
+  .infoBarBox {
+    padding-left: 40px;
+    padding-right: 40px;
+    display: flex;
+    margin: auto;
+    border: 2px solid #e4e4e4;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    width: 93%;
+    height: 100px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .content1,
+  .content2,
+  .content3 {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .content3 a {
+    text-decoration: none; /* Removes the underline from links */
+    color: inherit; /* Inherits the text color from the parent element */
+  }
+
+  .content3 a:hover {
+    text-decoration: underline; /* Adds underline on hover for better indication */
+  }
+
+  .verticalDivider1,
+  .verticalDivider2 {
+    height: 50%;
+    width: 1px;
+    background-color: #ccc;
+  }
+
+  .documentView {
+    grid-column: 1/2;
+    grid-row: 5;
+    background-color: #efefef;
+    margin-left: 5.5%;
+    margin-right: 10px;
+    border: 2px solid #e4e4e4;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .documentView iframe {
+    width: 100%;
+    height: 700px;
+  }
+
+  .buttonBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+  }
+
+  #downloadIcon,
+  #flagIcon {
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  .buttonBar i:hover {
+    transform: scale(1.2);
+  }
+
+  #flagIcon {
+    margin-left: auto;
+    padding-right: 40px;
+    color: red;
+  }
+  #downloadIcon {
+    padding-left: 40px;
+  }
+
+  .hands {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    flex-grow: 2;
+  }
+
+  #likes {
+    color: rgb(1, 200, 1);
+  }
+
+  #dislikes {
+    color: red;
+  }
+  .commentView {
+    grid-column: 2 / 2;
+    grid-row: 5;
+    min-height: 500px;
+    /* overflow-y: auto; */
+    margin-right: 5.5%;
+  }
+  .commentViewBox {
+    border: 2px solid #e4e4e4;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    height: 800px;
+    width: 95%;
+    overflow-y: auto;
+  }
+
+  .commentViewBox h3 {
+    font-weight: bold;
+    padding-top: 10px;
+    padding-left: 10px;
+  }
+
+  .commentViewBox textarea {
+    font-size: 14px;
+    width: calc(
+      100% - 20px
+    ); /* Adjusts the width to ensure it doesn't overflow the parent container */
+    margin: 10px; /* Adds margin around the textarea for spacing */
+    padding: 10px; /* Adds padding inside the textarea for text */
+    border: 1px solid #ccc; /* Subtle border color */
+    border-radius: 10px; /* Rounded corners */
+    resize: vertical; /* Allows resizing only vertically */
+  }
+
+  .commentInputBox {
+    display: flex;
+    align-items: center; /* Aligns items vertically in the center */
+    justify-content: space-between; /* Spaces out the child elements */
+    padding: 10px 0; /* Optional: Adds some vertical padding inside the container */
+  }
+
+  #submitComment {
+    cursor: pointer;
+    font-size: 24px; /* Adjusts the size of the icon */
+    padding: 10px; /* Provides space around the icon */
+    background-color: #007bff; /* Sets the icon's background color to blue */
+    color: white; /* Icon color */
+    border-radius: 10px; /* Makes the border perfectly round */
+    border: none; /* Removes any default border */
+    margin-right: 5px; /* Adds some space to the left of the icon */
+    vertical-align: middle; /* Aligns the icon with the textarea vertically */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Adds a subtle shadow for depth */
+  }
+
+  #submitComment:hover {
+    background-color: #0056b3; /* Darker blue on hover for interactive feedback */
+  }
+
+  #likeBtn,
+  #dislikeBtn {
+    font-size: 24px;
+  }
+
+  #likeBtn {
+    cursor: pointer;
+    transition: 0.5s;
+  }
+
+  #likeBtn:hover,
+  #commentLike:hover {
+    color: rgb(65, 240, 79);
+    transform: scale(1.09);
+  }
+
+  #dislikeBtn {
+    cursor: pointer;
+    transition: 0.5s;
+  }
+
+  #dislikeBtn:hover,
+  #commentDislike:hover {
+    color: red;
+    transform: scale(1.09);
+  }
+  .courseName {
+    font-weight: bold;
+    color: #333333;
+  }
+
+  #greenhand {
+    color: rgb(65, 240, 79);
+  }
+
+  #blackHand {
+    color: black;
+  }
+
+  #redHand {
+    color: red;
+  }
+
+  .rateBtnContainer {
+    border: #000;
+    border-style: solid;
+    padding: 20px;
+    padding-left: 40px;
+    padding-right: 40px;
+    border-radius: 40px;
   }
 
   .pdf_frame {
@@ -140,8 +344,11 @@
   }
 
   .comment {
-    display: flex;
-    margin-top: 15px;
+    padding: 10px 0;
+    /* border: 2px solid #efefef; */
+    /* border-bottom: 1px solid #ccc; */
+    /* border-radius: 20px; */
+    margin-bottom: 15px;
   }
 
   .comment-avatar {
@@ -156,106 +363,315 @@
 
   .comment-content {
     flex-grow: 1;
-  }
-
-  .comment-author {
-    font-weight: bold;
+    margin-left: 20px;
+    margin-right: 20px;
+    border: 2px solid #efefef;
+    border-radius: 10px;
+    font-size: 14px;
   }
 
   .comment-text {
-    margin-top: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  .commentButtons {
+    display: flex;
+    justify-content: space-evenly;
+    margin-left: 50%;
+    font-size: 18px;
+  }
+
+  .commentButtons i:hover {
+    transform: scale(1.2);
+  }
+
+  .commentButtons i {
+    cursor: pointer;
+  }
+
+  #commentFlag {
+    color: red;
+  }
+  #commentReply {
+    color: rgb(1, 111, 255);
+    font-size: 18px;
+  }
+
+  #moderatorMenu {
+    text-align: center; /* Center-align the buttons */
+    padding: 20px; /* Add some padding around the buttons for spacing */
+    /* background-color: #f5f5f5; Light grey background for a subtle look */
+  }
+
+  #moderatorBtn1,
+  #moderatorBtn2 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: #333333; /* Dark text color for contrast */
+    border: 1px solid #ddd; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover effect */
+  }
+  #moderatorBtn1 {
+    background-color: lightgreen;
+  }
+  #moderatorBtn2 {
+    background-color: lightcoral;
+  }
+
+  #moderatorBtn3 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: red; /* Dark text color for contrast */
+    border: 1px solid red; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  #moderatorBtn1:hover,
+  #moderatorBtn2:hover,
+  #moderatorBtn3:hover {
+    background-color: #e9ecef; /* Slightly darker background on hover */
+    cursor: pointer; /* Change cursor to pointer to indicate clickable */
   }
 </style>
 
-<!-- Script for Firebase authentication and voting -->
 <script type="module">
-  // Import Firebase configuration and initialization modules
+  // Firebase configuration and initialization
   import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import {
+    getDatabase,
+    ref,
+    child,
+    get,
+    set,
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const documentId = "{{ document_id }}";
+  const document_id = "{{ document_id }}";
 
-  // Function to submit document validation
-  function submitValidation() {
-    const validationType = document.getElementById('validateType').value;
-    if (validationType === 'Approve') {
-      validateDocument(documentId, true);
-    } else {
-      validateDocument(documentId, false);
-      console.log("Document disapproved or other action taken.");
-      // Additional handling for disapproval or other actions
-    }
-  }
-
-  // Function to validate the document
-  function validateDocument(documentId, approve) {
-    fetch(`/validate_document/${documentId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({approve: approve}),
-    })
-    .then(response => {
-      if (response.ok) {
-        if (approve) {
-          alert("Document was successfully validated.")
-        }
-        else {
-          alert("Document was successfully removed.")
-        }
-        
-        window.location.href = "/moderator_panel"
-      } else {
-        throw new Error('Failed to validate document');
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('An error occurred while trying to validate the document.');
-    });
-  }
-
-  // Check if the user is signed in and a moderator
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // Fetch user details to check if the user is a moderator
-      fetchUser(user.uid).then((userData) => {
-        if (userData && userData.role === "moderator") {
-          console.log("User is a moderator.");
-
-          // Add event listener to the "Submit" button
-          document.getElementById('submit-validation').addEventListener('click', submitValidation);
-        } else {
-          console.log("User is not a moderator.");
-          window.location.href = "/"
-        }
+  // Function to check if user exists in the database
+  function userExists(uid) {
+    const dbRef = ref(getDatabase());
+    return get(child(dbRef, `Users/${uid}`))
+      .then((snapshot) => {
+        return snapshot.exists();
+      })
+      .catch((error) => {
+        console.error(error);
+        return false;
       });
-    } else {
-      console.log("User is not signed in.");
-      // Handle not signed-in state
-      window.location.href = "/login"
-    }
-  });
+  }
 
   function fetchUser(uid) {
     const url = "/get_user"; // Update this URL to match your Flask endpoint
-    const data = { uid: uid };
+
+    const data = {
+      uid: uid,
+    };
 
     return fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(data),
     })
-    .then(response => response.json())
-    .catch(error => {
-      console.error(error);
-      return null;
+      .then((response) => response.json())
+      .catch((error) => {
+        console.error(error);
+        return null;
+      });
+  }
+
+  // Check if user is signed in and get user's UID
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const uid = user.uid;
+      console.log("User is signed in with UID:", uid);
+
+      // Call your function here with UID if needed
+      document.getElementById("likeBtn").addEventListener("click", function () {
+        castVote(true, uid);
+      });
+
+      document
+        .getElementById("dislikeBtn")
+        .addEventListener("click", function () {
+          castVote(false, uid);
+        });
+    } else {
+      console.log("User is signed out");
+      // Redirect user to sign in page or handle the case where user is not signed in
+    }
+  });
+
+  function validateDocument(documentId) {
+    fetch(`/validate_document/${documentId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.text();
+        } else {
+          throw new Error("Network response was not ok.");
+        }
+      })
+      .then((data) => {
+        console.log(data);
+        //success
+      })
+      .catch((error) => {
+        console.error(
+          "There has been a problem with your fetch operation:",
+          error
+        );
+      });
+  }
+
+  function castVote(isUpvote, uid) {
+    var documentId = "{{ document_id }}";
+    if (!documentId) {
+      alert("Document ID not available!");
+      return;
+    }
+    fetch("/vote_document", {
+      method: "POST",
+      body: JSON.stringify({
+        uid: uid,
+        document_id: documentId,
+        is_upvote: isUpvote,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Successfully added vote");
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  // <!-- Dynamic commentsection -->
+  document
+    .getElementById("submitComment")
+    .addEventListener("click", function () {
+      const commentInput = document.getElementById("commentInput");
+      const commentText = commentInput.value.trim();
+      const db = getDatabase();
+      const auth = getAuth();
+
+      if (commentText && auth.currentUser) {
+        fetch("/add_document_comment", {
+          method: "POST",
+          body: JSON.stringify({
+            uid: auth.currentUser.uid,
+            document_id: "{{ document_id }}",
+            text: commentText,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data.message);
+            window.location.reload();
+            commentInput.value = "";
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      } else {
+        console.log("User is not signed in or comment is empty.");
+      }
     });
+
+  // Report extraction
+  document
+    .getElementById("submitReport")
+    .addEventListener("click", function () {
+      const reportReasonSelect = document.getElementById("reportReason");
+      const reportReason = reportReasonSelect.value;
+      const reportText = document.getElementById("reportText").value;
+
+      // Assuming the user is already signed in and you have their UID
+      const uid = auth.currentUser ? auth.currentUser.uid : null;
+      const documentId = "{{ document_id }}";
+
+      if (!uid) {
+        alert("You must be signed in to submit a report.");
+        return;
+      }
+
+      const reportData = {
+        uid: uid,
+        document_id: documentId,
+        reason: reportReason,
+        text: reportText,
+      };
+
+      fetch("/add_document_report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportData),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data.message);
+          $("#reportModal").modal("hide");
+          reportReasonSelect.value = reportReasonSelect.options[0].value;
+          document.getElementById("reportText").value = "";
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+
+  function deleteDocument(document_id) {
+    fetch(`/validate_document/${document_id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ approve: false }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          alert("Document was successfully removed.");
+          window.location.href = "/";
+        } else {
+          throw new Error("Failed to delete the document.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("An error occurred while trying to delete the document.");
+      });
+  }
+
+  function downloadPDF(documentUrl) {
+    window.open(documentUrl, "_blank");
   }
 </script>
-
 {% endblock %}
