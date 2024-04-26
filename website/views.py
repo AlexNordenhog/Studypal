@@ -54,7 +54,10 @@ def profile():
 def get_courses():
     university = request.args.get('university')
     subject = request.args.get('subject')
-    courses = search_controller.get_courses_from_subject_at_university(university, subject)
+    try:
+        courses = search_controller.get_courses_from_subject_at_university(university, subject)
+    except KeyError:
+        courses = []
     return jsonify(courses)
 
 
