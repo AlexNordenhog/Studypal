@@ -308,6 +308,9 @@ def upload_document_v2():
     if request.form.get('documentGrade'):
         document_data['grade'] = request.form['documentGrade']
 
+    if request.form.get('anonymousCheckbox'):
+        document_data['submitted_anonymously'] = True
+
     main.add_document(**document_data)
 
     return render_template("thank_you.html")

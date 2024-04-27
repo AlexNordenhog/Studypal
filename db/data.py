@@ -1590,12 +1590,12 @@ class Main:
                  write_date, upload_comment, grade = "ungraded",
                  validated = False, vote_directory = None, 
                  comment_section = None, document_id = uuid.uuid4().hex,
-                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")):
+                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), submitted_anonymously = False):
         
         document = Document(pdf_url=pdf_url, document_type=document_type, 
                  user_id=user_id, university=university, course_name=course_name, 
                  subject=subject, write_date=write_date, grade=grade, 
-                 upload_comment=upload_comment, document_id=document_id)
+                 upload_comment=upload_comment, document_id=document_id, submitted_anonymously=submitted_anonymously)
         
         if not self._course_dir.course_exists(course_name=course_name):
             print("Course does not exist, please create the course before (for now?)")
