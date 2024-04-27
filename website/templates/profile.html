@@ -94,7 +94,7 @@ content %}
   }
 
   .sign-out-btn:hover {
-    background-color: #c82333; /* Darker red on hover */
+    background-color: #c82333;
   }
   .document-date {
     margin-left: auto;
@@ -114,8 +114,6 @@ content %}
 </style>
 
 <div class="profile-card" id="profileContainer"></div>
-
-<!--button class="sign-out-btn" onclick="signOutUser()">Sign Out</button-->
 
 <div class="document-box">
   <h3>My Uploads</h3>
@@ -313,11 +311,6 @@ content %}
     `;
       document.getElementById("profileContainer").innerHTML = loginPrompt;
     }
-  });
-
-  document.addEventListener("DOMContentLoaded", (event) => {
-    const signOutButton = document.querySelector(".sign-out-btn");
-    signOutButton.addEventListener("click", signOutUser);
   });
 </script>
 {% endblock %}

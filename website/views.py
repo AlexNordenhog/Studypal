@@ -321,6 +321,7 @@ def get_user_documents_view():
 
     try:
         documents = main.get_user_documents(uid)
+        print(documents)
     except Exception as e:
         return jsonify({"error": str(e)}), 500  # Handle unexpected errors from the database call
 

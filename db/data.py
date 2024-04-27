@@ -216,7 +216,7 @@ class FirebaseDatabase(Firebase):
                         for document_id in document_ids:
                             document_name = courses_dict[course_name]["Documents"][document_type][document_id]
                             course.add_document(document_id=document_id, document_type=document_type, document_name=document_name, add_to_firebase = False)
-                
+                print(course._documents)
                 courses.append(course)
 
         return courses
