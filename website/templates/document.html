@@ -21,13 +21,15 @@
     <h3>{{ content.header }}</h3>
     <p>University: {{ categorization.university }}</p>
     <!-- Ska synas om det är en graded exam -->
-    <p><strong>Grade system: </strong>Lägg till import</p>
+    <!-- <p><strong>Grade system: </strong>Lägg till import</p> (Lägg till senare om behövs)-->
   </div>
   <div class="rightInfo">
     <p>Author: <strong>{{ content.username }}</strong></p>
     <p>Uploaded: {{ timestamp.date }}</p>
     <!-- Ska synas om det är en graded exam -->
-    <p><strong>Grade: </strong>Lägg till import</p>
+    {% if categorization.grade %}
+    <p><strong>Grade: </strong>{{ categorization.grade }}</p>
+    {% endif %}
   </div>
   <div class="infoBlankTop"></div>
   <div class="infoBar">

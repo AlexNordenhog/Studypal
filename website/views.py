@@ -297,17 +297,23 @@ def upload_document_v2():
                         subject=request.form['uploadSubject'])
 
     # Add document to db
-    main.add_document(
-        pdf_url=request.form['tempURL'],
-        document_type=request.form['documentType'],
-        user_id=request.form['uid'],
-        university=request.form['uploadUniversity'],
-        course_name=course,
-        subject=request.form['uploadSubject'],
-        upload_comment=request.form['documentComment'],
-        write_date=request.form["documentDate"],
-        grade = 'ungraded' # should be what user specified
-    )
+    document_data = {
+        'pdf_url': request.form['tempURL'],
+        'document_type': request.form['documentType'],
+        'user_id': request.form['uid'],
+        'university': request.form['uploadUniversity'],
+        'course_name': course,
+        'subject': request.form['uploadSubject'],
+        'upload_comment': request.form['documentComment'],
+        'write_date': request.form['documentDate']
+    }
+
+    if request.form.get('documentGrade'):
+        document_data['grade'] = request.form['documentGrade']
+
+    print(document_data)
+
+    main.add_document(**document_data)
 
     return render_template("thank_you.html")
 
@@ -384,7 +390,7 @@ def upload_specificatoins(pdf_id):
         'Religious Studies', 'Software Development', 'Software Engineering', 'Special Education', 'Systems Engineering',
         'Tax Law', 'Teaching and Learning', 'Theater and Performance Studies', 'Tourism Management', 'Veterinary Medicine', 'Visual Arts'
     ]
-    document_types = ['Assignment', 'Exam', 'Graded Exam (not part of MVP)', 'Lecture Materials', 'Other Document']
+    document_types = ['Assignment', 'Exam', 'Graded Exam (coming soon)', 'Lecture Materials', 'Other Document']
 
     return render_template("upload_specifications.html", url=pdf_url, 
                            universities=universities,

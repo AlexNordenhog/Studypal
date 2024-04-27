@@ -758,7 +758,8 @@ class Document:
                  subject: str,
                  write_date: str,
                  upload_comment: str,
-                 grade: str = "ungraded",
+                 grade_system = None,
+                 grade = None,
                  validated: bool = False,
                  vote_directory: VoteDirectory = None, 
                  comment_section: CommentSection = None, 
@@ -775,6 +776,7 @@ class Document:
         self._pdf_url = pdf_url
         self._document_type = document_type
         self._grade = grade
+        self._grade_system = grade_system
         self._write_date = write_date
         self._upload_comment = upload_comment
 
@@ -818,7 +820,9 @@ class Document:
                 "subject":self._subject,
                 "validated":self._validated,
                 "document_type":self._document_type,
-                "reported":self._reported
+                "reported":self._reported,
+                "grade":self._grade,
+                "grade_system":self._grade_system
             },
 
             "votes":self._vote_directory.get(),
