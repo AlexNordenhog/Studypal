@@ -94,20 +94,20 @@ class FirebaseDatabase(Firebase):
         ref.update(document.to_json())
 
         document_id = document.get_id()
-        document_type = document.get_type()
+        #document_type = document.get_type()
 
-        ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
+        #ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
 
         # get and update course document reference list
-        course_documents = ref.get()
+        #course_documents = ref.get()
 
-        try:
-            course_documents.append(document_id)
+        #try:
+        #    course_documents.append(document_id)
         
-        except:
-            course_documents = [document_id]
+        #except:
+        #    course_documents = [document_id]
 
-        ref.parent.update({document_type:course_documents})
+        #ref.parent.update({document_type:course_documents})
 
         # add document reference to user
         ref = db.reference(f"/Users/{user_id}/Documents", self._app)
@@ -210,13 +210,12 @@ class FirebaseDatabase(Firebase):
                                 comment_section=comment_section)
                 
                 if "Documents" in list(courses_dict[course_name].keys()):
-                    print(list(courses_dict[course_name]["Documents"].keys()))
                     for document_type in courses_dict[course_name]["Documents"].keys():
                         document_ids = courses_dict[course_name]["Documents"][document_type].keys()
                         for document_id in document_ids:
                             document_name = courses_dict[course_name]["Documents"][document_type][document_id]
                             course.add_document(document_id=document_id, document_type=document_type, document_name=document_name, add_to_firebase = False)
-                print(course._documents)
+
                 courses.append(course)
 
         return courses
@@ -339,18 +338,25 @@ class FirebaseDatabase(Firebase):
                 else:
                     reports = {}
 
+                try:
+                    grade_system = document_dict["categorization"]["grade_system"]
+                except:
+                    grade_system = None
+
                 document = Document(document_id=document_id,
                                     pdf_url=document_dict["content"]["pdf_url"],
                                     user_id=document_dict["content"]["user_id"],
-                                    grade=document_dict["content"]["grade"],
                                     write_date=document_dict["content"]["write_date"],
                                     upload_comment=document_dict["content"]["upload_comment"],
 
+                                    grade=document_dict["categorization"]["grade"],
+                                    grade_system=grade_system,
                                     validated=document_dict["categorization"]["validated"],
                                     university=document_dict["categorization"]["university"],
                                     document_type=document_dict["categorization"]["document_type"],
                                     course_name=document_dict["categorization"]["course_name"],
                                     subject=document_dict["categorization"]["subject"],
+                                    submitted_anonymously=document_dict["categorization"]["submitted_anonymously"],
 
                                     vote_directory=vote_directory,
                                     comment_section=comment_section,
@@ -766,7 +772,8 @@ class Document:
                  document_id: str = uuid.uuid4().hex,
                  timestamp = datetime.now(),
                  reported = False,
-                 reports = {}
+                 reports = {},
+                 submitted_anonymously = False
                  ) -> None:
                 
         
@@ -778,9 +785,14 @@ class Document:
         self._grade = grade
         self._grade_system = grade_system
         self._write_date = write_date
-        self._upload_comment = upload_comment
+
+        if len(upload_comment.replace(" ", "")) < 1:
+            self._upload_comment = "No Upload Comment"
+        else:
+            self._upload_comment = upload_comment
 
         # categorization
+        self._submitted_anonymously = submitted_anonymously
         self._university = university
         self._course_name = course_name
         self._subject = subject
@@ -805,13 +817,19 @@ class Document:
         self._reports = reports
     
     def to_display_json(self):
+        if self._submitted_anonymously:
+            username = "Submitted Anonymously"
+        else:
+            username = Main().get_user(self._user_id).get_username()
+
         return {
             "content":{
                 "header":self._header,
                 "pdf_url":self._pdf_url,
-                "username":Main().get_user(self._user_id).get_username(),
+                "username":username,
                 "grade":self._grade,
-                "write_date":self._write_date
+                "write_date":self._write_date,
+                "upload_comment":self._upload_comment
             },
 
             "categorization":{
@@ -852,7 +870,6 @@ class Document:
                     "header":self._header,
                     "pdf_url":self._pdf_url,
                     "user_id":self._user_id,
-                    "grade":self._grade,
                     "write_date":self._write_date,
                     "upload_comment":self._upload_comment
                 },
@@ -864,7 +881,10 @@ class Document:
                     "validated":self._validated,
                     "document_type":self._document_type,
                     "reports":self._reports,
-                    "reported":self._reported
+                    "reported":self._reported,
+                    "grade":self._grade,
+                    "grade_system":self._grade_system,
+                    "submitted_anonymously":self._submitted_anonymously
                 },
 
                 "vote_directory":self._vote_directory.to_json(),
@@ -970,10 +990,8 @@ class Course:
         else:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
 
-        self.print_documents()
-
-    def print_documents(self):
-        print('Course Documents: ', self._documents)
+    def get_documents(self):
+        return self._documents
 
     def validate(self):
         path = f"Courses/{self._course_name}/Course Content"
@@ -1025,7 +1043,7 @@ class Course:
             self._documents[document_type][document_id] = document_name
 
         if add_to_firebase:
-            path = f"Courses/{self._course_name}/Documents/{document_type}"
+            path = f"Courses/{self._course_name}/Documents/{document_type}s"
             data = {document_id:document_name}
             FirebaseDatabase().push_to_path(path=path, data=data)
 
@@ -1096,13 +1114,7 @@ class Course:
     def to_json(self):
         json = {
             self._course_name:{
-                "Documents":{
-                    "Graded Exams":(self._documents["Graded Exams"]),
-                    "Exams":(self._documents["Exams"]),
-                    "Lecture Materials":(self._documents["Lecture Materials"]),
-                    "Assignments":(self._documents["Assignments"]),
-                    "Other Documents":(self._documents["Other Documents"])
-                },
+                "Documents":self.get_documents(),
 
                 "Course Content":{
                     "course_name":self._course_name,
@@ -1118,13 +1130,7 @@ class Course:
 
     def to_display_json(self):
         json = {
-            "Documents":{
-                "Graded Exams":(self._documents["Graded Exams"]),
-                "Exams":(self._documents["Exams"]),
-                "Lecture Materials":(self._documents["Lecture Materials"]),
-                "Assignments":(self._documents["Assignments"]),
-                "Other Documents":(self._documents["Other Documents"])
-            },
+            "Documents":self.get_documents(),
 
             "Content":{
                 "course_name":self._course_name,
@@ -1161,7 +1167,8 @@ class User:
         return json
 
     def add_document_link(self, document_id):
-        self._documents.append(document_id)
+        if document_id not in self._documents:
+            self._documents.append(document_id)
 
     def get_documents(self):
         '''
@@ -1588,7 +1595,7 @@ class Main:
         document = Document(pdf_url=pdf_url, document_type=document_type, 
                  user_id=user_id, university=university, course_name=course_name, 
                  subject=subject, write_date=write_date, grade=grade, 
-                 upload_comment=upload_comment)
+                 upload_comment=upload_comment, document_id=document_id)
         
         if not self._course_dir.course_exists(course_name=course_name):
             print("Course does not exist, please create the course before (for now?)")
@@ -1671,6 +1678,7 @@ class Main:
         Takes a type of page and converts it to json.
         '''
         if type == 'document':
+            print(id)
             document = self.get_document(id)
             json = document.to_display_json()
             return json

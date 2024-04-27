@@ -311,8 +311,6 @@ def upload_document_v2():
     if request.form.get('documentGrade'):
         document_data['grade'] = request.form['documentGrade']
 
-    print(document_data)
-
     main.add_document(**document_data)
 
     return render_template("thank_you.html")
