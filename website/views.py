@@ -282,9 +282,6 @@ def test_comment():
 
 @views.route('/upload_document_v2', methods=['POST'])
 def upload_document_v2():
-    # this returns, but it exists?
-    #if 'tempURL' not in request.files:
-    #    return "No file part"
 
     if request.form['uid'] == "":
         return "No user id"
