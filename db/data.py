@@ -1494,8 +1494,7 @@ class SearchController:
                 close_matches = difflib.get_close_matches(query.lower(), lower_filtered_course_names, n=n_matches, cutoff=0.5)
                 matching_course_names = [filtered_course_names[lower_filtered_course_names.index(match)] for match in close_matches]
                 for course_name in matching_course_names:
-                    course = course_directory.get(course_name)
-                    matching_courses.append(course)
+                    matching_courses.append(course_name)
         else:
             matching_courses = [course.get_course_name() for course in filtered_courses]
 
