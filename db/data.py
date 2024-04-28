@@ -162,6 +162,7 @@ class FirebaseDatabase(Firebase):
             for user_id in users_dict:
                 try:
                     documents = users_dict[user_id]["Documents"]
+                    documents.remove(None)
                 except:
                     documents = []
 
@@ -169,7 +170,7 @@ class FirebaseDatabase(Firebase):
                             username=users_dict[user_id]["username"],
                             documents=documents,
                             role=users_dict[user_id]["role"], 
-                            sign_up_timestamp=users_dict[user_id]["creation_date"])
+                            sign_up_timestamp=datetime.strptime(users_dict[user_id]["creation_date"], "%Y-%m-%d %H:%M:%S.%f"))
                 
                 users.append(user)
         
@@ -1031,6 +1032,9 @@ class Course:
         Returns the course name.
         '''
         return self._course_name
+    
+    def remove_document(self, document_id, document_type):
+        self._documents[f"{document_type}s"].pop(document_id)
 
     def add_document(self, document_type, document_id, document_name, add_to_firebase=True):
         '''
@@ -1143,7 +1147,7 @@ class Course:
         return json
 
 class User:
-    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), documents: list = []) -> None:
+    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = []) -> None:
         self._id = user_id
         self._username = username
         self._sign_up_timestamp = sign_up_timestamp
@@ -1159,12 +1163,25 @@ class User:
     def to_json(self) -> str:
         json = {
                 "username":self._username,
-                "creation_date":self._sign_up_timestamp,
+                "creation_date":self._sign_up_timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 "documents":self._documents,
                 "role":self._role
         }
 
         return json
+
+    def to_display_json(self) -> str:
+        json = {
+                "username":self._username,
+                "creation_date":self._sign_up_timestamp.strftime("%Y-%m-%d"),
+                "documents":self._documents,
+                "role":self._role
+        }
+
+        return json
+    
+    def remove_document(self, document_id):
+        self._documents.remove(document_id)
 
     def add_document_link(self, document_id):
         if document_id not in self._documents:
@@ -1379,6 +1396,9 @@ class DocumentDirectory(Directory):
     def get(self, document_id) -> Document:
         return self._documents[document_id] if self.document_exists(document_id) else None
 
+    def remove(self, document_id):
+        self._documents.pop(document_id)
+
     def document_exists(self, document_id: str) -> bool:
         return True if document_id in self._documents.keys() else False
     
@@ -1487,7 +1507,7 @@ class SearchController:
         '''
 
         subject_courses = list(self._course_dict['Universities'][university][subject])
-        print(subject_courses)
+        #print(subject_courses)
 
         return subject_courses
     
@@ -1496,7 +1516,7 @@ class SearchController:
         Returns a list of all subjects for a certain university.
         '''
         university_subjects = list(self._course_dict['Universities'][university])
-        print(university_subjects)
+        #print(university_subjects)
 
         return university_subjects
     
@@ -1506,13 +1526,13 @@ class SearchController:
         '''
         subject_universities = []
         universities = list(self._course_dict['Universities'])
-        print(universities)
+        #print(universities)
         for u in universities:
             university_subjects = self.get_all_subjects_from_university(u)
             for s in university_subjects:
                 if s == subject:
                     subject_universities.append(u)
-        print(subject_universities)
+        #print(subject_universities)
         return subject_universities
 
 class Main:
@@ -1535,6 +1555,10 @@ class Main:
     def add_user(self, user_id, username):
         user = User(user_id=user_id, username=username)
         self._user_dir.add(user=user)
+        user_id = user.get_id()
+        data = {user_id: user.to_json()}
+        path = "Users"
+        FirebaseDatabase().push_to_path(path=path, data=data)
 
     def add_course_comment(self, course_name, user_id, text):
         try:
@@ -1585,13 +1609,24 @@ class Main:
     def get_course(self, course_name: str) -> Course:
         return self._course_dir.get_course(course_name=course_name)
 
-    def add_document(self, pdf_url, document_type, 
-                 user_id, university, course_name, subject,
-                 write_date, upload_comment, grade = "ungraded",
-                 validated = False, vote_directory = None, 
-                 comment_section = None, document_id = uuid.uuid4().hex,
-                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), submitted_anonymously = False):
+    def add_document(self, 
+                     pdf_url, 
+                     document_type, 
+                     user_id, 
+                     university, 
+                     course_name, 
+                     subject,
+                     write_date, 
+                     upload_comment, 
+                     grade = "ungraded",
+                     validated = False, 
+                     vote_directory = None, 
+                     comment_section = None,
+                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), 
+                     submitted_anonymously = False):
         
+        document_id = uuid.uuid4().hex
+
         document = Document(pdf_url=pdf_url, document_type=document_type, 
                  user_id=user_id, university=university, course_name=course_name, 
                  subject=subject, write_date=write_date, grade=grade, 
@@ -1602,11 +1637,11 @@ class Main:
         
         else:
             # add to document dir and firebase
-            course = self._course_dir.get_course(course_name=course_name)
+            #course = self._course_dir.get_course(course_name=course_name)
             self._document_dir.add(document=document)
 
             # add reference in course
-            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
+            #course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
 
             # add reference in user
             user = self._user_dir.get(user_id=user_id)
@@ -1696,7 +1731,7 @@ class Main:
         
         elif type == 'user':
             user = self.get_user(id)
-            json = user.to_json()
+            json = user.to_display_json()
             return json
         
         elif type == 'document_comments':
@@ -1739,16 +1774,17 @@ class Main:
         document_ids = user.get_documents()
 
         documents = []
-
+        print(document_ids)
         for document_id in document_ids:
             document = self._document_dir.get(document_id)
-
-            documents.append({
-                    document_id:{
-                        "header":f"{document.get_course_name()} - {document.get_header()}",
-                        "validated":document.get_validation()
-                    }
-                })
+            if document != None:
+                
+                documents.append({
+                        document_id:{
+                            "header":f"{document.get_course_name()} - {document.get_header()}",
+                            "validated":document.get_validation()
+                        }
+                    })
 
         return documents
     
@@ -1766,12 +1802,48 @@ class Main:
         '''
         return self._document_dir.get_reported_documents()
     
-    def validate_document(self, document_id):
+    def validate_document(self, document_id, approve):
         '''
         Validate a document with a certain document id.
         '''
+        if approve:
+            document = self._document_dir.get(document_id)
+            course_name = document.get_course_name()
+            document_type = document.get_type()
+            document.validate_document()
+            course = self._course_dir.get_course(course_name=course_name)
+            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
+        else:
+            #for now, delete the document if it is diapproved
+            self.delete_document(document_id=document_id)
+
+    def delete_document(self, document_id):
         document = self._document_dir.get(document_id)
-        document.validate_document()
+        course_name = document.get_course_name()
+        document_type = document.get_type()
+        user_id = document.get_author()
+        
+        # remove from db
+        course = self._course_dir.get_course(course_name=course_name)
+        course.remove_document(document_id=document_id, document_type=document_type)
+        user = self._user_dir.get(user_id=user_id)
+        user.remove_document(document_id)
+        self._document_dir.remove(document_id=document_id)
+
+
+        # remove from firebase backup
+        data = {document_id:{}}
+        # remove from course
+        #path = f"Courses/{course_name}/Documents/{document_type}s/"
+        #FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from documents
+        path = f"/Documents"
+        FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from user
+        path = f"/Users/{user_id}/Documents"
+        FirebaseDatabase().push_to_path(path=path, data=data)
+
+        print(f"Removed document: {document_id}")
 
     def add_document_report(self, document_id, user_id, reason, text):
         """Add a report to a document"""
@@ -1835,42 +1907,4 @@ def test_course_search(search_controller):
     else:
         print('No search results.')
 
-#test_course_search()
-
-
 main = Main()
-
-
-
-
-def test_comment_sorting():
-    vote_dir1 = VoteDirectory('id', {'upvotes' : 17, 'downvotes' : 3})
-    vote_dir2 = VoteDirectory('id', {'upvotes' : 50, 'downvotes' : 10})
-    vote_dir3 = VoteDirectory('id', {'upvotes' : 30, 'downvotes' : 20})
-    vote_dir4 = VoteDirectory('id', {'upvotes' : 40, 'downvotes' : 10})
-    vote_dir5 = VoteDirectory('id', {'upvotes' : 100, 'downvotes' : 0})
-    comment1 = Comment(1, 'Första kommentaren', None, comment_id='id1', timestamp = '2024-04-18 15:30:00.000000', vote_dir=vote_dir1)
-    comment2 = Comment(1, 'Vad säger du??', None, comment_id='id2', timestamp = '2024-04-18 16:30:00.000000', vote_dir=vote_dir5)
-    comment3 = Comment(1, 'Nee va?', None, comment_id='id3', timestamp = '2024-04-18 14:30:00.000000', vote_dir=vote_dir2)
-    comment4 = Comment(1, 'Bra dokument tyckte jag iallafall.', None, comment_id='id4', timestamp = '2024-04-18 20:30:00.000000', vote_dir=vote_dir4)
-    comment5 = Comment(1, 'Cool hemsida', None, comment_id='id5', timestamp = '2024-04-18 18:30:00.000000', vote_dir=vote_dir3)
-
-    comment_section = CommentSection(None, comment_section_id='id', comments = {
-
-    1:{
-        'id1':comment1,
-        'id2':comment2,
-        'id3':comment3,
-        'id4':comment4,
-        'id5':comment5,
-    }
-    }, 
-    replies = {})
-
-    comments = comment_section.get_comments('new', 'asc', 10, 1)
-
-    for comment in comments.values():
-        print(comment._text)
-
-#sök_kontrollant = SearchController()
-#sök_kontrollant.print_course_dict()

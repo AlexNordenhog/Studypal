@@ -4,7 +4,7 @@
 <div class="grid">
   <div class="blankTop">
     <!-- Ska bara synas om man är moderator -->
-    <div id="moderatorMenu">
+    <!--div id="moderatorMenu">
       <button id="moderatorBtn1">Något?</button>
       <button id="moderatorBtn2">Något?</button>
       <button
@@ -14,7 +14,7 @@
       >
         Delete
       </button>
-    </div>
+    </div-->
   </div>
   <div class="leftInfo">
     <h1 class="courseName">{{ categorization.course_name }}</h1>
@@ -877,6 +877,11 @@
   };
 
   document.addEventListener("DOMContentLoaded", (event) => {
+    document
+      .getElementById("deleteDocument")
+      .addEventListener("click", function () {
+        deleteDocument("{{ document_id }}");
+      });
     document
       .getElementById("downloadIcon")
       .addEventListener("click", () => downloadPDF("{{ content.pdf_url }}"));

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, render_template, jsonify
 from db.data import Main
 from db.data import SearchController
-from .categorization import c
+
 
 views = Blueprint("views", __name__)
 
@@ -268,7 +268,7 @@ def get_user():
         return jsonify(
             {
                 "username":user["username"],
-                "creation_date":user["creation_date"]["date"],
+                "creation_date":user["creation_date"],
                 "role":user["role"]
             })
     else:
@@ -293,6 +293,8 @@ def upload_document_v2():
                         university=request.form['uploadUniversity'],
                         subject=request.form['uploadSubject'])
 
+    is_anonymous = 'anonymous' in request.form
+
     # Add document to db
     document_data = {
         'pdf_url': request.form['tempURL'],
@@ -302,14 +304,15 @@ def upload_document_v2():
         'course_name': course,
         'subject': request.form['uploadSubject'],
         'upload_comment': request.form['documentComment'],
-        'write_date': request.form['documentDate']
+        'write_date': request.form['documentDate'],
+        'submitted_anonymously': is_anonymous
     }
 
     if request.form.get('documentGrade'):
         document_data['grade'] = request.form['documentGrade']
 
-    if request.form.get('anonymousCheckbox'):
-        document_data['submitted_anonymously'] = True
+    #if request.form.get('anonymousCheckbox'):
+    #    document_data['submitted_anonymously'] = True
 
     main.add_document(**document_data)
 
@@ -429,10 +432,8 @@ def validate_document(document_id):
         return jsonify({"error": "Approve/Disapprove not provided."}), 400
     else:
         try:
-            if approve:
-                main.validate_document(document_id)
-            else:
-                print("Disapprove not done yet.")
+            main.validate_document(document_id, approve)
+
         except Exception as e:
             print(f"Error validating document {document_id}: {str(e)}")
             return jsonify({"error": "Failed to validate document."}), 500
