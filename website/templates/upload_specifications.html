@@ -407,8 +407,8 @@
       }
 
       documentTypeSelect.addEventListener("change", function () {
-        var isAssignment = documentTypeSelect.value === "Assignment";
-        showHideDropdowns(isAssignment);
+        var isGraded = documentTypeSelect.value === "Assignment" || documentTypeSelect.value === "Graded Exam";
+        showHideDropdowns(isGraded);
         // Reset grading system and grade dropdowns when document type changes
         gradingSystemSelect.value = "Choose a grading system...";
         gradeSelect.innerHTML = "";
