@@ -32,15 +32,13 @@ def search_results():
     else:
         course = None
 
+    query = ''
+
     if request.args.get('upper_right_query'):
         query = request.args.get('upper_right_query', '')
 
-    # Use query from search bar if input
     if request.args.get('query'):
         query = request.args.get('query', '')
-
-    else:
-        query = ''
 
     results = search_controller.search(query=query, course_directory=main._course_dir, university=university, subject=subject, course=course)  
     return render_template('search.html', query=query, results=results)
