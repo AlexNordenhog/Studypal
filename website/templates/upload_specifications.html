@@ -310,41 +310,36 @@
 
     //Code for checking that input has been made in all menus and checking documentType
     document.addEventListener("DOMContentLoaded", function () {
-      document
-        .getElementById("submitBtn")
-        .addEventListener("click", function (event) {
-          if (!isPublishing) {
-            alert("You must agree to publish the document before submitting.");
-            // Prevent the default form submission if no file is selected
-            event.preventDefault();
-          } else {
-            pass}
+    var submitBtn = document.getElementById("submitBtn");
+    var publishCheckbox = document.getElementById("publishCheckbox"); // Correct method to get checkbox
 
-          var documentType = document.getElementById("documentType").value;
-          var documentDate = document.getElementById("documentDate").value;
-          var university = document.getElementById("uploadUniversity").value;
-          var subject = document.getElementById("uploadSubject").value;
-          var course = document.getElementById("uploadCourse").value;
-          var manualCourse = document
-            .getElementById("manualUploadCourse")
-            .value.trim();
-          var gradingSystem = document.getElementById("gradingSystem").value;
-          var documentGrade = document.getElementById("documentGrade").value;
-        
-          if (
-            !documentType ||
-            documentType === "Choose a document type..." ||
+    submitBtn.addEventListener("click", function (event) {
+        // Check if the publish checkbox is checked
+        if (!publishCheckbox.checked) {
+            alert("You must agree to publish the document before submitting.");
+            event.preventDefault(); // Prevent the default form submission
+            return false; // Stop further processing
+        }
+
+        var documentType = document.getElementById("documentType").value;
+        var documentDate = document.getElementById("documentDate").value;
+        var university = document.getElementById("uploadUniversity").value;
+        var subject = document.getElementById("uploadSubject").value;
+        var course = document.getElementById("uploadCourse").value;
+        var manualCourse = document.getElementById("manualUploadCourse").value.trim();
+        var gradingSystem = document.getElementById("gradingSystem").value;
+        var documentGrade = document.getElementById("documentGrade").value;
+
+        // Check other required fields
+        if (!documentType || documentType === "Choose a document type..." ||
             !documentDate ||
-            !university ||
-            university === "Choose a university..." ||
-            !subject ||
-            subject === "Choose a subject..." ||
-            (course === "Choose a course..." && manualCourse === "")
-          ) {
+            !university || university === "Choose a university..." ||
+            !subject || subject === "Choose a subject..." ||
+            (course === "Choose a course..." && manualCourse === "")) {
             alert("Please make a selection in all required fields.");
             event.preventDefault();
             return false;
-          }
+        }
           //If documentType = Assignment, check that a grade has been chosen
           if (documentType === "Assignment") {
             if (
@@ -367,7 +362,7 @@
         });
         var formData = new FormData(document.getElementById("specificationsForm"));
           // Add additional form data here if necessary
-          
+
         submitForm(formData);
     });
     //Code for updating grading system

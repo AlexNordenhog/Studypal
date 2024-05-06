@@ -290,6 +290,9 @@ def test_comment():
 @views.route('/upload_document_v2', methods=['POST'])
 def upload_document_v2():
 
+    if 'publish' not in request.form:
+        return jsonify({'error': 'You must agree to publish the document before proceeding.'}), 400
+
     if request.form['uid'] == "":
         return "No user id"
 
@@ -324,6 +327,7 @@ def upload_document_v2():
     main.add_document(**document_data)
 
     return render_template("thank_you.html")
+
 
 @views.route("/get_user_documents", methods=["POST"])
 def get_user_documents_view():
