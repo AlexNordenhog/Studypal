@@ -4,7 +4,7 @@
 <div class="grid">
   <div class="blankTop">
     <!-- Ska bara synas om man är moderator -->
-    <!--div id="moderatorMenu">
+    <div id="moderatorMenu" , style="display: none">
       <button id="moderatorBtn1">Något?</button>
       <button id="moderatorBtn2">Något?</button>
       <button
@@ -14,7 +14,7 @@
       >
         Delete
       </button>
-    </div-->
+    </div>
   </div>
   <div class="leftInfo">
     <h1 class="courseName">{{ categorization.course_name }}</h1>
@@ -699,6 +699,17 @@
     if (user) {
       const uid = user.uid;
       console.log("User is signed in with UID:", uid);
+
+      fetchUser(user.uid).then((userData) => {
+        if (userData) {
+          // User is signed in
+          if (userData.role === "moderator") {
+            // Display Moderator Menu
+            document.getElementById("moderatorMenu").style.display = "block";
+          } else {
+          }
+        }
+      });
 
       // Call your function here with UID if needed
       document.getElementById("likeBtn").addEventListener("click", function () {
