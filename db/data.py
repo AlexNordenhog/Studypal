@@ -1514,9 +1514,10 @@ class SearchController:
         '''
         Returns a list of all subjects for a certain university.
         '''
-        university_subjects = list(self._course_dict['Universities'][university])
-        #print(university_subjects)
-
+        try:
+            university_subjects = list(self._course_dict['Universities'][university])
+        except KeyError:
+            university_subjects = []
         return university_subjects
     
     def get_subject_universities(self, subject):
