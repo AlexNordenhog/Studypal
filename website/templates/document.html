@@ -113,6 +113,13 @@
                 data-toggle="modal"
                 data-target="#reportModalComment"
               ></i>
+              <!-- TODO Knappen finns och synns bara för moderators. Nu måste den bara göra något -->
+              <i
+                id="commentDelete"
+                ,
+                style="display: none"
+                class="bi bi-trash"
+              ></i>
             </div>
           </div>
           {% endfor %}
@@ -212,16 +219,13 @@
       </div>
       <div class="modal-body">
         <!-- Form inside the modal -->
-        <!-- TODO Byta till relevanta punkter -->
         <form>
           <div class="form-group">
             <label for="reportReason">Choose an reason</label>
             <select class="form-control" id="reportReason">
-              <option value="inaccurateContent">
-                Inaccurate or Misleading Content
-              </option>
+              <option value="advertising">Advertising</option>
               <option value="inappropriateMaterial">
-                Inappropriate or Offensive Material
+                Inappropriate or Offensive
               </option>
               <option value="plagiarism">
                 Plagiarism or Copyright Infringement
@@ -246,7 +250,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal">
           Close
         </button>
-        <!-- TODO Kommer behöva implementeras -->
+        <!-- TODO Kommer behöva implementeras så att det händer något -->
         <button type="button" class="btn btn-primary" id="submitReportComment">
           Submit Report
         </button>
@@ -778,6 +782,7 @@
           if (userData.role === "moderator") {
             // Display Moderator Menu
             document.getElementById("moderatorMenu").style.display = "block";
+            document.getElementById("commentDelete").style.display = "block";
           } else {
           }
         }
