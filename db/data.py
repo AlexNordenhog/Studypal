@@ -1145,6 +1145,12 @@ class Course:
         }
         
         return json
+    
+    def is_validated(self):
+        '''
+        Returns the validation status of the course.
+        '''
+        return self._validated
 
 class User:
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = []) -> None:
@@ -1455,30 +1461,36 @@ class SearchController:
                 course_subject = c.get_subject()
                 course_name = c.get_course_name()
                 if course_university == university and course_subject == subject and course_name == course:
-                    filtered_courses.append(c)
-                    break
+                    if c.is_validated():
+                        filtered_courses.append(c)
+                        break
 
         elif university and subject and not course:
             for c in all_courses:
                 course_university = c.get_university()
                 course_subject = c.get_subject()
                 if course_university == university and course_subject == subject:
-                    filtered_courses.append(c)
+                    if c.is_validated():
+                        filtered_courses.append(c)
 
         elif university and not subject and not course:
             for c in all_courses:
                 course_university = c.get_university()
                 if course_university == university:
-                    filtered_courses.append(c)
+                    if c.is_validated():
+                        filtered_courses.append(c)
 
         elif not university and subject and not course:
             for c in all_courses:
                 course_subject = c.get_subject()
                 if course_subject == subject:
-                    filtered_courses.append(c)
+                    if c.is_validated():
+                        filtered_courses.append(c)
 
         elif not university and not subject and not course:
-            filtered_courses.extend(all_courses)
+            for c in all_courses:
+                if c.is_validated():
+                    filtered_courses.append(c)
 
         matching_courses = []
         if query:
