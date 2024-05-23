@@ -1153,12 +1153,13 @@ class Course:
         return self._validated
 
 class User:
-    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = []) -> None:
+    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = [], score = 0) -> None:
         self._id = user_id
         self._username = username
         self._sign_up_timestamp = sign_up_timestamp
         self._documents = documents
         self._role = role
+        self._score = score
 
     def get_username(self):
         return self._username
@@ -1171,7 +1172,8 @@ class User:
                 "username":self._username,
                 "creation_date":self._sign_up_timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 "documents":self._documents,
-                "role":self._role
+                "role":self._role,
+                "score":self._score
         }
 
         return json
@@ -1181,7 +1183,8 @@ class User:
                 "username":self._username,
                 "creation_date":self._sign_up_timestamp.strftime("%Y-%m-%d"),
                 "documents":self._documents,
-                "role":self._role
+                "role":self._role,
+                "score":self._score
         }
 
         return json
@@ -1198,6 +1201,15 @@ class User:
         Returns a list of ids for all documents uploaded by the user.
         '''
         return self._documents
+    
+    def change_user_score(self, change):
+        '''
+        Changes the user score by the specified number.
+        '''
+        if isinstance(change, int):
+            self._score += change
+        else:
+            return 'Change must be an integer.'
 
 class Moderator(User):
     def __init__(self, user_id, username) -> None:
@@ -1879,6 +1891,16 @@ class Main:
             print("404: No file found")
             url = None
         return url
+    
+    def change_user_score(self, uid, change):
+        '''
+        Changes the user score.
+        '''
+        try:
+            user = self._user_dir.get(uid)
+            user.change_user_score(change)
+        except:
+            return 'Failed to change user score.'
 
 def test_document():
     main = Main()

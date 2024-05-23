@@ -276,7 +276,8 @@ def get_user():
             {
                 "username":user["username"],
                 "creation_date":user["creation_date"],
-                "role":user["role"]
+                "role":user["role"],
+                "score":user["score"]
             })
     else:
         return jsonify({"username":'unregistered user', "creation_date":"none"})
@@ -444,6 +445,11 @@ def validate_document(document_id):
     else:
         try:
             main.validate_document(document_id, approve)
+            
+            # Increment the users score upon validation
+            document = main.get_document(document_id)
+            uid = document.get_author()
+            main.change_user_score(uid, 10)
 
         except Exception as e:
             print(f"Error validating document {document_id}: {str(e)}")
