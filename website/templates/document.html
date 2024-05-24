@@ -860,13 +860,13 @@
         });
     });
 
-  function deleteDocument(document_id) {
-    fetch(`/validate_document/${document_id}`, {
+  function deleteDocument(document_id, uid) {
+    fetch(`/delete_document/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ approve: false }),
+      body: JSON.stringify({ document_id: document_id, uid: uid }),
     })
       .then((response) => {
         if (response.ok) {

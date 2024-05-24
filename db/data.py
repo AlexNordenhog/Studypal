@@ -1159,6 +1159,9 @@ class User:
     
     def get_id(self):
         return self._id
+    
+    def get_role(self) -> str:
+        return self._role
 
     def to_json(self) -> str:
         json = {
@@ -1816,33 +1819,38 @@ class Main:
             #for now, delete the document if it is diapproved
             self.delete_document(document_id=document_id)
 
-    def delete_document(self, document_id):
-        document = self._document_dir.get(document_id)
-        course_name = document.get_course_name()
-        document_type = document.get_type()
-        user_id = document.get_author()
-        
-        # remove from db
-        course = self._course_dir.get_course(course_name=course_name)
-        course.remove_document(document_id=document_id, document_type=document_type)
-        user = self._user_dir.get(user_id=user_id)
-        user.remove_document(document_id)
-        self._document_dir.remove(document_id=document_id)
+    def delete_document(self, document_id, user_id):
+        user = self._user_dir.get(user_id)
+        if user.get_role() == "moderator":
+            document = self._document_dir.get(document_id)
+            course_name = document.get_course_name()
+            document_type = document.get_type()
+            user_id = document.get_author()
+            
+            # remove from db
+            course = self._course_dir.get_course(course_name=course_name)
+            course.remove_document(document_id=document_id, document_type=document_type)
+            user = self._user_dir.get(user_id=user_id)
+            user.remove_document(document_id)
+            self._document_dir.remove(document_id=document_id)
 
 
-        # remove from firebase backup
-        data = {document_id:{}}
-        # remove from course
-        #path = f"Courses/{course_name}/Documents/{document_type}s/"
-        #FirebaseDatabase().push_to_path(path=path, data=data)
-        # remove from documents
-        path = f"/Documents"
-        FirebaseDatabase().push_to_path(path=path, data=data)
-        # remove from user
-        path = f"/Users/{user_id}/Documents"
-        FirebaseDatabase().push_to_path(path=path, data=data)
+            # remove from firebase backup
+            data = {document_id:{}}
+            # remove from course
+            #path = f"Courses/{course_name}/Documents/{document_type}s/"
+            #FirebaseDatabase().push_to_path(path=path, data=data)
+            # remove from documents
+            path = f"/Documents"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+            # remove from user
+            path = f"/Users/{user_id}/Documents"
+            FirebaseDatabase().push_to_path(path=path, data=data)
 
-        print(f"Removed document: {document_id}")
+            print(f"Removed document: {document_id}")
+            return f"Successfully removed document: {document_id}"
+        else:
+            return f"Failed to delete document: {document_id}. Error: User is not a moderator"
 
     def add_document_report(self, document_id, user_id, reason, text):
         """Add a report to a document"""

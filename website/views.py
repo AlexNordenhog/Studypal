@@ -263,6 +263,16 @@ def vote_document():
     
     return jsonify({"message": "Vote added successfully"})
 
+@views.route("/delete_document", methods=["POST"])
+def delete_document():
+    data = request.json
+    uid = data.get("uid")
+    document_id = data.get("document_id")
+
+    status = main.delete_document(document_id=document_id, 
+                                  user_id = uid)
+    
+    return jsonify({"message": status})
 
 @views.route("/get_user", methods=["POST"])
 def get_user():
