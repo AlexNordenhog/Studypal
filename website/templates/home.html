@@ -53,11 +53,30 @@
       </form>
     </div>
   </div>
-  <div class="second"></div>
-  <div class="thirdLeft"></div>
-  <div class="thirdRight"></div>
-  <div class="fourthLeft"></div>
-  <div class="fourthRight"></div>
+  <div class="second">
+    <!-- Write content for the 'second' class here -->
+    <p>Never miss out on exams, assignments and lecture notes. StudyPal has everything you need</p>
+  </div>
+
+  <div class="thirdLeft">
+    <!-- Write content for the 'thirdLeft' class here -->
+    <p>450 000+ Students</p>
+  </div>
+
+  <div class="thirdRight">
+    <!-- Write content for the 'thirdRight' class here -->
+    <p>40+ Universities</p>
+  </div>
+
+  <div class="fourthLeft">
+    <!-- Write content for the 'fourthLeft' class here -->
+    <p>Available everywhere and anytime</p>
+  </div>
+
+  <div class="fourthRight">
+    <!-- Write content for the 'fourthRight' class here -->
+    <p>Fun and easy learning experience</p>
+  </div>
 </div>
 
 <script>
@@ -250,12 +269,52 @@
     grid-template-columns: auto auto;
     grid-template-rows: 650px 450px 400px 400px;
   }
+  .grid div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    padding: 40px; /* Increased padding for better spacing */
+    transition: transform 0.3s ease; /* Smooth transition for hover effects */
+  }
+
+  .grid div p {
+    font-size: 40px; /* Increased font size for better readability */
+    font-weight: normal; /* Default weight for less dense text appearance */
+  }
+  .second, .thirdLeft, .thirdRight, .fourthLeft, .fourthRight {
+    cursor: pointer; /* Indicates that these are interactive */
+    background: linear-gradient(145deg, #ffffff, #f6f6f6);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Soft shadow for 3D effect */
+  }
+
+  .second:hover, .thirdLeft:hover, .thirdRight:hover, .fourthLeft:hover, .fourthRight:hover {
+    transform: scale(1.05); /* Slightly enlarges the div on hover */
+    background: linear-gradient(145deg, #fff7ee, #efe3d5);
+  }
+  .thirdRight, .fourthLeft {
+    color: #fff; /* White text for dark backgrounds */
+    background: linear-gradient(145deg, #333333, #424242);
+  }
+
+  .thirdRight:hover, .fourthLeft:hover {
+    background: linear-gradient(145deg, #424242, #333333);
+  }
+
+  /* Ensuring the text is visually centered and has good readability */
+  .grid div {
+    font-size: 20px; /* Consistent font size */
+    font-weight: bold; /* Makes text stand out more */
+  }
 
   .first {
     grid-row: 1;
     grid-column: 1 / span 2;
     background-color: black;
+    height: 700px;
   }
+  
   .firstContent {
     display: flex;
     align-items: center;
@@ -269,8 +328,9 @@
     background-repeat: no-repeat;
     background-size: cover;
     color: white;
-    background-image: url("{{ url_for("static", filename= "pictures/bookedited.png") }}");
+    background-image: url("{{ url_for('static', filename='pictures/bookedited.png') }}");
   }
+
   .firstContent h1 {
     font-size: 64px;
   }
@@ -279,16 +339,19 @@
     font-weight: bold;
   }
   .searchbar {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 8%;
-    width: 80%;
+    display: flex; /* Ensures the form elements are in a row */
+    align-items: center; /* Centers the form elements vertically */
+    justify-content: space-between; /* Optional: spaces out the elements */
+    padding: 10px; /* Adds some padding inside the form */
+    border-radius: 8px; /* Optional: rounds the corners of the form */
+    width: auto; /* Adjusts the width automatically based on the content */
   }
 
   .second {
     grid: 2;
     grid-column: 1 / span 2;
-    background-color: #f5f5f5;
+    background-color: #fbf9f6;
+    color: #000000;
     margin-top: 10px;
     display: flex;
     justify-content: center;
@@ -301,10 +364,11 @@
     margin: 10px;
     margin-bottom: 5px;
     margin-right: 5px;
+    color: #1e1e1e;
     /* background-image: url("{{ url_for('static', filename='pictures/Student.png') }}"); */
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #efefef;
+    background-color: #efe3d5;
     background-size: cover;
   }
 
@@ -314,10 +378,11 @@
     margin: 10px;
     margin-bottom: 5px;
     margin-left: 5px;
+    color: #dddddd;
     /* background-image: url("{{ url_for('static', filename='pictures/University.png') }}"); */
     background-position: center;
     background-repeat: no-repeat;
-    background-color: black;
+    background-color: #4a4a4a;
     background-size: cover;
   }
   .fourthLeft {
@@ -326,10 +391,11 @@
     margin: 10px;
     margin-top: 5px;
     margin-right: 5px;
+    color: #dddddd;
     /* background-image: url("{{ url_for('static', filename='pictures/Student.png') }}"); */
     background-position: center;
     background-repeat: no-repeat;
-    background-color: black;
+    background-color: #4a4a4a;
     background-size: cover;
   }
 
@@ -339,6 +405,7 @@
     margin: 10px;
     margin-top: 5px;
     margin-left: 5px;
+    color: #1e1e1e;
     /* background-image: url("{{ url_for('static', filename='pictures/University.png') }}"); */
     background-position: center;
     background-repeat: no-repeat;

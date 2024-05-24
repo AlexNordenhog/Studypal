@@ -85,7 +85,7 @@
       </div>
       <div class="comments-display">
         <!-- Comments will be dynamically added here from our firebase database -->
-        <!-- Som moderator ska man kunna gå in på en användares profil samt ta bort kommentarer... -->
+        <!-- Som moderator ska man kunna gå in på en användares profil -->
         <!-- Display of comments -->
         {% for comment_id, comment in comments.items() %}
         <div class="comment">
@@ -104,10 +104,24 @@
               {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
             </div>
             <div class="commentButtons">
+              <!-- TODO hur får jag tag i ratingen på varje kommentar?  -->
+              <div class="commentRating">Lägg till</div>
               <i id="commentLike" class="bi bi-hand-thumbs-up"></i>
               <i id="commentDislike" class="bi bi-hand-thumbs-down"></i>
               <i id="commentReply" class="bi bi-reply"></i>
-              <i id="commentFlag" class="bi bi-flag"></i>
+              <i
+                id="commentFlag"
+                class="bi bi-flag"
+                data-toggle="modal"
+                data-target="#reportModalComment"
+              ></i>
+              <!-- TODO Knappen finns och synns bara för moderators. Nu måste den bara göra något -->
+              <i
+                id="commentDelete"
+                ,
+                style="display: none"
+                class="bi bi-trash"
+              ></i>
             </div>
           </div>
           {% endfor %}
@@ -118,7 +132,7 @@
   <div class="blankFooter"></div>
 </div>
 
-<!-- Report Modal with form -->
+<!-- Report Modal for document -->
 <div
   class="modal fade"
   id="reportModal"
@@ -176,6 +190,70 @@
           Close
         </button>
         <button type="button" class="btn btn-primary" id="submitReport">
+          Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report modal for comment -->
+<div
+  class="modal fade"
+  id="reportModalComment"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="modelTitleId"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Report Document</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <div aria-hidden="true">&times;</div>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Form inside the modal -->
+        <form>
+          <div class="form-group">
+            <label for="reportReason">Choose an reason</label>
+            <select class="form-control" id="reportReason">
+              <option value="advertising">Advertising</option>
+              <option value="inappropriateMaterial">
+                Inappropriate or Offensive
+              </option>
+              <option value="plagiarism">
+                Plagiarism or Copyright Infringement
+              </option>
+              <option value="irrelevantContent">Irrelevant or Off-topic</option>
+              <option value="otherreason">Other Reason</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="reportText">Comment</label>
+            <textarea
+              class="form-control"
+              id="reportText"
+              rows="3"
+              placeholder="Your Comment"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+        <!-- TODO Kommer behöva implementeras så att det händer något -->
+        <button type="button" class="btn btn-primary" id="submitReportComment">
           Submit Report
         </button>
       </div>
@@ -706,6 +784,7 @@
           if (userData.role === "moderator") {
             // Display Moderator Menu
             document.getElementById("moderatorMenu").style.display = "block";
+            document.getElementById("commentDelete").style.display = "block";
           } else {
           }
         }

@@ -144,6 +144,7 @@
         <option value="A-F">A-F</option>
         <option value="VG/U/G">VG/U/G</option>
         <option value="1-5">1-5</option>
+        <option value="Ungraded">Ungraded</option>
       </select>
     </div>
 
@@ -394,6 +395,7 @@
           grades = ["A", "B", "C", "D", "E", "F"];
         else if (gradingSystem === "VG/U/G") grades = ["VG", "G", "U"];
         else if (gradingSystem === "1-5") grades = ["1", "2", "3", "4", "5"];
+        else if (gradingSystem === "Ungraded") grades = ["ungraded"]
 
         grades.forEach(function (grade) {
           var option = new Option(grade, grade);
