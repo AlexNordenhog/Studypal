@@ -170,7 +170,8 @@ class FirebaseDatabase(Firebase):
                             username=users_dict[user_id]["username"],
                             documents=documents,
                             role=users_dict[user_id]["role"], 
-                            sign_up_timestamp=datetime.strptime(users_dict[user_id]["creation_date"], "%Y-%m-%d %H:%M:%S.%f"))
+                            sign_up_timestamp=datetime.strptime(users_dict[user_id]["creation_date"], "%Y-%m-%d %H:%M:%S.%f"),
+                            score=users_dict[user_id]["score"])
                 
                 users.append(user)
         
@@ -1211,6 +1212,9 @@ class User:
         '''
         if isinstance(change, int):
             self._score += change
+            current_score = self._score
+            FirebaseDatabase().push_to_path(path=f"Users/{self._id}", 
+                                            data={"score":current_score})
         else:
             return 'Change must be an integer.'
 
