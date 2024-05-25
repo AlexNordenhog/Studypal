@@ -53,31 +53,58 @@
       </form>
     </div>
   </div>
-  <div class="second">
-    <!-- Write content for the 'second' class here -->
-    <p>Never miss out on exams, assignments and lecture notes. StudyPal has everything you need</p>
-  </div>
-
-  <div class="thirdLeft">
-    <!-- Write content for the 'thirdLeft' class here -->
-    <p>450 000+ Students</p>
-  </div>
-
-  <div class="thirdRight">
-    <!-- Write content for the 'thirdRight' class here -->
-    <p>40+ Universities</p>
-  </div>
-
-  <div class="fourthLeft">
-    <!-- Write content for the 'fourthLeft' class here -->
-    <p>Available everywhere and anytime</p>
-  </div>
-
-  <div class="fourthRight">
-    <!-- Write content for the 'fourthRight' class here -->
-    <p>Fun and easy learning experience</p>
-  </div>
 </div>
+
+<div class="container">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">
+        <img src="{{ url_for('static', filename='pictures/students-icon.png') }}" alt="students-icon">
+      </div>
+      <div class="card-content">
+        <br>
+        <h2>450 000+ Studnets</h2>
+        <p>More than 450 000 students in Sweden are able to use StudyPal to find old exams, assignments and lecture notes</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">
+        <img src="{{ url_for('static', filename='pictures/university-icon.png') }}" alt="university-icon">
+      </div>
+      <div class="card-content">
+        <br>
+        <h2>40+ Universities</h2>
+        <p>More than 40 universities in Sweden is able to connect over StudyPal</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">
+        <img src="{{ url_for('static', filename='pictures/24-7-icon.png') }}" alt="24-7-icon">
+      </div>
+      <div class="card-content">
+        <br>
+        <h2>Available anytime and everywhere</h2>
+        <p>Since this is an online based application, StudyPal is available anythime and eveyrwhere</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">
+        <img src="{{ url_for('static', filename='pictures/study-material-icon.png') }}" alt="study-material-icon">
+      </div>
+      <div class="card-content">
+        <br>
+        <h2>Find the best study material </h2>
+        <p>Since there is alot of students and universities in Sweden, by uplopading material to StudyPal you will help yourself and other to find the best material</p>
+      </div>
+    </div>  
+    <div class="second">
+      <p>Never miss out on old exams, assignments and lecture notes. StudyPal has everything you need.</p>
+    </div>
+</div>
+
 
 <script>
   class SearchDropDownMenu {
@@ -264,10 +291,75 @@
 </script>
 
 <style>
+  body {
+    background-image: url("{{ url_for('static', filename='pictures/bookedited.png') }}");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    color: rgb(0, 0, 0);
+    font-family: 'Arial', sans-serif;
+  }
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .card {
+    background-color: rgb(215, 211, 203);
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card-icon {
+    flex: 0 0 auto;
+    margin-right: 20px;
+  }
+
+  .card-icon img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .card-content {
+    flex: 1;
+  }
+
+  .card-content h2 {
+    margin: 0 0 10px;
+    font-size: 1.5rem;
+  }
+
+  .card-content p {
+    margin: 0;
+    font-size: 1rem;
+    color: #666;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(145deg, #f9f5ef, #e1d8ce);
+
+  }
   .grid {
     display: grid;
-    grid-template-columns: auto auto;
-    grid-template-rows: 650px 450px 400px 400px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto;
+    
   }
   .grid div {
     display: flex;
@@ -283,35 +375,18 @@
     font-size: 40px; /* Increased font size for better readability */
     font-weight: normal; /* Default weight for less dense text appearance */
   }
-  .second, .thirdLeft, .thirdRight, .fourthLeft, .fourthRight {
-    cursor: pointer; /* Indicates that these are interactive */
-    background: linear-gradient(145deg, #ffffff, #f6f6f6);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Soft shadow for 3D effect */
-  }
-
-  .second:hover, .thirdLeft:hover, .thirdRight:hover, .fourthLeft:hover, .fourthRight:hover {
-    transform: scale(1.05); /* Slightly enlarges the div on hover */
-    background: linear-gradient(145deg, #fff7ee, #efe3d5);
-  }
-  .thirdRight, .fourthLeft {
-    color: #fff; /* White text for dark backgrounds */
-    background: linear-gradient(145deg, #333333, #424242);
-  }
-
-  .thirdRight:hover, .fourthLeft:hover {
-    background: linear-gradient(145deg, #424242, #333333);
-  }
 
   /* Ensuring the text is visually centered and has good readability */
   .grid div {
     font-size: 20px; /* Consistent font size */
     font-weight: bold; /* Makes text stand out more */
+    color: #000000;
   }
 
   .first {
     grid-row: 1;
     grid-column: 1 / span 2;
-    background-color: black;
+
     height: 700px;
   }
   
@@ -333,10 +408,12 @@
 
   .firstContent h1 {
     font-size: 64px;
+    color: white;
   }
   .firstContent p {
     font-size: 24px;
     font-weight: bold;
+    color: rgb(225, 225, 225);
   }
   .searchbar {
     display: flex; /* Ensures the form elements are in a row */
@@ -350,68 +427,27 @@
   .second {
     grid: 2;
     grid-column: 1 / span 2;
-    background-color: #fbf9f6;
+    background-color:rgb(215, 211, 203);;
     color: #000000;
     margin-top: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
+    border-radius: 20px;
+    height: 150px;
+    margin-bottom: 100px;
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
   }
+  .second:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(145deg, #f9f5ef, #e1d8ce);
 
-  .thirdLeft {
-    grid-row: 3;
-    grid-column: 1 / 2;
-    margin: 10px;
-    margin-bottom: 5px;
-    margin-right: 5px;
-    color: #1e1e1e;
-    /* background-image: url("{{ url_for('static', filename='pictures/Student.png') }}"); */
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #efe3d5;
-    background-size: cover;
-  }
-
-  .thirdRight {
-    grid-row: 3;
-    grid-column: 2 / 2;
-    margin: 10px;
-    margin-bottom: 5px;
-    margin-left: 5px;
-    color: #dddddd;
-    /* background-image: url("{{ url_for('static', filename='pictures/University.png') }}"); */
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #4a4a4a;
-    background-size: cover;
-  }
-  .fourthLeft {
-    grid-row: 4;
-    grid-column: 1 / 2;
-    margin: 10px;
-    margin-top: 5px;
-    margin-right: 5px;
-    color: #dddddd;
-    /* background-image: url("{{ url_for('static', filename='pictures/Student.png') }}"); */
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #4a4a4a;
-    background-size: cover;
-  }
-
-  .fourthRight {
-    grid-row: 4;
-    grid-column: 2 / 2;
-    margin: 10px;
-    margin-top: 5px;
-    margin-left: 5px;
-    color: #1e1e1e;
-    /* background-image: url("{{ url_for('static', filename='pictures/University.png') }}"); */
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #efefef;
-    background-size: cover;
   }
 </style>
+
+
 
 {% endblock %}
