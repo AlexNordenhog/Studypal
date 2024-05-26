@@ -1163,11 +1163,12 @@ class Course:
         contributors = {}
         for document_id in self._get_doc_ids():
             document = Main().get_document(document_id)
-            author_id = document.get_author()
-            if author_id not in contributors.keys():
-                contributors.update({author_id : 1})
-            else:
-                contributors[author_id] += 1
+            if document._submitted_anonymously == False:
+                author_id = document.get_author()
+                if author_id not in contributors.keys():
+                    contributors.update({author_id : 1})
+                else:
+                    contributors[author_id] += 1
         sorted_contributors = sorted(contributors, key=contributors.get, reverse=True)
         contributors_username = []
         for i in range(len(sorted_contributors)):
