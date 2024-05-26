@@ -117,7 +117,9 @@
             </div>
             <div class="commentButtons">
               <!-- TODO hur får jag tag i ratingen på varje kommentar?  -->
-              <div class="commentRating">L</div>
+              <div class="commentRating">
+                {{ comment.votes.upvotes - comment.votes.downvotes }}
+              </div>
               <i id="commentLike" class="bi bi-hand-thumbs-up"></i>
               <i id="commentDislike" class="bi bi-hand-thumbs-down"></i>
               <i id="commentReply" class="bi bi-reply"></i>
@@ -270,6 +272,7 @@
     </div>
   </div>
 </div>
+
 <!-- Report modal for comment -->
 <div
   class="modal fade"
@@ -1188,6 +1191,7 @@
         alert("Report submitted successfully."); // Display system message
       });
   });
+
   document.addEventListener("DOMContentLoaded", function () {
     document
       .getElementById("submitReportComment")
