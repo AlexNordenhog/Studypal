@@ -16,7 +16,7 @@
     padding: 40px;
   }
 
-  .btn {
+  .btn123 {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -31,11 +31,11 @@
     transition: background-color 0.3s;
   }
 
-  .btn:hover {
+  .btn123:hover {
     background-color: #c5c5c5;
   }
 
-  .btn img {
+  .btn123 img {
     width: 24px;
     margin-right: 10px;
   }
@@ -63,7 +63,7 @@
       <span class="line"></span>
     </div>
     <div class="input">
-      <button id="google_login_btn" class="btn">
+      <button id="google_login_btn123" class="btn123">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
           alt="Google Logo"
@@ -111,7 +111,7 @@
   });
 
   document
-    .getElementById("google_login_btn")
+    .getElementById("google_login_btn123")
     .addEventListener("click", function () {
       signInWithPopup(auth, provider)
         .then((result) => {

@@ -1,6 +1,6 @@
 <!-- search_results.html -->
-{% extends "base.html" %} {% block title %}Search Results{% endblock %} {% block content
-  %}
+{% extends "base.html" %} {% block title %}Search Results{% endblock %} {% block
+content %}
 
 <div class="container my-5">
   {% if query %}
@@ -8,7 +8,11 @@
   {% endif %}
   <ul class="searchList">
     {% for result in results %}
-    <li class="searchResult"><a href="{{ url_for('views.course_page', course_name=result) }}">{{ result }}</a></li>
+    <li class="searchResult">
+      <a href="{{ url_for('views.course_page', course_name=result) }}"
+        >{{ result }}</a
+      >
+    </li>
     {% else %}
     <p>No results found.</p>
     {% endfor %}
@@ -35,8 +39,8 @@
     background-color: #e9e9e9;
   }
   .searchResult a {
-    color: inherit; 
-    text-decoration: none; 
+    color: inherit;
+    text-decoration: none;
   }
   .searchResult a:hover {
     text-decoration: underline;
