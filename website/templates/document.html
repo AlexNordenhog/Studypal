@@ -127,13 +127,6 @@
                 data-toggle="modal"
                 data-target="#reportModalComment"
               ></i>
-              <!-- TODO Knappen finns och synns bara för moderators. Nu måste den bara göra något -->
-              <i
-                id="commentDelete"
-                ,
-                style="display: none"
-                class="bi bi-trash"
-              ></i>
             </div>
             <textarea id="replyInput" style="display: none"></textarea>
           </div>
@@ -871,7 +864,6 @@
           if (userData.role === "moderator") {
             // Display Moderator Menu
             document.getElementById("moderatorMenu").style.display = "block";
-            document.getElementById("commentDelete").style.display = "block";
           } else {
           }
         }
