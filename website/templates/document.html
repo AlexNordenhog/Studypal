@@ -5,8 +5,20 @@
   <div class="blankTop">
     <!-- Ska bara synas om man är moderator -->
     <div id="moderatorMenu" , style="display: none">
-      <button id="moderatorBtn1">Något?</button>
-      <button id="moderatorBtn2">Något?</button>
+      <button
+        id="moderatorBtn1"
+        data-toggle="modal"
+        data-target="#reportModalInformation"
+      >
+        Reports
+      </button>
+      <button
+        id="moderatorBtn2"
+        data-toggle="modal"
+        data-target="#reportModalCommentInformation"
+      >
+        Reported Comments
+      </button>
       <button
         id="moderatorBtn3"
         data-toggle="modal"
@@ -105,7 +117,7 @@
             </div>
             <div class="commentButtons">
               <!-- TODO hur får jag tag i ratingen på varje kommentar?  -->
-              <div class="commentRating">Lägg till</div>
+              <div class="commentRating">L</div>
               <i id="commentLike" class="bi bi-hand-thumbs-up"></i>
               <i id="commentDislike" class="bi bi-hand-thumbs-down"></i>
               <i id="commentReply" class="bi bi-reply"></i>
@@ -123,6 +135,7 @@
                 class="bi bi-trash"
               ></i>
             </div>
+            <textarea id="replyInput" style="display: none"></textarea>
           </div>
           {% endfor %}
         </div>
@@ -197,6 +210,73 @@
   </div>
 </div>
 
+<!-- Modal for all document reports -->
+<div
+  class="modal fade"
+  id="reportModalInformation"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Reports on the document</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <div aria-hidden="true">&times;</div>
+        </button>
+      </div>
+      <div class="modal-body">
+        FIXAAA TODO
+        <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for all comment reports -->
+<div
+  class="modal fade"
+  id="reportModalCommentInformation"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Reported comments</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <div aria-hidden="true">&times;</div>
+        </button>
+      </div>
+      <div class="modal-body">
+        FIXAAAAA TODO
+        <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Report modal for comment -->
 <div
   class="modal fade"
@@ -586,12 +666,19 @@
     color: #333333;
   }
 
+  .bi-hand-thumbs-up-fill {
+    color: rgb(65, 240, 79);
+  }
   #greenhand {
     color: rgb(65, 240, 79);
   }
 
   #blackHand {
     color: black;
+  }
+
+  .bi-hand-thumbs-down-fill {
+    color: red;
   }
 
   #redHand {
@@ -790,10 +877,23 @@
         }
       });
 
-      // Call your function here with UID if needed
-      document.getElementById("likeBtn").addEventListener("click", function () {
-        castVote(true, uid);
-      });
+      // // Call your function here with UID if needed
+      // document.getElementById("likeBtn").addEventListener("click", function () {
+      //   const likesElement = document.getElementById("likes");
+      //   let currentLikes = parseInt(likesElement.textContent);
+
+      //   // Update the likes counter on the client side
+      //   likesElement.textContent = currentLikes + 1;
+
+      //   // Get the user's UID
+      //   const uid = auth.currentUser ? auth.currentUser.uid : null;
+      //   if (!uid) {
+      //     alert("You must be signed in to like a document.");
+      //     return;
+      //   }
+
+      //   castVote(true, uid);
+      // });
 
       document
         .getElementById("dislikeBtn")
@@ -836,11 +936,12 @@
   }
 
   function castVote(isUpvote, uid) {
-    var documentId = "{{ document_id }}";
+    const documentId = "{{ document_id }}";
     if (!documentId) {
       alert("Document ID not available!");
       return;
     }
+
     fetch("/vote_document", {
       method: "POST",
       body: JSON.stringify({
@@ -858,6 +959,9 @@
       })
       .catch((error) => {
         console.error("Error:", error);
+        // If there's an error, revert the like count on the client side
+        const likesElement = document.getElementById("likes");
+        likesElement.textContent = parseInt(likesElement.textContent) - 1;
       });
   }
 
@@ -977,6 +1081,127 @@
     document
       .getElementById("downloadIcon")
       .addEventListener("click", () => downloadPDF("{{ content.pdf_url }}"));
+  });
+
+  // Check if the user has liked the document when the page loads
+  document.addEventListener("DOMContentLoaded", (event) => {
+    // Check if the user is logged in and then fetch their like status
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        fetchUserLikeStatus(uid, "{{ document_id }}");
+      }
+    });
+  });
+  // TODO Dessa funktioner är inte implementerade correct saknas backend
+  function fetchUserLikeStatus(uid, documentId) {
+    fetch(`/check_user_like_status`, {
+      method: "POST",
+      body: JSON.stringify({ uid: uid, document_id: documentId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.hasLiked) {
+          // If the user has liked the document, change the button class and disable it
+          const likeBtn = document.getElementById("likeBtn");
+          likeBtn.classList.remove("bi-hand-thumbs-up");
+          likeBtn.classList.add("bi-hand-thumbs-up-fill");
+          likeBtn.disabled = true;
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  function fetchUserDislikeStatus(uid, documentId) {
+    fetch(`/check_user_dislike_status`, {
+      method: "POST",
+      body: JSON.stringify({ uid: uid, document_id: documentId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.hasDisliked) {
+          // If the user has disliked the document, change the button class and disable it
+          const dislikeBtn = document.getElementById("dislikeBtn");
+          dislikeBtn.classList.remove("bi-hand-thumbs-down");
+          dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
+          dislikeBtn.disabled = true;
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  document.getElementById("dislikeBtn").addEventListener("click", function () {
+    const dislikeBtn = document.getElementById("dislikeBtn");
+    if (dislikeBtn.disabled) return;
+
+    const dislikesElement = document.getElementById("dislikes");
+    let currentDislikes = parseInt(dislikesElement.textContent);
+
+    // Update the dislikes counter on the client side
+    dislikesElement.textContent = currentDislikes + 1;
+
+    // Get the user's UID
+    const uid = auth.currentUser ? auth.currentUser.uid : null;
+    if (!uid) {
+      alert("You must be signed in to dislike a document.");
+      return;
+    }
+
+    // Change the button class and disable it
+    dislikeBtn.classList.remove("bi-hand-thumbs-down");
+    dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
+    dislikeBtn.disabled = true;
+
+    // Send the dislike information to the server
+    castVote(false, uid);
+  });
+
+  document.getElementById("likeBtn").addEventListener("click", function () {
+    const likeBtn = document.getElementById("likeBtn");
+    if (likeBtn.disabled) return;
+
+    const likesElement = document.getElementById("likes");
+    let currentLikes = parseInt(likesElement.textContent);
+
+    // Update the likes counter on the client side
+    likesElement.textContent = currentLikes + 1;
+
+    // Get the user's UID
+    const uid = auth.currentUser ? auth.currentUser.uid : null;
+    if (!uid) {
+      alert("You must be signed in to like a document.");
+      return;
+    }
+
+    // Change the button class and disable it
+    likeBtn.classList.remove("bi-hand-thumbs-up");
+    likeBtn.classList.add("bi-hand-thumbs-up-fill");
+    likeBtn.disabled = true;
+
+    // Send the like information to the server
+    castVote(true, uid);
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("submitReport")
+      .addEventListener("click", function () {
+        alert("Report submitted successfully."); // Display system message
+      });
+  });
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("submitReportComment")
+      .addEventListener("click", function () {
+        alert("Report submitted successfully."); // Display system message
+      });
   });
 </script>
 {% endblock %}
