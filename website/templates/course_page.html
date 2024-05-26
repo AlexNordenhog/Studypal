@@ -2,7 +2,18 @@
 %} {% block content %}
 
 <div class="grid">
-  <div class="blankTop"></div>
+  <div class="blankTop">
+    <div id="moderatorMenu" , style="display: none">
+      <button
+        id="moderatorBtn2"
+        data-toggle="modal"
+        data-target="#reportModalCommentInformation"
+      >
+        Reported Comments
+      </button>
+    </div>
+  </div>
+
   <div class="leftInfo">
     <h1 class="courseName">
       <strong> {{ content.course_name }} </strong>
@@ -179,6 +190,40 @@
         <!-- TODO Kommer behöva implementeras så att det händer något -->
         <button type="button" class="btn btn-primary" id="submitReportComment">
           Submit Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for all comment reports -->
+<div
+  class="modal fade"
+  id="reportModalCommentInformation"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Reported comments</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <div aria-hidden="true">&times;</div>
+        </button>
+      </div>
+      <div class="modal-body">
+        FIXAAAAA TODO
+        <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
         </button>
       </div>
     </div>
@@ -452,6 +497,26 @@
   .document-type-section[d="all"] {
     display: block; /* Show all sections if "All" is selected */
   }
+  #moderatorMenu {
+    text-align: center; /* Center-align the buttons */
+    padding: 20px; /* Add some padding around the buttons for spacing */
+    /* background-color: #f5f5f5; Light grey background for a subtle look */
+  }
+  #moderatorBtn2 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: #333333; /* Dark text color for contrast */
+    border: 1px solid #ddd; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover effect */
+  }
+
+  #moderatorBtn2:hover {
+    background-color: #e9ecef; /* Slightly darker background on hover */
+    cursor: pointer; /* Change cursor to pointer to indicate clickable */
+  }
 </style>
 
 <script type="module">
@@ -576,6 +641,30 @@
         }
       });
     });
+  });
+
+  // Check if user is signed in and get user's UID
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const uid = user.uid;
+      console.log("User is signed in with UID:", uid);
+
+      fetchUser(user.uid).then((userData) => {
+        if (userData) {
+          // User is signed in
+          if (userData.role === "moderator") {
+            // Display Moderator Menu
+            document.getElementById("moderatorMenu").style.display = "block";
+          } else {
+          }
+        }
+      });
+    } else {
+      console.log("User is signed out");
+
+      // Redirect user to sign in page or handle the case where user is not signed in
+      window.location.href = "/login";
+    }
   });
 </script>
 {% endblock %}
