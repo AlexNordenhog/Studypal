@@ -123,9 +123,6 @@ def course_page(course_name):
     documents = course_data.get("Documents", {})
     # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
     comments = main.to_json("course_comments", course_name)
-    print(comments)
-    print(content)
-    print(documents)
 
     return render_template("course_page.html", 
                            content=content,

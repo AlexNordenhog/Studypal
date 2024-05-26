@@ -1141,10 +1141,12 @@ class Course:
                 "course_name":self._course_name,
                 "university":self._university,
                 "subject":self._subject,
-                "validated":self._validated
+                "validated":self._validated,
+                "top_contributors":self.get_top_contributors()
             }
         }
         
+        print(self.get_top_contributors())
         return json
     
     def is_validated(self):
@@ -1152,6 +1154,38 @@ class Course:
         Returns the validation status of the course.
         '''
         return self._validated
+    
+    def get_top_contributors(self):
+        '''
+        Returns a list of the usernames of the users that have made
+        the most contributions to a course, descending order.
+        '''
+        contributors = {}
+        for document_id in self._get_doc_ids():
+            document = Main().get_document(document_id)
+            author_id = document.get_author()
+            if author_id not in contributors.keys():
+                contributors.update({author_id : 1})
+            else:
+                contributors[author_id] += 1
+        sorted_contributors = sorted(contributors, key=contributors.get, reverse=True)
+        contributors_username = []
+        for i in range(len(sorted_contributors)):
+            user = Main().get_user(sorted_contributors[i])
+            username = user.get_username()
+            contributors_username.append(username)
+        return contributors_username
+    
+    def _get_doc_ids(self):
+        '''
+        Returns a list of all the document ids in the course.
+        '''
+        all_ids = []
+        for category in self._documents.values():
+                if isinstance(category, dict):
+                    all_ids.extend(category.keys())
+        return all_ids
+
 
 class User:
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = [], score = 0) -> None:
