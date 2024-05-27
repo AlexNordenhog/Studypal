@@ -2143,4 +2143,3 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
-main.delete_document_comment("343af762bc7c4b73b47b5a7c4717000a", "3e32f657e25b4adea3c6b79ac8b4efa5")
