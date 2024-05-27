@@ -467,7 +467,6 @@ def validate_course(course_name):
 
     return jsonify({"status":"success"})
 
-
 from flask import request, jsonify
 
 @views.route("/validate_document/<document_id>", methods=["POST"])
@@ -477,17 +476,16 @@ def validate_document(document_id):
 
     if approve not in [True, False]:
         return jsonify({"error": "Approve/Disapprove not provided."}), 400
-    if approve == True:
-        try:
-            main.validate_document(document_id, approve)
-            # Increment the users score upon validation
-            document = main.get_document(document_id)
-            uid = document.get_author()
-            main.change_user_score(uid, 10)
+    try:
+        main.validate_document(document_id, approve)
+        # Increment the users score upon validation
+        document = main.get_document(document_id)
+        uid = document.get_author()
+        main.change_user_score(uid, 10)
 
-        except Exception as e:
-            print(f"Error validating document {document_id}: {str(e)}")
-            return jsonify({"error": "Failed to validate document."}), 500
+    except Exception as e:
+        print(f"Error validating document {document_id}: {str(e)}")
+        return jsonify({"error": "Failed to validate document."}), 500
     
     return jsonify({"status": "success", "approved": approve})
 
