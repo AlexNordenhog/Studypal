@@ -1,16 +1,11 @@
-{% extends "base.html" %} {% block title %}{{ content.course_name }}{% endblock
-%} {% block content %}
+{% extends "base.html" %}
+{% block title %}{{ content.course_name }}{% endblock %}
+{% block content %}
 
 <div class="grid">
   <div class="blankTop">
     <div id="moderatorMenu" , style="display: none">
-      <button
-        id="moderatorBtn2"
-        data-toggle="modal"
-        data-target="#reportModalCommentInformation"
-      >
-        Reported Comments
-      </button>
+      <button id="moderatorBtn2" data-toggle="modal" data-target="#reportModalCommentInformation">Reported Comments</button>
     </div>
   </div>
 
@@ -76,31 +71,34 @@
   <div class="documentFacts">
     <div class="documentFactsBox">
       <h2><strong> Top Contributors </strong></h2>
-      <ol>
+      <ol class="leaderboard">
         {% for contributor, score in content.top_contributors.items() %}
-        <li>{{ contributor }}: {{ score }}</li>
+        <li class="leaderboard-item">
+          {% if loop.first %}
+          <img src="{{ url_for('static', filename='pictures/first_place.png') }}" class="contributor-image" alt="Top Contributor">
+          {% endif %}
+          <span class="contributor-name">{{ contributor }}</span>
+          <span class="contributor-score">{{ score }} ⭐</span>
+        </li>
         {% endfor %}
       </ol>
+      <div class="contributor-message">
+        <strong> Do you want to be a top contributor? Keep uploading to this course to earn points ⭐</strong>
+      </div>
     </div>
   </div>
+  
 
   <div class="commentArea">
     <!-- Comment form -->
     <div id="commentSection" class="container mt-4">
-      <h1><strong>Course Forum</strong></h1>
+      <h1 class="forumTitle"><strong>Course Forum</strong></h1>
       <div class="comment-submit-form">
-        <textarea
-          id="commentInput"
-          class="form-control mb-2"
-          placeholder="Add a comment..."
-          rows="3"
-        ></textarea>
+        <textarea id="commentInput" class="form-control mb-2" placeholder="Add a comment..." rows="3"></textarea>
         <button id="submitComment" class="btn btn-primary">Comment</button>
       </div>
       <!-- Display of comments -->
-      <div class="comments-display">
-        <!-- Comments will be dynamically added here from our database -->
-        <!-- Display of comments -->
+      <div class="comments-display mt-4">
         {% for comment_id, comment in comments.items() %}
         <div class="comment">
           <div class="comment-avatar">
@@ -108,54 +106,26 @@
             <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
           </div>
           <div class="comment-content">
-            <div class="comment-author">User: {{ comment.username }}</div>
-            <div class="comment-text">
-              <strong> Comment: </strong> {{ comment.text }}
-            </div>
-            <div class="comment-timestamp">
-              {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
-            </div>
+            <div class="comment-author">User: <strong>{{ comment.username }}</strong></div>
+            <div class="comment-text">Comment: {{ comment.text }}</div>
+            <div class="comment-timestamp">{{ comment.timestamp.date }} at {{ comment.timestamp.time }}</div>
             <div class="commentButtons">
-              <!-- <div class="commentRating">
-                {{ comment.votes.upvotes - comment.votes.downvotes }}
-              </div>
-              <i id="commentLike" class="bi bi-hand-thumbs-up"></i>
-              <i id="commentDislike" class="bi bi-hand-thumbs-down"></i> -->
               <i id="commentReply" class="bi bi-reply"></i>
-              <i
-                id="commentFlag"
-                class="bi bi-flag"
-                data-toggle="modal"
-                data-target="#reportModalComment"
-              ></i>
+              <i id="commentFlag" class="bi bi-flag" data-toggle="modal" data-target="#reportModalComment"></i>
             </div>
           </div>
-          {% endfor %}
         </div>
+        {% endfor %}
       </div>
     </div>
   </div>
-</div>
-
 <!-- Report modal for comment -->
-<div
-  class="modal fade"
-  id="reportModalComment"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="modelTitleId"
-  aria-hidden="true"
->
+<div class="modal fade" id="reportModalComment" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Report Document</h5>
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <div aria-hidden="true">&times;</div>
         </button>
       </div>
@@ -166,12 +136,8 @@
             <label for="reportReason">Choose an reason</label>
             <select class="form-control" id="reportReason">
               <option value="advertising">Advertising</option>
-              <option value="inappropriateMaterial">
-                Inappropriate or Offensive
-              </option>
-              <option value="plagiarism">
-                Plagiarism or Copyright Infringement
-              </option>
+              <option value="inappropriateMaterial">Inappropriate or Offensive</option>
+              <option value="plagiarism">Plagiarism or Copyright Infringement</option>
               <option value="irrelevantContent">Irrelevant or Off-topic</option>
               <option value="otherreason">Other Reason</option>
             </select>
@@ -179,46 +145,26 @@
 
           <div class="form-group">
             <label for="reportText">Comment</label>
-            <textarea
-              class="form-control"
-              id="reportText"
-              rows="3"
-              placeholder="Your Comment"
-            ></textarea>
+            <textarea class="form-control" id="reportText" rows="3" placeholder="Your Comment"></textarea>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Close
-        </button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <!-- TODO Kommer behöva implementeras så att det händer något -->
-        <button type="button" class="btn btn-primary" id="submitReportComment">
-          Submit Report
-        </button>
+        <button type="button" class="btn btn-primary" id="submitReportComment">Submit Report</button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Modal for all comment reports -->
-<div
-  class="modal fade"
-  id="reportModalCommentInformation"
-  tabindex="-1"
-  role="dialog"
-  aria-hidden="true"
->
+<div class="modal fade" id="reportModalCommentInformation" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Reported comments</h5>
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <div aria-hidden="true">&times;</div>
         </button>
       </div>
@@ -227,9 +173,7 @@
         <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Close
-        </button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -370,9 +314,67 @@
     padding: 10px;
   }
 
+  .leaderboard {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #e4e4e4;
+    border-radius: 5px;
+    background: #f8f9fa;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .leaderboard-item:hover {
+    transform: scale(1.02);
+    background: #e9ecef;
+  }
+
+  .contributor-image {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+  }
+
+  .contributor-name {
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .contributor-score {
+    font-size: 16px;
+    color: #6c757d;
+    margin-left: auto; /* Align score to the right */
+  }
   .commentArea {
     grid-row: 6;
     grid-column: 1 / span 2;
+    background: #f0f2f5;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .forumTitle {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+  }
+  .contributor-message {
+    margin-top: 470px;
+    font-size: 14px;
+    color: #0f559b;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #e4e4e4;
+    text-align: center;
   }
 
   .banner {
@@ -394,14 +396,61 @@
   .comment {
     /* border-top: 1px solid #ccc; */
     margin-bottom: 15px;
-    padding: 10px 0;
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e4e4e4;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s;
+  }
+  .comment:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
   .comment-avatar {
-    margin-right: 10px;
+    margin-right: 15px;
   }
+  .comment-submit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .comment-submit-form textarea {
+    resize: none;
+    border-radius: 10px;
+    border: 1px solid #ced4da;
+    padding: 15px;
+    font-size: 1rem;
+  }
+
+  .comment-submit-form button {
+    align-self: flex-start;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .comment-submit-form button:hover {
+    background-color: #0056b3;
+  }
+
+  .comments-display {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
   .comment-avatar img {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
   }
   .comment-content {
@@ -412,18 +461,28 @@
     padding: 10px;
   }
   .comment-author {
+    font-size: 1.1rem;
     font-weight: bold;
+    color: #007bff;
   }
   .comment-text {
     margin-top: 5px;
     margin-bottom: 5px;
+  }
+  .comment-timestamp {
+    font-size: 0.9rem;
+    color: #6c757d;
   }
 
   .commentButtons {
     display: flex;
     justify-content: space-evenly;
     margin-left: 50%;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
     font-size: 18px;
+    gap: 15px;
+    margin-top: 10px;
   }
 
   .commentButtons i:hover {
@@ -432,6 +491,8 @@
 
   .commentButtons i {
     cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.2s, color 0.2s;
   }
 
   #commentFlag {
@@ -631,15 +692,10 @@
 
     filterDropdown.addEventListener("change", function () {
       const selectedType = filterDropdown.value;
-      const documentSections = document.querySelectorAll(
-        ".document-type-section"
-      );
+      const documentSections = document.querySelectorAll(".document-type-section");
 
       documentSections.forEach((section) => {
-        if (
-          selectedType === "all" ||
-          section.dataset.docType === selectedType
-        ) {
+        if (selectedType === "all" || section.dataset.docType === selectedType) {
           section.style.display = "block";
         } else {
           section.style.display = "none";
