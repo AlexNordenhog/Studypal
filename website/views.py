@@ -207,18 +207,6 @@ def add_document_report():
 
     return jsonify({"message": "Comment added to document successfully"})
 
-# @views.route("/add_comment_report", method=["POST"])
-# def add_comment_report():
-#     data = request.json
-#     uid = data.get("uid")
-#     document_id = data.get("document_id")
-#     text = data.get("text")
-#     reason = data.get("reason")
-
-#     main.add_course_report(document_id=document_id, user_id=uid, reason=reason, text=text)
-    
-#     return jsonify({"message": "Comment added to document successfully"})
-
 @views.route("/add_course_comment", methods=["POST"])
 def add_course_comment():
     data = request.json
@@ -502,10 +490,8 @@ def validation(document_id):
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):
-    reports = ''
-    print("get document reports not implemented")
+    reports = main.get_document_reports(document_id)
     return jsonify(reports)
-
 
 @views.route('/check_user_like_status', methods=['POST'])
 def check_user_like_status():
