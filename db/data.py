@@ -441,12 +441,15 @@ class FirebaseManager:
 
 
 class Report:
-    def __init__(self, document_id, user_id, reason, text, report_id = uuid.uuid4().hex) -> None:
+    def __init__(self, document_id, user_id, reason, text, report_id = None) -> None:
         self._document_id = document_id
         self._user_id = user_id
         self._reason = reason
         self._text = text
-        self._report_id = report_id
+        if report_id == None:
+            self._report_id = uuid.uuid4().hex
+        else:
+            self._report_id = report_id
     
     def get_report(self):
         """
