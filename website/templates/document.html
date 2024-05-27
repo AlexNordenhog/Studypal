@@ -207,7 +207,7 @@
 
 <!-- Modal for all document reports -->
 <div
-  class="modal fade"
+  class="modal fade modalReportInformation"
   id="reportModalInformation"
   tabindex="-1"
   role="dialog"
@@ -226,8 +226,10 @@
           <div aria-hidden="true">&times;</div>
         </button>
       </div>
-      <div class="modal-body">
-        FIXAAA TODO
+      <div class="modal-body modal-body-reports">
+        <div id="reports-container">
+          <!-- Report for each document printed here -->
+        </div>
         <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
       </div>
       <div class="modal-footer">
@@ -284,7 +286,6 @@
               {% endfor %}
             </div>
           </div>
-          <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -835,6 +836,16 @@
     background-color: #e9ecef; /* Slightly darker background on hover */
     cursor: pointer; /* Change cursor to pointer to indicate clickable */
   }
+
+  .report {
+    border-bottom: 2px solid #000;
+    font-size: 14px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .modal-body-reports {
+    overflow: auto;
+  }
 </style>
 
 <script type="module">
@@ -1167,6 +1178,38 @@
         alert("An error occurred while trying to delete the document.");
       });
   }
+
+  function deleteDocumentComment(document_id, comment_id) {
+    fetch(`/delete_document_comment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        document_id: document_id,
+        comment_id: comment_id,
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          alert("Comment was successfully removed.");
+        } else {
+          throw new Error("Failed to delete the comment.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("An error occurred while trying to delete the comment.");
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", (event) => {
+    document.getElementById("removeBtn").addEventListener("click", function () {
+      deleteDocumentComment("{{ document_id }}", "{{ comment_id }}");
+      // window.location.reload();
+    });
+  });
+
   function downloadPDF(documentUrl) {
     window.open(documentUrl, "_blank");
   }
@@ -1320,5 +1363,29 @@
       })
       .catch((error) => console.error("Error:", error));
   }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const documentId = "{{ document_id }}";
+    const reportsContainer = document.getElementById("reports-container");
+
+    fetch(`/get_document_reports/${documentId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        let reportsHtml = "";
+        for (const [reportId, reportContent] of Object.entries(data)) {
+          reportsHtml += `
+                            <div class="report">
+                                <p><strong>Report ID:</strong> ${reportId}</p>
+
+                                <p><strong>Reason:</strong> ${reportContent.text}</p>
+                            </div>
+                        `;
+        }
+        reportsContainer.innerHTML = reportsHtml;
+      })
+      .catch((error) =>
+        console.error("Error fetching document reports:", error)
+      );
+  });
 </script>
 {% endblock %}
