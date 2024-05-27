@@ -9,7 +9,7 @@ content %}
     <!-- Column for documents awaiting validation -->
     <div class="col-md-6 awaiting-validation-wrapper">
       <h2>Awaiting Validation</h2>
-      <h5 style="text-decoration: underline;">Documents:</h5>
+      <h5 style="text-decoration: underline">Documents:</h5>
       <div style="text-indent: 40px" id="documentList" class="document_list">
         {% if documents_ids %} {% for document_id in documents_ids %}
         <div class="list-item">
@@ -23,10 +23,10 @@ content %}
         </p>
         {% endif %}
       </div>
-      <br>
-    <!-- Column for courses awaiting validation -->
-    <!-- To Do: koppla data så att kurserna hamnar här. Samma som för dokument fast det heter couse/courses istället för document/documents -->
-      <h5 style="text-decoration: underline;">Courses:</h5>
+      <br />
+      <!-- Column for courses awaiting validation -->
+      <!-- To Do: koppla data så att kurserna hamnar här. Samma som för dokument fast det heter couse/courses istället för document/documents -->
+      <h5 style="text-decoration: underline">Courses:</h5>
       <div style="text-indent: 40px" id="courseList" class="course_list">
         {% if courses_ids %} {% for course_id in courses_ids %}
         <div class="list-item">
@@ -48,7 +48,7 @@ content %}
     </div>
 
     <!-- Column for flagged documents -->
-    <div class="col-md-5 ">
+    <div class="col-md-5">
       <h2>Flagged Documents</h2>
       <div id="reportlist" class="report_list">
         {% if reported_ids %} {% for document_id in reported_ids %}
@@ -71,56 +71,57 @@ content %}
 </div>
 
 <style>
-    .header-container {
-      background-color: #efefef;
-      text-align: center; 
-      padding: 40px 20px; 
-      margin-bottom: 20px; 
-      border-radius: 20px; 
-    }
-    .awaiting-validation-wrapper {
-      position: relative; /* Needed for the absolute positioning of the pseudo-element */
-      padding-right: 15px; /* Give some space for the divider */
-    }
-    .awaiting-validation-wrapper::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: 1px;
-      background-color: #000000; /* Color of the divider */
-    }
+  .header-container {
+    background-color: #efefef;
+    text-align: center;
+    padding: 40px 20px;
+    margin-bottom: 20px;
+    border-radius: 20px;
+  }
+  .awaiting-validation-wrapper {
+    position: relative; /* Needed for the absolute positioning of the pseudo-element */
+    padding-right: 15px; /* Give some space for the divider */
+  }
+  .awaiting-validation-wrapper::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: #000000; /* Color of the divider */
+  }
 
-    .col-md-5.offset-md-1 {
-      padding-left: 15px; /* Align with the right edge of the divider */
-    }
-    .header {
-      margin: 0; 
-      font-size: 48px;
-      font-weight: normal; 
-      color: #333; 
-    }
+  .col-md-5.offset-md-1 {
+    padding-left: 15px; /* Align with the right edge of the divider */
+  }
+  .header {
+    margin: 0;
+    font-size: 48px;
+    font-weight: normal;
+    color: #333;
+  }
 
-    /* Ensure the list items fill the flex container */
-    .list-item, .report_list {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .row {
-      display: flex;
-      align-items: stretch;
-    }
+  /* Ensure the list items fill the flex container */
+  .list-item,
+  .report_list {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .row {
+    display: flex;
+    align-items: stretch;
+  }
 
-    .item-link {
-      color: #007bff;
-      text-decoration: none;
-      border-bottom: 2px #000;
-    }
+  .item-link {
+    color: #007bff;
+    text-decoration: none;
+    border-bottom: 2px #000;
+  }
 
-    .no-documents-message {
-      color: #888;
-    }
+  .no-documents-message {
+    color: #888;
+  }
 </style>
 
 <script type="module">
@@ -181,37 +182,6 @@ content %}
       // Not signed in
     }
   });
-
-  // reports
-  document.addEventListener("DOMContentLoaded", async () => {
-    {% for document_id in reported_ids %}
-    await loadReports("{{ document_id }}");
-    {% endfor %}
-  });
-
-  async function loadReports(documentId) {
-    try {
-      const response = await fetch(`/get_document_reports/${documentId}`);
-      const reports = await response.json();
-
-
-      const reportsContainer = document.getElementById(`reports-for-${documentId}`);
-      reportsContainer.innerHTML = '';
-
-      if (reports && reports.length > 0) {
-
-        reports.forEach(report => {
-          const reportElement = document.createElement('p');
-          reportElement.textContent = `Reason: ${report.reason}, Comment: ${report.text}`;
-          reportsContainer.appendChild(reportElement);
-        });
-      } else {
-        reportsContainer.innerHTML = '<p>No reports for this document.</p>';
-      }
-    } catch (error) {
-      console.error('Error loading reports:', error);
-    }
-  }
 </script>
 
 {% endblock %}

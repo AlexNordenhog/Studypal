@@ -448,6 +448,17 @@ class Report:
         self._text = text
         self._report_id = report_id
     
+    def get_report(self):
+        """
+        Returns a dict with keys Reason and Text to display the report.
+        """
+
+        report = {}
+        report["reason"] = self._reason
+        report["text"] = f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote '{self._text}'"
+
+        return f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote '{self._text}'"
+
     def get_id(self):
         return self._report_id
 
@@ -617,6 +628,13 @@ class CommentSection():
             print(f"Error: Sorting ({sorting}) or order ({order}) option not avalable")
 
         return _sorted_comments
+
+    def add_comment_report(self, comment_id, user_id, reason, text):
+        try:
+            comment = self._comments[comment_id]
+            comment.add_report(user_id, reason, text)
+        except IndexError:
+            print("404: Comment not found")
 
     def get_replies(self, comment_id: str):
         """
@@ -1004,7 +1022,7 @@ class Document:
         self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
 
     def get_comments(self, sorting='popular', order="desc"):
-        return self._comment_section.get_comments(sorting=sorting, order=order)
+        return self._comment_section.get_comments(sorting=sorting, order=order)    
     
     def is_anonymous(self):
         '''
@@ -1012,6 +1030,16 @@ class Document:
         '''
         return self._submitted_anonymously
 
+    def get_descriptive_reports(self):
+        """
+        Returns a string with all reports.
+        """
+        reports = ""
+        if self._reported:
+            for report in self._reports:
+                reports += self._reports[report].get_report() + "."
+        
+        return reports
 
 class Course:
     '''
@@ -1524,10 +1552,13 @@ class DocumentDirectory(Directory):
         '''
         Returns a list of all document ids that are reported.
         '''
-        reported_documents = []
+        reported_documents = {}
         for document_id in self._documents:
+            document = self._documents[document_id]
+
             if self._documents[document_id].get_report_status():
-                reported_documents.append(document_id)
+                report_str = document.get_descriptive_reports()
+                reported_documents[document_id] = report_str
 
         return reported_documents
 
@@ -1934,7 +1965,7 @@ class Main:
             course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
             print("Document has been validated")
         else:
-            # delete disapproved documents
+            # remove the document
             document = self._document_dir.get(document_id)
             course_name = document.get_course_name()
             document_type = document.get_type()
@@ -1942,7 +1973,6 @@ class Main:
             course = self._course_dir.get_course(course_name=course_name)
             course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
             self.delete_document(document_id=document_id)
-
 
     def delete_document(self, document_id):
         """
@@ -2017,6 +2047,10 @@ class Main:
         Calls on the course directory to return a list of waiting course names.
         '''
         return self._course_dir.get_waiting_courses()
+    
+    def get_document_reports(self, document_id):
+        document = self._document_dir.get(document_id)
+        return document.get_descriptive_reports()
 
 def test_document():
     main = Main()
@@ -2036,6 +2070,7 @@ def test_document():
         print(t.get_id())
 
 #test_document()
+
 
 def test_course_search(search_controller):
 
@@ -2058,4 +2093,3 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
-
