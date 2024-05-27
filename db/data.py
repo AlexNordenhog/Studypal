@@ -512,6 +512,27 @@ class VoteDirectory(Directory):
             print("User vote stored")
             return self._votes
         
+    def current_vote(self, user_id):
+        """
+        Returns a string with the current user vote status.
+        
+        Can be:
+        'novote'
+        'upvote'
+        'downvote'
+        """
+
+        status = "novote"
+        
+        if user_id in list(self._votes.keys()):
+            current_vote = self._votes[user_id]
+            if current_vote:
+                status = "upvote"
+            else:
+                status = "downvote"
+        
+        return status
+    
     def to_json(self):
         return {
             "votes":self._votes,
@@ -818,6 +839,18 @@ class Document:
         self._reported = reported
         self._reports = reports
     
+    def get_user_vote_status(self, user_id):
+        """
+        Returns a string with the current user vote status.
+        
+        Can be:
+        'novote'
+        'upvote'
+        'downvote'
+        """
+
+        return self._vote_directory.current_vote(user_id=user_id)
+
     def to_display_json(self):
         if self._submitted_anonymously:
             username = "Submitted Anonymously"
@@ -1618,6 +1651,12 @@ class Main:
 
         return cls._main
 
+    def get_user_like_status_on_document(self, user_id, document_id):
+        document = self._document_dir.get(document_id=document_id)
+        vote_status = document.get_user_vote_status(user_id=user_id)
+
+        return vote_status
+
     def validate_course(self, course_name):
         self._course_dir.validate_course(course_name=course_name)
 
@@ -1992,3 +2031,4 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
+
