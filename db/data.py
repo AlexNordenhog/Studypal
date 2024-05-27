@@ -1184,8 +1184,7 @@ class Course:
                 "top_contributors":self.get_top_contributors()
             }
         }
-        
-        print(self.get_top_contributors())
+
         return json
     
     def is_validated(self):

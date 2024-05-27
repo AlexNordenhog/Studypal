@@ -121,7 +121,6 @@ def course_page(course_name):
 
     content = course_data.get('Content', {})
     documents = course_data.get("Documents", {})
-    # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
     comments = main.to_json("course_comments", course_name)
 
     return render_template("course_page.html", 
@@ -433,13 +432,13 @@ def upload_specificatoins(pdf_id):
 def get_waiting_documents():
     document_ids = main.get_waiting_documents()
     reported_ids = main.get_reported_documents()
-    courses_ids = main.get_waiting_courses()
+    course_names = main.get_waiting_courses()
 
     return render_template("moderator_panel.html",
-                           documents_ids=document_ids, reported_ids=reported_ids, courses_ids=courses_ids)
+                           documents_ids=document_ids, reported_ids=reported_ids, course_names = course_names)
 
 
-@views.route("validate_course/<course_name>", methods=["POST"])
+@views.route("/validate_course/<course_name>", methods=["POST"])
 def validate_course(course_name):
     data = request.get_json()
     approve = data.get("approve")
@@ -447,7 +446,12 @@ def validate_course(course_name):
     if approve not in [True, False]:
         return "Error: Approve/Disapprove not provided."
     else:
-        main.validate_course(course_name=course_name)
+        try:
+            main.validate_course(course_name=course_name)
+
+        except Exception as e:
+            print(f"Error validating course {course_name}: {str(e)}")
+            return jsonify({"error": "Failed to validate course."}), 500
     
     return jsonify({"status":"success"})
 
@@ -477,7 +481,7 @@ def validate_document(document_id):
     return jsonify({"status": "success", "approved": approve})
 
 
-@views.route("validation/<document_id>")
+@views.route("document_validation/<document_id>")
 def validation(document_id):
     # Fetch the document data
     document_data = main.to_json('document', document_id)
@@ -494,7 +498,7 @@ def validation(document_id):
     votes = document_data.get('votes', {})
     timestamp = document_data.get('timestamp', '')
 
-    return render_template("validation.html", 
+    return render_template("document_validation.html", 
                            content=content, 
                            categorization=categorization,
                            comments=comments,
@@ -502,6 +506,22 @@ def validation(document_id):
                            votes=votes,
                            timestamp=timestamp,
                            document_id=document_id)
+
+@views.route("course_validation/<course_name>")
+def course_validation(course_name):
+    course_data = main.to_json('course_page', course_name)
+
+    if not course_data:
+        return "Course not found", 404
+
+    content = course_data.get('Content', {})
+    documents = course_data.get("Documents", {})
+    comments = main.to_json("course_comments", course_name)
+
+    return render_template("course_validation.html", 
+                           content=content,
+                           documents=documents,
+                           comments=comments)
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):

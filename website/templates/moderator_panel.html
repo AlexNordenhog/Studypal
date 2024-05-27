@@ -13,7 +13,7 @@ content %}
       <div style="text-indent: 40px" id="documentList" class="document_list">
         {% if documents_ids %} {% for document_id in documents_ids %}
         <div class="list-item">
-          <a href="/validation/{{ document_id }}" class="item-link"
+          <a href="/document_validation/{{ document_id }}" class="item-link"
             >Document ID: {{ document_id }}</a
           >
         </div>
@@ -25,13 +25,12 @@ content %}
       </div>
       <br>
     <!-- Column for courses awaiting validation -->
-    <!-- To Do: koppla data så att kurserna hamnar här. Samma som för dokument fast det heter couse/courses istället för document/documents -->
       <h5 style="text-decoration: underline;">Courses:</h5>
       <div style="text-indent: 40px" id="courseList" class="course_list">
-        {% if courses_ids %} {% for course_id in courses_ids %}
+        {% if course_names %} {% for course_name in course_names %}
         <div class="list-item">
-          <a href="/validation/{{ course_id }}" class="item-link"
-            >Course ID: {{ course_id }}</a
+          <a href="/course_validation/{{ course_name }}" class="item-link"
+            >Course: {{ course_name }}</a
           >
         </div>
         {% endfor %} {% else %}
