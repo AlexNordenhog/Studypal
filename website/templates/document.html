@@ -3,7 +3,7 @@
 
 <div class="grid">
   <div class="blankTop">
-    <!-- Ska bara synas om man är moderator -->
+    <!-- Only visible for moderators -->
     <div id="moderatorMenu" , style="display: none">
       <button
         id="moderatorBtn1"
@@ -17,7 +17,7 @@
         data-toggle="modal"
         data-target="#reportModalCommentInformation"
       >
-        Reported Comments
+        Manage Comments
       </button>
       <button
         id="moderatorBtn3"
@@ -250,7 +250,7 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Reported comments</h5>
+        <h5 class="modal-title">Manage Comments</h5>
         <button
           type="button"
           class="close"
@@ -261,18 +261,44 @@
         </button>
       </div>
       <div class="modal-body">
-        FIXAAAAA TODO
-        <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Close
-        </button>
+        <div class="comments-display">
+          <!-- Comments will be dynamically added here from our firebase database -->
+          <!-- Som moderator ska man kunna gå in på en användares profil -->
+          <!-- Display of comments -->
+          {% for comment_id, comment in comments.items() %}
+          <div class="comment">
+            <div class="comment-avatar">
+              <!-- If we want it later -->
+              <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
+            </div>
+            <div class="comment-content">
+              <div class="comment-author">
+                <strong>User:</strong> {{ comment.username }}
+              </div>
+              <div class="comment-text">
+                <strong>Comment:</strong> {{ comment.text }}
+              </div>
+              <div class="comment-timestamp">
+                {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
+              </div>
+              <div class="commentButtonsModal">
+                <!-- TODO Göra så removeBtn tar bort kommentaren -->
+                <i id="removeBtn" class="bi bi-trash"></i>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Close
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
 <!-- Report modal for comment -->
 <div
   class="modal fade"
@@ -747,6 +773,20 @@
     justify-content: space-evenly;
     margin-left: 50%;
     font-size: 18px;
+  }
+  .commentButtonsModal {
+    display: flex;
+    justify-content: end;
+    margin-right: 10%;
+    font-size: 18px;
+  }
+
+  .commentButtonsModal i:hover {
+    transform: scale(1.2);
+  }
+
+  .commentButtonsModal i {
+    cursor: pointer;
   }
 
   .commentButtons i:hover {
