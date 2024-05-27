@@ -268,6 +268,26 @@ def delete_document():
     
     return jsonify({"message": status})
 
+@views.route("/delete_document_comment", methods=["POST"])
+def delete_document_comment():
+    data = request.json
+    document_id = data.get("document_id")
+    comment_id = data.get("comment_id")
+
+    status = main.delete_document_comment(document_id=document_id, comment_id=comment_id)
+    
+    return jsonify({"message": status})
+
+@views.route("/delete_course_comment", methods=["POST"])
+def delete_course_comment():
+    data = request.json
+    coures_name = data.get("course_name")
+    comment_id = data.get("comment_id")
+
+    status = main.delete_course_comment(course_name=coures_name, comment_id=comment_id)
+    
+    return jsonify({"message": status})
+
 @views.route("/get_user", methods=["POST"])
 def get_user():
     data = request.json

@@ -593,6 +593,12 @@ class CommentSection():
         
         print("404: Comment not found error")
     
+    def delete_comment(self, comment_id):
+        if comment_id in list(self._comments.keys()):
+            self._comments.pop(comment_id)
+        else:
+            print("404: Comment not found error")
+
     def get_comments(self, sorting='popular', order='desc', amount: int = 10, page: int = 1):
         """
         Returns dict of comments on page :page:, if there is :amount: comments per page.
@@ -803,7 +809,7 @@ class Comment:
 
     def get_vote_directory_json(self):
         return self._vote_dir.to_json()
-
+    
     def get_id(self):
         return self._comment_id
 
@@ -1053,6 +1059,9 @@ class Document:
         
         return reports
 
+    def delete_comment(self, comment_id):
+        self._comment_section.delete_comment(comment_id)
+
 class Course:
     '''
     A course.
@@ -1070,6 +1079,9 @@ class Course:
         
         else:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
+
+    def delete_comment(self, comment_id):
+        self._comment_section.delete_comment(comment_id)
 
     def get_documents(self):
         return self._documents
@@ -2063,6 +2075,32 @@ class Main:
     def get_document_reports(self, document_id):
         document = self._document_dir.get(document_id)
         return document.get_descriptive_reports()
+    
+    def delete_document_comment(self, document_id, comment_id):
+        """
+        Delete a comment on a document page.
+        """
+        document = self._document_dir.get(document_id)
+        course_name = document.get_course_name()
+        
+        document.delete_comment(comment_id)
+        # firebase
+        path = f"Documents/{document_id}/comment_section/comments"
+        self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
+
+
+    def delete_course_comment(self, course_name, comment_id):
+        """
+        Delete a comment on a course page.
+        """
+        
+        course = self._course_dir.get_course(course_name)
+        
+        course.delete_comment(comment_id)
+        # firebase
+        path = f"Courses/{course_name}/Course Content/comment_section/comments"
+        self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
+
 
 def test_document():
     main = Main()
@@ -2105,3 +2143,4 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
+main.delete_document_comment("343af762bc7c4b73b47b5a7c4717000a", "3e32f657e25b4adea3c6b79ac8b4efa5")
