@@ -1424,6 +1424,17 @@ class CourseDirectory(Directory):
         course_names = self.get_courses()
 
         return True if course_name in course_names else False
+    
+    def get_waiting_courses(self):
+        '''
+        Returns a list of course names awaiting validation.
+        '''
+        waiting_courses = []
+        for course_name in self._courses:
+            course = Main().get_course(course_name)
+            if course.is_validated() == False:
+                waiting_courses.append(course_name)
+        return waiting_courses
 
 class UserDirectory(Directory):
     _users = {}
@@ -1921,43 +1932,50 @@ class Main:
             document.validate_document()
             course = self._course_dir.get_course(course_name=course_name)
             course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
+            print("Document has been validated")
         else:
-            #for now, delete the document if it is diapproved
-            self.delete_document(document_id=document_id)
-
-    def delete_document(self, document_id, user_id):
-        user = self._user_dir.get(user_id)
-        if user.get_role() == "moderator":
+            # delete disapproved documents
             document = self._document_dir.get(document_id)
             course_name = document.get_course_name()
             document_type = document.get_type()
-            user_id = document.get_author()
-            
-            # remove from db
+            document.validate_document()
             course = self._course_dir.get_course(course_name=course_name)
-            course.remove_document(document_id=document_id, document_type=document_type)
-            user = self._user_dir.get(user_id=user_id)
-            user.remove_document(document_id)
-            self._document_dir.remove(document_id=document_id)
+            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
+            self.delete_document(document_id=document_id)
 
 
-            # remove from firebase backup
-            data = {document_id:{}}
-            # remove from course
-            #path = f"Courses/{course_name}/Documents/{document_type}s/"
-            #FirebaseDatabase().push_to_path(path=path, data=data)
-            # remove from documents
-            path = f"/Documents"
-            FirebaseDatabase().push_to_path(path=path, data=data)
-            # remove from user
-            path = f"/Users/{user_id}/Documents"
-            FirebaseDatabase().push_to_path(path=path, data=data)
+    def delete_document(self, document_id):
+        """
+        Deletes a document from the database.
+        """
+        document = self._document_dir.get(document_id)
+        course_name = document.get_course_name()
+        document_type = document.get_type()
+        user_id = document.get_author()
+        
+        # remove from db
+        course = self._course_dir.get_course(course_name=course_name)
+        course.remove_document(document_id=document_id, document_type=document_type)
+        user = self._user_dir.get(user_id=user_id)
+        user.remove_document(document_id)
+        self._document_dir.remove(document_id=document_id)
 
-            print(f"Removed document: {document_id}")
-            return f"Successfully removed document: {document_id}"
-        else:
-            return f"Failed to delete document: {document_id}. Error: User is not a moderator"
 
+        # remove from firebase backup
+        data = {document_id:{}}
+        # remove from course
+        #path = f"Courses/{course_name}/Documents/{document_type}s/"
+        #FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from documents
+        path = f"/Documents"
+        FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from user
+        path = f"/Users/{user_id}/Documents"
+        FirebaseDatabase().push_to_path(path=path, data=data)
+
+        print(f"Removed document: {document_id}")
+        return f"Successfully removed document: {document_id}"
+        
     def add_document_report(self, document_id, user_id, reason, text):
         """Add a report to a document"""
         document = self._document_dir.get(document_id=document_id)
@@ -1973,6 +1991,9 @@ class Main:
         self._firebase_manager.push_to_path(path=path, data=data)
 
     def get_user_upload_pdf(self, pdf_id):
+        """
+        
+        """
         path = f"Files/Uploads/PDF/{pdf_id}"
         try:
             url = self._firebase_manager.get_from_database_path(path=path)
@@ -1990,6 +2011,12 @@ class Main:
             user.change_user_score(change)
         except:
             return 'Failed to change user score.'
+        
+    def get_waiting_courses(self):
+        '''
+        Calls on the course directory to return a list of waiting course names.
+        '''
+        return self._course_dir.get_waiting_courses()
 
 def test_document():
     main = Main()

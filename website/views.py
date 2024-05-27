@@ -274,11 +274,9 @@ def vote_document():
 @views.route("/delete_document", methods=["POST"])
 def delete_document():
     data = request.json
-    uid = data.get("uid")
     document_id = data.get("document_id")
 
-    status = main.delete_document(document_id=document_id, 
-                                  user_id = uid)
+    status = main.delete_document(document_id=document_id)
     
     return jsonify({"message": status})
 
@@ -433,9 +431,10 @@ def upload_specificatoins(pdf_id):
 def get_waiting_documents():
     document_ids = main.get_waiting_documents()
     reported_ids = main.get_reported_documents()
+    courses_ids = main.get_waiting_courses()
 
     return render_template("moderator_panel.html",
-                           documents_ids=document_ids, reported_ids=reported_ids)
+                           documents_ids=document_ids, reported_ids=reported_ids, courses_ids=courses_ids)
 
 
 @views.route("validate_course/<course_name>", methods=["POST"])
@@ -463,7 +462,6 @@ def validate_document(document_id):
     else:
         try:
             main.validate_document(document_id, approve)
-            
             # Increment the users score upon validation
             document = main.get_document(document_id)
             uid = document.get_author()
