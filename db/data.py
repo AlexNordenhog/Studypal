@@ -1058,6 +1058,10 @@ class Document:
                 reports[report] = self._reports[report].get_report()
         
         return reports
+    
+    def remove_all_reports(self):
+        self._reported = False
+        self._reports = {}
 
     def delete_comment(self, comment_id):
         self._comment_section.delete_comment(comment_id)
@@ -2101,6 +2105,21 @@ class Main:
         path = f"Courses/{course_name}/Course Content/comment_section/comments"
         self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
 
+    def remove_document_reports(self, document_id):
+        """
+        Removes all reports for a document.
+        """
+
+        document = self._document_dir.get(document_id)
+        document.remove_all_reports()
+
+        # firebase
+        path = f"Documents/{document_id}/categorization"
+        data = {
+            "reported":False,
+            "reports":None
+        }
+        self._firebase_manager.push_to_path(path=path, data=data)
 
 def test_document():
     main = Main()

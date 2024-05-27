@@ -306,6 +306,14 @@ def get_user():
     else:
         return jsonify({"username":'unregistered user', "creation_date":"none"})
 
+@views.route('/remove_document_reports', methods=['POST'])
+def remove_document_reports():
+    data = request.json
+    document_id = data.get("document_id")
+    status = main.remove_document_reports(document_id=document_id)
+
+    return jsonify({"message": status})
+
 
 @views.route("/test-vote")
 def test_comment():
