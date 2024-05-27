@@ -451,7 +451,6 @@ def get_waiting_documents():
     return render_template("moderator_panel.html",
                            documents_ids=document_ids, reported_ids=reported_ids, course_names = course_names)
 
-
 @views.route("/validate_course/<course_name>", methods=["POST"])
 def validate_course(course_name):
     data = request.get_json()
@@ -459,14 +458,13 @@ def validate_course(course_name):
 
     if approve not in [True, False]:
         return "Error: Approve/Disapprove not provided."
-    if approve == True:
-        try:
-            main.validate_course(course_name=course_name)
+    try:
+        main.validate_course(course_name=course_name, approve=approve)
 
-        except Exception as e:
-            print(f"Error validating course {course_name}: {str(e)}")
-            return jsonify({"error": "Failed to validate course."}), 500
-    
+    except Exception as e:
+        print(f"Error validating course {course_name}: {str(e)}")
+        return jsonify({"error": "Failed to validate course."}), 500
+
     return jsonify({"status":"success"})
 
 

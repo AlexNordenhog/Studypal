@@ -1091,6 +1091,7 @@ class Course:
         return self._documents
 
     def validate(self):
+        """Validates the course, and syncs the validation status with firebase"""
         path = f"Courses/{self._course_name}/Course Content"
         data = {
             "validated":True
@@ -1363,9 +1364,28 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
-    def validate_course(self, course_name):
-        course = self.get_course(course_name=course_name)
-        course.validate()
+    def validate_course(self, course_name, approve):
+        """Change the validation status of a course. If 'validate' is set to False, the course is deleted."""
+
+        print("going to awoidnaoiw")
+        if approve:
+            course = self.get_course(course_name=course_name)
+            course.validate()
+        else:
+            self.delete_course(course_name)
+
+    def delete_course(self, course_name):
+        """
+        Deletes a course from the CourseDirectory and removes it from firebase.
+        """
+
+        if course_name in self._courses:
+            self._courses.pop(course_name)
+            # firebase
+            path = f"/Courses"
+            FirebaseManager().push_to_path(path=path, data={course_name:None})
+        else:
+            return "Failed to delete course: 404 Course not found."
 
     def add_course(self, course: Course, add_to_firebase = True):
         '''
@@ -1729,8 +1749,8 @@ class Main:
 
         return vote_status
 
-    def validate_course(self, course_name):
-        self._course_dir.validate_course(course_name=course_name)
+    def validate_course(self, course_name, approve):
+        self._course_dir.validate_course(course_name=course_name, approve=approve)
 
     def add_user(self, user_id, username):
         user = User(user_id=user_id, username=username)
