@@ -441,13 +441,31 @@ class FirebaseManager:
 
 
 class Report:
-    def __init__(self, document_id, user_id, reason, text, report_id = uuid.uuid4().hex) -> None:
+    def __init__(self, document_id, user_id, reason, text, report_id = None) -> None:
         self._document_id = document_id
         self._user_id = user_id
         self._reason = reason
         self._text = text
-        self._report_id = report_id
+        if report_id == None:
+            self._report_id = uuid.uuid4().hex
+        else:
+            self._report_id = report_id
     
+    def get_report(self):
+        """
+        Returns a dict with keys Reason and Text to display the report.
+        """
+
+        report = {}
+        report["reason"] = self._reason
+        
+        if len(self._text.replace(" ", "")) < 1:
+            report["text"] = f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote 'No Additional Comment'"
+        else:
+            report["text"] = f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote '{self._text}'"
+
+        return report
+
     def get_id(self):
         return self._report_id
 
@@ -575,6 +593,12 @@ class CommentSection():
         
         print("404: Comment not found error")
     
+    def delete_comment(self, comment_id):
+        if comment_id in list(self._comments.keys()):
+            self._comments.pop(comment_id)
+        else:
+            print("404: Comment not found error")
+
     def get_comments(self, sorting='popular', order='desc', amount: int = 10, page: int = 1):
         """
         Returns dict of comments on page :page:, if there is :amount: comments per page.
@@ -617,6 +641,13 @@ class CommentSection():
             print(f"Error: Sorting ({sorting}) or order ({order}) option not avalable")
 
         return _sorted_comments
+
+    def add_comment_report(self, comment_id, user_id, reason, text):
+        try:
+            comment = self._comments[comment_id]
+            comment.add_report(user_id, reason, text)
+        except IndexError:
+            print("404: Comment not found")
 
     def get_replies(self, comment_id: str):
         """
@@ -709,9 +740,14 @@ class CommentSection():
 
 class Comment:
 
-    def __init__(self, user_id, text, parent_path, comment_id = uuid.uuid4().hex, timestamp = datetime.now(), vote_dir = None):
+    def __init__(self, user_id, text, parent_path, comment_id = None, timestamp = datetime.now(), vote_dir = None):
         self._user_id = user_id
-        self._comment_id = comment_id
+        
+        if comment_id == None:
+            self._comment_id = uuid.uuid4().hex
+        else:
+            self._comment_id = comment_id
+        
         self._text = text
         self._timestamp = timestamp
         self._db_path = f"{parent_path}/{comment_id}"
@@ -773,7 +809,7 @@ class Comment:
 
     def get_vote_directory_json(self):
         return self._vote_dir.to_json()
-
+    
     def get_id(self):
         return self._comment_id
 
@@ -1004,7 +1040,7 @@ class Document:
         self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
 
     def get_comments(self, sorting='popular', order="desc"):
-        return self._comment_section.get_comments(sorting=sorting, order=order)
+        return self._comment_section.get_comments(sorting=sorting, order=order)    
     
     def is_anonymous(self):
         '''
@@ -1012,6 +1048,19 @@ class Document:
         '''
         return self._submitted_anonymously
 
+    def get_descriptive_reports(self):
+        """
+        Returns a string with all reports.
+        """
+        reports = {}
+        if self._reported:
+            for report in self._reports:
+                reports[report] = self._reports[report].get_report()
+        
+        return reports
+
+    def delete_comment(self, comment_id):
+        self._comment_section.delete_comment(comment_id)
 
 class Course:
     '''
@@ -1030,6 +1079,9 @@ class Course:
         
         else:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
+
+    def delete_comment(self, comment_id):
+        self._comment_section.delete_comment(comment_id)
 
     def get_documents(self):
         return self._documents
@@ -1523,10 +1575,13 @@ class DocumentDirectory(Directory):
         '''
         Returns a list of all document ids that are reported.
         '''
-        reported_documents = []
+        reported_documents = {}
         for document_id in self._documents:
+            document = self._documents[document_id]
+
             if self._documents[document_id].get_report_status():
-                reported_documents.append(document_id)
+                report_str = document.get_descriptive_reports()
+                reported_documents[document_id] = report_str
 
         return reported_documents
 
@@ -1931,43 +1986,49 @@ class Main:
             document.validate_document()
             course = self._course_dir.get_course(course_name=course_name)
             course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
+            print("Document has been validated")
         else:
-            #for now, delete the document if it is diapproved
-            self.delete_document(document_id=document_id)
-
-    def delete_document(self, document_id, user_id):
-        user = self._user_dir.get(user_id)
-        if user.get_role() == "moderator":
+            # remove the document
             document = self._document_dir.get(document_id)
             course_name = document.get_course_name()
             document_type = document.get_type()
-            user_id = document.get_author()
-            
-            # remove from db
+            document.validate_document()
             course = self._course_dir.get_course(course_name=course_name)
-            course.remove_document(document_id=document_id, document_type=document_type)
-            user = self._user_dir.get(user_id=user_id)
-            user.remove_document(document_id)
-            self._document_dir.remove(document_id=document_id)
+            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
+            self.delete_document(document_id=document_id)
+
+    def delete_document(self, document_id):
+        """
+        Deletes a document from the database.
+        """
+        document = self._document_dir.get(document_id)
+        course_name = document.get_course_name()
+        document_type = document.get_type()
+        user_id = document.get_author()
+        
+        # remove from db
+        course = self._course_dir.get_course(course_name=course_name)
+        course.remove_document(document_id=document_id, document_type=document_type)
+        user = self._user_dir.get(user_id=user_id)
+        user.remove_document(document_id)
+        self._document_dir.remove(document_id=document_id)
 
 
-            # remove from firebase backup
-            data = {document_id:{}}
-            # remove from course
-            #path = f"Courses/{course_name}/Documents/{document_type}s/"
-            #FirebaseDatabase().push_to_path(path=path, data=data)
-            # remove from documents
-            path = f"/Documents"
-            FirebaseDatabase().push_to_path(path=path, data=data)
-            # remove from user
-            path = f"/Users/{user_id}/Documents"
-            FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from firebase backup
+        data = {document_id:{}}
+        # remove from course
+        #path = f"Courses/{course_name}/Documents/{document_type}s/"
+        #FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from documents
+        path = f"/Documents"
+        FirebaseDatabase().push_to_path(path=path, data=data)
+        # remove from user
+        path = f"/Users/{user_id}/Documents"
+        FirebaseDatabase().push_to_path(path=path, data=data)
 
-            print(f"Removed document: {document_id}")
-            return f"Successfully removed document: {document_id}"
-        else:
-            return f"Failed to delete document: {document_id}. Error: User is not a moderator"
-
+        print(f"Removed document: {document_id}")
+        return f"Successfully removed document: {document_id}"
+        
     def add_document_report(self, document_id, user_id, reason, text):
         """Add a report to a document"""
         document = self._document_dir.get(document_id=document_id)
@@ -1983,6 +2044,9 @@ class Main:
         self._firebase_manager.push_to_path(path=path, data=data)
 
     def get_user_upload_pdf(self, pdf_id):
+        """
+        
+        """
         path = f"Files/Uploads/PDF/{pdf_id}"
         try:
             url = self._firebase_manager.get_from_database_path(path=path)
@@ -2006,6 +2070,36 @@ class Main:
         Calls on the course directory to return a list of waiting course names.
         '''
         return self._course_dir.get_waiting_courses()
+    
+    def get_document_reports(self, document_id):
+        document = self._document_dir.get(document_id)
+        return document.get_descriptive_reports()
+    
+    def delete_document_comment(self, document_id, comment_id):
+        """
+        Delete a comment on a document page.
+        """
+        document = self._document_dir.get(document_id)
+        course_name = document.get_course_name()
+        
+        document.delete_comment(comment_id)
+        # firebase
+        path = f"Documents/{document_id}/comment_section/comments"
+        self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
+
+
+    def delete_course_comment(self, course_name, comment_id):
+        """
+        Delete a comment on a course page.
+        """
+        
+        course = self._course_dir.get_course(course_name)
+        
+        course.delete_comment(comment_id)
+        # firebase
+        path = f"Courses/{course_name}/Course Content/comment_section/comments"
+        self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
+
 
 def test_document():
     main = Main()
@@ -2025,6 +2119,7 @@ def test_document():
         print(t.get_id())
 
 #test_document()
+
 
 def test_course_search(search_controller):
 
@@ -2047,4 +2142,3 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
-

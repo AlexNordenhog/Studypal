@@ -206,18 +206,6 @@ def add_document_report():
 
     return jsonify({"message": "Comment added to document successfully"})
 
-# @views.route("/add_comment_report", method=["POST"])
-# def add_comment_report():
-#     data = request.json
-#     uid = data.get("uid")
-#     document_id = data.get("document_id")
-#     text = data.get("text")
-#     reason = data.get("reason")
-
-#     main.add_course_report(document_id=document_id, user_id=uid, reason=reason, text=text)
-    
-#     return jsonify({"message": "Comment added to document successfully"})
-
 @views.route("/add_course_comment", methods=["POST"])
 def add_course_comment():
     data = request.json
@@ -273,11 +261,29 @@ def vote_document():
 @views.route("/delete_document", methods=["POST"])
 def delete_document():
     data = request.json
-    uid = data.get("uid")
     document_id = data.get("document_id")
 
-    status = main.delete_document(document_id=document_id, 
-                                  user_id = uid)
+    status = main.delete_document(document_id=document_id)
+    
+    return jsonify({"message": status})
+
+@views.route("/delete_document_comment", methods=["POST"])
+def delete_document_comment():
+    data = request.json
+    document_id = data.get("document_id")
+    comment_id = data.get("comment_id")
+
+    status = main.delete_document_comment(document_id=document_id, comment_id=comment_id)
+    
+    return jsonify({"message": status})
+
+@views.route("/delete_course_comment", methods=["POST"])
+def delete_course_comment():
+    data = request.json
+    coures_name = data.get("course_name")
+    comment_id = data.get("comment_id")
+
+    status = main.delete_course_comment(course_name=coures_name, comment_id=comment_id)
     
     return jsonify({"message": status})
 
@@ -468,7 +474,6 @@ def validate_document(document_id):
     else:
         try:
             main.validate_document(document_id, approve)
-            
             # Increment the users score upon validation
             document = main.get_document(document_id)
             uid = document.get_author()
@@ -525,10 +530,8 @@ def course_validation(course_name):
 
 @views.route("/get_document_reports/<document_id>")
 def get_document_reports(document_id):
-    reports = ''
-    print("get document reports not implemented")
+    reports = main.get_document_reports(document_id)
     return jsonify(reports)
-
 
 @views.route('/check_user_like_status', methods=['POST'])
 def check_user_like_status():
