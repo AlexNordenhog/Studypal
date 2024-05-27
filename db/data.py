@@ -1058,6 +1058,10 @@ class Document:
                 reports[report] = self._reports[report].get_report()
         
         return reports
+    
+    def remove_all_reports(self):
+        self._reported = False
+        self._reports = {}
 
     def delete_comment(self, comment_id):
         self._comment_section.delete_comment(comment_id)
@@ -1236,8 +1240,7 @@ class Course:
                 "top_contributors":self.get_top_contributors()
             }
         }
-        
-        print(self.get_top_contributors())
+
         return json
     
     def is_validated(self):
@@ -1284,6 +1287,9 @@ class User:
         self._documents = documents
         self._role = role
         self._score = score
+
+    def get_score(self):
+        return self._score
 
     def get_username(self):
         return self._username
@@ -1932,14 +1938,18 @@ class Main:
 
         else:
             return 'Failed to get course/document json.'
-        
+    
+    def get_username(self, user_id):
+        """Returns the username of a specific user."""
+        return self._user_dir.get_username(user_id)
+
     def get_user(self, user_id):
         '''
         Calls on the user directory to return a certain user object.
         '''
         return self._user_dir.get(user_id)
     
-    def get_user_documents(self, user_id):
+    def get_user_documents(self, user_id, validated=False):
         '''
         Calls on the relevant user object to return a list of the documents
         uploaded by the user.
@@ -1948,19 +1958,23 @@ class Main:
         document_ids = user.get_documents()
 
         documents = []
-        print(document_ids)
         for document_id in document_ids:
             document = self._document_dir.get(document_id)
             if document != None:
-                
-                documents.append({
-                        document_id:{
-                            "header":f"{document.get_course_name()} - {document.get_header()}",
-                            "validated":document.get_validation()
-                        }
-                    })
+                # if validated is true, then only include documents that are validated
+                if (validated and document.get_validation()) or (not validated):
+                    documents.append({
+                            document_id:{
+                                "header":f"{document.get_course_name()} - {document.get_header()}",
+                                "validated":document.get_validation()
+                            }
+                        })
 
         return documents
+    
+    def get_user_score(self, user_id):
+        user = self._user_dir.get(user_id)
+        return user.get_score()
     
     def get_waiting_documents(self):
         '''
@@ -2101,6 +2115,21 @@ class Main:
         path = f"Courses/{course_name}/Course Content/comment_section/comments"
         self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
 
+    def remove_document_reports(self, document_id):
+        """
+        Removes all reports for a document.
+        """
+
+        document = self._document_dir.get(document_id)
+        document.remove_all_reports()
+
+        # firebase
+        path = f"Documents/{document_id}/categorization"
+        data = {
+            "reported":False,
+            "reports":None
+        }
+        self._firebase_manager.push_to_path(path=path, data=data)
 
 def test_document():
     main = Main()
@@ -2143,4 +2172,3 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
-main.delete_document_comment("343af762bc7c4b73b47b5a7c4717000a", "3e32f657e25b4adea3c6b79ac8b4efa5")

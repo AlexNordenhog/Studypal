@@ -1,0 +1,428 @@
+{% extends "base.html" %} {% block title %}{{ content.course_name }}{% endblock
+    %} {% block content %}
+    
+    <div class="grid">
+      <div class="blankTop">
+        <!-- Ska bara synas om man är moderator -->
+        <div id="moderatorMenu">
+            <button id="moderatorBtn1">Approve</button>
+            <button id="moderatorBtn2">Dissapprove</button>
+        </div>
+      </div>
+    
+      <div class="leftInfo">
+        <h1 class="courseName">
+          <strong> {{ content.course_name }} </strong>
+        </h1>
+        <h3>{{ content.university }}</h3>
+        <p>Subject: {{ content.subject }}</p>
+      </div>
+      <div class="rightInfo">
+        <p>Contribute & Earn Rewards</p>
+        <p>Submit Your Documents <a href="/upload">Here</a></p>
+      </div>
+      <div class="infoBlankTop"></div>
+      <div class="infoBar">
+        <div class="infoBarBox">
+          <div class="content1">
+            <strong> Qty of Docs &nbsp;</strong>
+          </div>
+          <div class="verticalDivider1"></div>
+          <div class="content2">
+            <strong> Qty of Comments &nbsp;</strong>
+          </div>
+          <div class="verticalDivider2"></div>
+          <div class="content3">
+            <strong> <a href="#commentSection">Forum</a></strong>
+          </div>
+        </div>
+      </div>
+      <div class="infoBlankBottom"></div>
+      <div class="documentArea">
+        <!-- Filter Dropdown -->
+        <div class="filter-section">
+          <label for="documentTypeFilter">Filter by Document Type:</label>
+          <select id="documentTypeFilter" class="form-control">
+            <option value="all">All</option>
+            {% for doc_type in documents.keys() %}
+            <option value="{{ doc_type }}">{{ doc_type }}</option>
+            {% endfor %}
+          </select>
+        </div>
+    
+        <!-- Loop through each document type and its corresponding documents -->
+        {% for doc_type, doc_ids in documents.items() %}
+        <div class="document-type-section" data-doc-type="{{ doc_type }}">
+          <!-- <h3><strong> {{ doc_type }} </strong></h3> -->
+          <ul class="documentList">
+            {% for doc_id, doc_name in doc_ids.items() %}
+            <li class="documentResult">
+              <a href="{{ url_for('views.document', document_id=doc_id) }}">
+                {{ doc_name }}
+              </a>
+              <!-- Add your logic here to display votes or other properties -->
+              <div></div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    
+    <style>
+      .grid {
+        display: grid;
+        grid-template-columns: 1.76fr 1fr;
+        grid-template-rows: 60px 200px 100px 100px 700px auto;
+      }
+      .blankFooter {
+        grid-column: 1 / span 2;
+        grid-row: 6;
+      }
+    
+      .blankTop {
+        grid-row: 1;
+        grid-column: 1 / span 2;
+        /* background-color: #efefef; */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    
+      .leftInfo,
+      .rightInfo {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
+        background-color: #efefef;
+      }
+    
+      .leftInfo {
+        grid-column: 1;
+        grid-row: 2;
+        text-align: left;
+        padding-left: 40px;
+      }
+    
+      .rightInfo {
+        grid-column: 2;
+        grid-row: 2;
+        text-align: right;
+        padding-right: 40px;
+        font-size: large;
+      }
+    
+      .infoBlankTop {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        background-color: #efefef;
+      }
+      .infoBlankBottom {
+        grid-column: 1 / span 2;
+        grid-row: 4;
+      }
+    
+      .infoBar,
+      .infoBarBox {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    
+      .infoBar {
+        grid-column: 1 / span 2;
+        grid-row: 3 / 5;
+      }
+      .infoBarBox {
+        padding-left: 40px;
+        padding-right: 40px;
+        display: flex;
+        margin: auto;
+        border: 2px solid #e4e4e4;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #ffffff;
+        width: 93%;
+        height: 100px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .content1,
+      .content2,
+      .content3 {
+        flex: 1;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    
+      .content3 a {
+        text-decoration: none; /* Removes the underline from links */
+        color: inherit; /* Inherits the text color from the parent element */
+      }
+    
+      .content3 a:hover {
+        text-decoration: underline; /* Adds underline on hover for better indication */
+      }
+    
+      .verticalDivider1,
+      .verticalDivider2 {
+        height: 50%;
+        width: 1px;
+        background-color: #ccc;
+      }
+    
+      .documentArea {
+        grid-column: 1/2;
+        grid-row: 5;
+        margin-left: 5.5%;
+        margin-right: 10px;
+        border: 2px solid #e4e4e4;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        /* min-height: 700px; */
+        overflow-y: auto;
+        padding: 10px;
+        overflow-x: auto;
+      }
+    
+      .documentFacts {
+        grid-column: 2/2; /* Position in the second column */
+        grid-row: 5; /* Position in the fifth row */
+        margin-right: 5.5%;
+      }
+    
+      .documentFactsBox {
+        border: 2px solid #e4e4e4;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        width: 95%;
+        overflow-y: auto;
+        padding: 10px;
+      }
+    
+      .commentArea {
+        grid-row: 6;
+        grid-column: 1 / span 2;
+      }
+    
+      .banner {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6; /* Adds a bottom border*/
+      }
+      .border-right {
+        border-right: 1px solid #dee2e6; /* Adds a right border to the columns */
+      }
+      .content {
+        margin-top: 20px;
+        /* border: 1px solid #dee2e6; */
+        border-radius: 5px;
+        padding: 20px;
+      }
+      .comment-section {
+        margin-top: 20px;
+      }
+      .comment {
+        /* border-top: 1px solid #ccc; */
+        margin-bottom: 15px;
+        padding: 10px 0;
+      }
+      .comment-avatar {
+        margin-right: 10px;
+      }
+      .comment-avatar img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+      }
+      .comment-content {
+        flex-grow: 1;
+        border: 2px solid #efefef;
+        border-radius: 10px;
+        font-size: 16px;
+        padding: 10px;
+      }
+      .comment-author {
+        font-weight: bold;
+      }
+      .comment-text {
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+    
+      .commentButtons {
+        display: flex;
+        justify-content: space-evenly;
+        margin-left: 50%;
+        font-size: 18px;
+      }
+    
+      .commentButtons i:hover {
+        transform: scale(1.2);
+      }
+    
+      .commentButtons i {
+        cursor: pointer;
+      }
+    
+      #commentFlag {
+        color: red;
+      }
+      #commentReply {
+        color: rgb(1, 111, 255);
+        font-size: 18px;
+      }
+      #commentLike:hover {
+        color: rgb(65, 240, 79);
+        transform: scale(1.09);
+      }
+      #commentDislike:hover {
+        color: red;
+        transform: scale(1.09);
+      }
+      .documentList {
+        list-style-type: none;
+        padding: 0;
+      }
+      .documentResult {
+        background-color: #efefef;
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    
+      .documentResult:hover {
+        background-color: #e9e9e9;
+      }
+      .documentResult a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .documentResult a:hover {
+        text-decoration: underline;
+      }
+      .votes {
+        float: right; /* Aligns the vote counts to the right */
+      }
+    
+      .upvotes {
+        color: green; /* Green color for upvotes */
+        margin-right: 10px; /* Adds some spacing between upvotes and downvotes */
+      }
+    
+      .downvotes {
+        color: red; /* Red color for downvotes */
+      }
+      .vote-counters {
+        display: flex;
+        justify-content: flex-end;
+      }
+    
+      .filter-section {
+        margin-bottom: 20px;
+      }
+    
+      .document-type-section {
+        display: none; /* Hide all sections initially */
+      }
+    
+      .document-type-section[d="all"] {
+        display: block; /* Show all sections if "All" is selected */
+      }
+      #moderatorMenu {
+        text-align: center; /* Center-align the buttons */
+        padding: 20px; /* Add some padding around the buttons for spacing */
+        /* background-color: #f5f5f5; Light grey background for a subtle look */
+      }
+      #moderatorBtn1,
+  #moderatorBtn2 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: #333333; /* Dark text color for contrast */
+    border: 1px solid #ddd; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for hover effect */
+  }
+  #moderatorBtn1 {
+    background-color: lightgreen;
+  }
+  #moderatorBtn2 {
+    background-color: lightcoral;
+  }
+
+  #moderatorBtn3 {
+    background-color: #ffffff; /* White background for the buttons */
+    color: red; /* Dark text color for contrast */
+    border: 1px solid red; /* Light border for definition */
+    padding: 10px 20px; /* Padding inside the buttons */
+    margin: 0 5px; /* Space between buttons */
+    border-radius: 5px; /* Slightly rounded corners for the buttons */
+    font-size: 16px; /* Moderate font size */
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  #moderatorBtn1:hover,
+  #moderatorBtn2:hover,
+  #moderatorBtn3:hover {
+    background-color: #e9ecef; /* Slightly darker background on hover */
+    cursor: pointer; /* Change cursor to pointer to indicate clickable */
+  }
+    </style>
+    
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import firebaseConfig from "{{ url_for('static', filename='firebase-cfg.js') }}";
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        function approveCourse(courseName) {
+        alert("Course name: " + courseName);
+        fetch(`/validate_course/${courseName}`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ approve: true }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+            alert("Course has been approved.");
+            window.location.href = "/moderator_panel";
+            })
+            .catch((error) => console.error("Error:", error));
+        }
+
+        function disapproveCourse(courseName) {
+        fetch(`/validate_course/${courseName}`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ approve: false }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+            alert("Course has been disapproved.");
+            window.location.href = "/moderator_panel";
+            })
+            .catch((error) => console.error("Error:", error));
+        }
+
+        document.getElementById("moderatorBtn1").addEventListener("click", () => approveCourse("{{ content.course_name }}"));
+        document.getElementById("moderatorBtn2").addEventListener("click", () => disapproveCourse("{{ content.course_name }}"));
+    });
+</script>
+{% endblock %}
+    
