@@ -498,15 +498,13 @@ def get_document_reports(document_id):
     return jsonify(reports)
 
 
-# @views.route('/check_user_like_status', methods=['POST'])
-# def check_user_like_status():
-#     data = request.get_json()
-#     uid = data.get('uid')
-#     document_id = data.get('document_id')
+@views.route('/check_user_like_status', methods=['POST'])
+def check_user_like_status():
+    data = request.get_json()
+    uid = data.get('uid')
+    document_id = data.get('document_id')
 
-#     # Check in the database if the user has liked the document
-#     # TODO om vi vill att denns ska funka
-#     # has_liked = check_if_user_has_liked_document(uid, document_id)
-#     # has_disliked = check_if_user_has_disliked_document(uid, document_id)
-
-#     return jsonify({'hasLiked': has_liked})
+    like_status = main.get_user_like_status_on_document(user_id=uid,
+                                                        document_id=document_id)
+    
+    return jsonify({'likeStatus': like_status})
