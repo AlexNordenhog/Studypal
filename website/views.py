@@ -476,12 +476,15 @@ def validate_document(document_id):
 
     if approve not in [True, False]:
         return jsonify({"error": "Approve/Disapprove not provided."}), 400
+
     try:
         main.validate_document(document_id, approve)
+
         # Increment the users score upon validation
-        document = main.get_document(document_id)
-        uid = document.get_author()
-        main.change_user_score(uid, 10)
+        if approve == True:
+            document = main.get_document(document_id)
+            uid = document.get_author()
+            main.change_user_score(uid, 10)
 
     except Exception as e:
         print(f"Error validating document {document_id}: {str(e)}")

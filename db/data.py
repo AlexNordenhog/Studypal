@@ -1131,7 +1131,7 @@ class Course:
         return self._course_name
     
     def remove_document(self, document_id, document_type):
-        self._documents[f"{document_type}s"].pop(document_id)
+        del self._documents[document_type][document_id]
 
     def add_document(self, document_type, document_id, document_name, add_to_firebase=True):
         '''
@@ -1258,7 +1258,7 @@ class Course:
         contributors = {}
         for document_id in self._get_doc_ids():
             document = Main().get_document(document_id)
-            if document.is_anonymous() == False:
+            if isinstance(document, Document) and document.is_anonymous() == False:
                 author_id = document.get_author()
                 user = Main().get_user(author_id)
                 username = user.get_username()
@@ -2014,7 +2014,7 @@ class Main:
         '''
         Validate a document with a certain document id.
         '''
-        if approve:
+        if approve == True:
             document = self._document_dir.get(document_id)
             course_name = document.get_course_name()
             document_type = document.get_type()
@@ -2031,6 +2031,7 @@ class Main:
             course = self._course_dir.get_course(course_name=course_name)
             course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
             self.delete_document(document_id=document_id)
+            print("Document has been deleted")
 
     def delete_document(self, document_id):
         """
