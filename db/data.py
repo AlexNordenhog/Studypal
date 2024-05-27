@@ -731,9 +731,14 @@ class CommentSection():
 
 class Comment:
 
-    def __init__(self, user_id, text, parent_path, comment_id = uuid.uuid4().hex, timestamp = datetime.now(), vote_dir = None):
+    def __init__(self, user_id, text, parent_path, comment_id = None, timestamp = datetime.now(), vote_dir = None):
         self._user_id = user_id
-        self._comment_id = comment_id
+        
+        if comment_id == None:
+            self._comment_id = uuid.uuid4().hex
+        else:
+            self._comment_id = comment_id
+        
         self._text = text
         self._timestamp = timestamp
         self._db_path = f"{parent_path}/{comment_id}"
