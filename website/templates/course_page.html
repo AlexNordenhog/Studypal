@@ -75,10 +75,15 @@
 
   <div class="documentFacts">
     <div class="documentFactsBox">
-      <!-- <p>course description here</p> -->
       <h2><strong> Top Contributors </strong></h2>
+      <ol>
+        {% for contributor, score in content.top_contributors.items() %}
+        <li>{{ contributor }}: {{ score }}</li>
+        {% endfor %}
+      </ol>
     </div>
   </div>
+
   <div class="commentArea">
     <!-- Comment form -->
     <div id="commentSection" class="container mt-4">

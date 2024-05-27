@@ -1424,6 +1424,17 @@ class CourseDirectory(Directory):
         course_names = self.get_courses()
 
         return True if course_name in course_names else False
+    
+    def get_waiting_courses(self):
+        '''
+        Returns a list of course names awaiting validation.
+        '''
+        waiting_courses = []
+        for course_name in self._courses:
+            course = Main().get_course(course_name)
+            if course.is_validated() == False:
+                waiting_courses.append(course_name)
+        return waiting_courses
 
 class UserDirectory(Directory):
     _users = {}
@@ -2000,6 +2011,12 @@ class Main:
             user.change_user_score(change)
         except:
             return 'Failed to change user score.'
+        
+    def get_waiting_courses(self):
+        '''
+        Calls on the course directory to return a list of waiting course names.
+        '''
+        return self._course_dir.get_waiting_courses()
 
 def test_document():
     main = Main()

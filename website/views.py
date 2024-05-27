@@ -207,6 +207,17 @@ def add_document_report():
 
     return jsonify({"message": "Comment added to document successfully"})
 
+# @views.route("/add_comment_report", method=["POST"])
+# def add_comment_report():
+#     data = request.json
+#     uid = data.get("uid")
+#     document_id = data.get("document_id")
+#     text = data.get("text")
+#     reason = data.get("reason")
+
+#     main.add_course_report(document_id=document_id, user_id=uid, reason=reason, text=text)
+    
+#     return jsonify({"message": "Comment added to document successfully"})
 
 @views.route("/add_course_comment", methods=["POST"])
 def add_course_comment():
@@ -420,9 +431,10 @@ def upload_specificatoins(pdf_id):
 def get_waiting_documents():
     document_ids = main.get_waiting_documents()
     reported_ids = main.get_reported_documents()
+    courses_ids = main.get_waiting_courses()
 
     return render_template("moderator_panel.html",
-                           documents_ids=document_ids, reported_ids=reported_ids)
+                           documents_ids=document_ids, reported_ids=reported_ids, courses_ids=courses_ids)
 
 
 @views.route("validate_course/<course_name>", methods=["POST"])

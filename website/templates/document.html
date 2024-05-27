@@ -299,8 +299,8 @@
         <!-- Form inside the modal -->
         <form>
           <div class="form-group">
-            <label for="reportReason">Choose an reason</label>
-            <select class="form-control" id="reportReason">
+            <label for="reportReasonComment">Choose an reason</label>
+            <select class="form-control" id="reportReasonComment">
               <option value="advertising">Advertising</option>
               <option value="inappropriateMaterial">
                 Inappropriate or Offensive
@@ -317,7 +317,7 @@
             <label for="reportText">Comment</label>
             <textarea
               class="form-control"
-              id="reportText"
+              id="reportTextComment"
               rows="3"
               placeholder="Your Comment"
             ></textarea>
@@ -995,7 +995,7 @@
       }
     });
 
-  // Report extraction
+  // Docuemnt Report extraction
   document
     .getElementById("submitReport")
     .addEventListener("click", function () {
@@ -1032,6 +1032,52 @@
           $("#reportModal").modal("hide");
           reportReasonSelect.value = reportReasonSelect.options[0].value;
           document.getElementById("reportText").value = "";
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+
+  // Comment  Report extraction
+  document
+    .getElementById("submitReportComment")
+    .addEventListener("click", function () {
+      const reportReasonSelect = document.getElementById("reportReasonComment");
+      const reportReason = reportReasonCommentSelect.value;
+      const reportText = document.getElementById("reportTextComment").value;
+
+      // Assuming the user is already signed in and you have their UID
+      const uid = auth.currentUser ? auth.currentUser.uid : null;
+      const documentId = "{{ document_id }}";
+      // TODO antar att detta inte kommer funka
+      const commentId = "{{comment_id}}";
+
+      if (!uid) {
+        alert("You must be signed in to submit a report.");
+        return;
+      }
+      // TODO - något som saknas i rapportdatan
+      const reportData = {
+        uid: uid,
+        document_id: documentId,
+        comment_id: commentId,
+        reason: reportReasonComment,
+        text: reportTextComment,
+      };
+
+      fetch("/add_comment_report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportData),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data.message);
+          $("#reportModalComment").modal("hide");
+          reportReasonSelect.value = reportReasonSelect.options[0].value;
+          document.getElementById("reportTextComment").value = "";
         })
         .catch((error) => {
           console.error("Error:", error);
