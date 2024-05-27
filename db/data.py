@@ -1288,6 +1288,9 @@ class User:
         self._role = role
         self._score = score
 
+    def get_score(self):
+        return self._score
+
     def get_username(self):
         return self._username
     
@@ -1935,14 +1938,18 @@ class Main:
 
         else:
             return 'Failed to get course/document json.'
-        
+    
+    def get_username(self, user_id):
+        """Returns the username of a specific user."""
+        return self._user_dir.get_username(user_id)
+
     def get_user(self, user_id):
         '''
         Calls on the user directory to return a certain user object.
         '''
         return self._user_dir.get(user_id)
     
-    def get_user_documents(self, user_id):
+    def get_user_documents(self, user_id, validated=False):
         '''
         Calls on the relevant user object to return a list of the documents
         uploaded by the user.
@@ -1951,19 +1958,23 @@ class Main:
         document_ids = user.get_documents()
 
         documents = []
-        print(document_ids)
         for document_id in document_ids:
             document = self._document_dir.get(document_id)
             if document != None:
-                
-                documents.append({
-                        document_id:{
-                            "header":f"{document.get_course_name()} - {document.get_header()}",
-                            "validated":document.get_validation()
-                        }
-                    })
+                # if validated is true, then only include documents that are validated
+                if (validated and document.get_validation()) or (not validated):
+                    documents.append({
+                            document_id:{
+                                "header":f"{document.get_course_name()} - {document.get_header()}",
+                                "validated":document.get_validation()
+                            }
+                        })
 
         return documents
+    
+    def get_user_score(self, user_id):
+        user = self._user_dir.get(user_id)
+        return user.get_score()
     
     def get_waiting_documents(self):
         '''

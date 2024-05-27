@@ -551,3 +551,20 @@ def check_user_like_status():
                                                         document_id=document_id)
     
     return jsonify({'likeStatus': like_status})
+
+@views.route("/contributor_profile/<uid>")
+def contributor_profile(uid):
+    user = main.to_json("user", uid)
+    username = user["username"]
+    creationDate = user["creation_date"]
+    role = user["role"]
+    
+    documents = main.get_user_documents(uid, True)
+    score = main.get_user_score(uid)
+
+    return render_template("contributor_profile.html", 
+                           username=username,
+                           role=role,
+                           creationDate=creationDate,
+                           documents=documents,
+                           score=score)
