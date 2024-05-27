@@ -433,9 +433,10 @@ def upload_specificatoins(pdf_id):
 def get_waiting_documents():
     document_ids = main.get_waiting_documents()
     reported_ids = main.get_reported_documents()
+    courses_ids = main.get_waiting_courses()
 
     return render_template("moderator_panel.html",
-                           documents_ids=document_ids, reported_ids=reported_ids)
+                           documents_ids=document_ids, reported_ids=reported_ids, courses_ids=courses_ids)
 
 
 @views.route("validate_course/<course_name>", methods=["POST"])
