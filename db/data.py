@@ -512,6 +512,27 @@ class VoteDirectory(Directory):
             print("User vote stored")
             return self._votes
         
+    def current_vote(self, user_id):
+        """
+        Returns a string with the current user vote status.
+        
+        Can be:
+        'novote'
+        'upvote'
+        'downvote'
+        """
+
+        status = "novote"
+        
+        if user_id in list(self._votes.keys()):
+            current_vote = self._votes[user_id]
+            if current_vote:
+                status = "upvote"
+            else:
+                status = "downvote"
+        
+        return status
+    
     def to_json(self):
         return {
             "votes":self._votes,
@@ -818,6 +839,18 @@ class Document:
         self._reported = reported
         self._reports = reports
     
+    def get_user_vote_status(self, user_id):
+        """
+        Returns a string with the current user vote status.
+        
+        Can be:
+        'novote'
+        'upvote'
+        'downvote'
+        """
+
+        return self._vote_directory.current_vote(user_id=user_id)
+
     def to_display_json(self):
         if self._submitted_anonymously:
             username = "Submitted Anonymously"
@@ -972,6 +1005,12 @@ class Document:
 
     def get_comments(self, sorting='popular', order="desc"):
         return self._comment_section.get_comments(sorting=sorting, order=order)
+    
+    def is_anonymous(self):
+        '''
+        Returns if the document is anonymous.
+        '''
+        return self._submitted_anonymously
 
 
 class Course:
@@ -1141,10 +1180,12 @@ class Course:
                 "course_name":self._course_name,
                 "university":self._university,
                 "subject":self._subject,
-                "validated":self._validated
+                "validated":self._validated,
+                "top_contributors":self.get_top_contributors()
             }
         }
         
+        print(self.get_top_contributors())
         return json
     
     def is_validated(self):
@@ -1152,6 +1193,36 @@ class Course:
         Returns the validation status of the course.
         '''
         return self._validated
+    
+    def get_top_contributors(self):
+        '''
+        Returns a list of the usernames of the users that have made
+        the most contributions to a course, descending order.
+        '''
+        contributors = {}
+        for document_id in self._get_doc_ids():
+            document = Main().get_document(document_id)
+            if document.is_anonymous() == False:
+                author_id = document.get_author()
+                user = Main().get_user(author_id)
+                username = user.get_username()
+                if username not in contributors.keys():
+                    contributors.update({username : 10})
+                else:
+                    contributors[username] += 10
+        sorted_contributors = dict(sorted(contributors.items(), key=lambda item: item[1], reverse=True))
+        return sorted_contributors
+    
+    def _get_doc_ids(self):
+        '''
+        Returns a list of all the document ids in the course.
+        '''
+        all_ids = []
+        for category in self._documents.values():
+                if isinstance(category, dict):
+                    all_ids.extend(category.keys())
+        return all_ids
+
 
 class User:
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = [], score = 0) -> None:
@@ -1580,6 +1651,12 @@ class Main:
 
         return cls._main
 
+    def get_user_like_status_on_document(self, user_id, document_id):
+        document = self._document_dir.get(document_id=document_id)
+        vote_status = document.get_user_vote_status(user_id=user_id)
+
+        return vote_status
+
     def validate_course(self, course_name):
         self._course_dir.validate_course(course_name=course_name)
 
@@ -1954,3 +2031,4 @@ def test_course_search(search_controller):
         print('No search results.')
 
 main = Main()
+

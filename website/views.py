@@ -123,9 +123,6 @@ def course_page(course_name):
     documents = course_data.get("Documents", {})
     # Example: {1: {'user_id': 'GrG6hgFUKHbQtNxKpSpGM6Sw84n2', 'text': 'first', 'timestamp': {'date': '2024-04-13', 'time': '17:18:37'}, 'username': 'hampus'}}
     comments = main.to_json("course_comments", course_name)
-    print(comments)
-    print(content)
-    print(documents)
 
     return render_template("course_page.html", 
                            content=content,
@@ -425,7 +422,7 @@ def upload_specificatoins(pdf_id):
         'Religious Studies', 'Software Development', 'Software Engineering', 'Special Education', 'Systems Engineering',
         'Tax Law', 'Teaching and Learning', 'Theater and Performance Studies', 'Tourism Management', 'Veterinary Medicine', 'Visual Arts'
     ]
-    document_types = ['Assignment', 'Exam', 'Graded Exam', 'Lecture Materials', 'Other Document']
+    document_types = ['Assignment', 'Exam', 'Graded Exam', 'Lecture Material', 'Other Document']
 
     return render_template("upload_specifications.html", url=pdf_url, 
                            universities=universities,
@@ -512,15 +509,13 @@ def get_document_reports(document_id):
     return jsonify(reports)
 
 
-# @views.route('/check_user_like_status', methods=['POST'])
-# def check_user_like_status():
-#     data = request.get_json()
-#     uid = data.get('uid')
-#     document_id = data.get('document_id')
+@views.route('/check_user_like_status', methods=['POST'])
+def check_user_like_status():
+    data = request.get_json()
+    uid = data.get('uid')
+    document_id = data.get('document_id')
 
-#     # Check in the database if the user has liked the document
-#     # TODO om vi vill att denns ska funka
-#     # has_liked = check_if_user_has_liked_document(uid, document_id)
-#     # has_disliked = check_if_user_has_disliked_document(uid, document_id)
-
-#     return jsonify({'hasLiked': has_liked})
+    like_status = main.get_user_like_status_on_document(user_id=uid,
+                                                        document_id=document_id)
+    
+    return jsonify({'likeStatus': like_status})

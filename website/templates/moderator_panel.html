@@ -9,7 +9,8 @@ content %}
     <!-- Column for documents awaiting validation -->
     <div class="col-md-6 awaiting-validation-wrapper">
       <h2>Awaiting Validation</h2>
-      <div id="documentList" class="document_list">
+      <h5 style="text-decoration: underline;">Documents:</h5>
+      <div style="text-indent: 40px" id="documentList" class="document_list">
         {% if documents_ids %} {% for document_id in documents_ids %}
         <div class="list-item">
           <a href="/validation/{{ document_id }}" class="item-link"
@@ -19,6 +20,23 @@ content %}
         {% endfor %} {% else %}
         <p class="no-documents-message">
           No Documents awaiting validation at the moment.
+        </p>
+        {% endif %}
+      </div>
+      <br>
+    <!-- Column for courses awaiting validation -->
+    <!-- To Do: koppla data så att kurserna hamnar här. Samma som för dokument fast det heter couse/courses istället för document/documents -->
+      <h5 style="text-decoration: underline;">Courses:</h5>
+      <div style="text-indent: 40px" id="courseList" class="course_list">
+        {% if courses_ids %} {% for course_id in courses_ids %}
+        <div class="list-item">
+          <a href="/validation/{{ course_id }}" class="item-link"
+            >Course ID: {{ course_id }}</a
+          >
+        </div>
+        {% endfor %} {% else %}
+        <p class="no-courses-message">
+          No courses awaiting validation at the moment.
         </p>
         {% endif %}
       </div>
