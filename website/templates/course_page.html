@@ -1,11 +1,16 @@
-{% extends "base.html" %}
-{% block title %}{{ content.course_name }}{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}{{ content.course_name }}{% endblock
+%} {% block content %}
 
 <div class="grid">
   <div class="blankTop">
     <div id="moderatorMenu" , style="display: none">
-      <button id="moderatorBtn2" data-toggle="modal" data-target="#reportModalCommentInformation">Reported Comments</button>
+      <button
+        id="moderatorBtn2"
+        data-toggle="modal"
+        data-target="#reportModalCommentInformation"
+      >
+        Manage Comments
+      </button>
     </div>
   </div>
 
@@ -75,7 +80,11 @@
         {% for contributor, score in content.top_contributors.items() %}
         <li class="leaderboard-item">
           {% if loop.first %}
-          <img src="{{ url_for('static', filename='pictures/first_place.png') }}" class="contributor-image" alt="Top Contributor">
+          <img
+            src="{{ url_for('static', filename='pictures/first_place.png') }}"
+            class="contributor-image"
+            alt="Top Contributor"
+          />
           {% endif %}
           <span class="contributor-name">{{ contributor }}</span>
           <span class="contributor-score">{{ score }} ⭐</span>
@@ -83,18 +92,25 @@
         {% endfor %}
       </ol>
       <div class="contributor-message">
-        <strong> Do you want to be a top contributor? Keep uploading to this course to earn points ⭐</strong>
+        <strong>
+          Do you want to be a top contributor? Keep uploading to this course to
+          earn points ⭐</strong
+        >
       </div>
     </div>
   </div>
-  
 
   <div class="commentArea">
     <!-- Comment form -->
     <div id="commentSection" class="container mt-4">
       <h1 class="forumTitle"><strong>Course Forum</strong></h1>
       <div class="comment-submit-form">
-        <textarea id="commentInput" class="form-control mb-2" placeholder="Add a comment..." rows="3"></textarea>
+        <textarea
+          id="commentInput"
+          class="form-control mb-2"
+          placeholder="Add a comment..."
+          rows="3"
+        ></textarea>
         <button id="submitComment" class="btn btn-primary">Comment</button>
       </div>
       <!-- Display of comments -->
@@ -106,12 +122,21 @@
             <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
           </div>
           <div class="comment-content">
-            <div class="comment-author">User: <strong>{{ comment.username }}</strong></div>
+            <div class="comment-author">
+              User: <strong>{{ comment.username }}</strong>
+            </div>
             <div class="comment-text">Comment: {{ comment.text }}</div>
-            <div class="comment-timestamp">{{ comment.timestamp.date }} at {{ comment.timestamp.time }}</div>
+            <div class="comment-timestamp">
+              {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
+            </div>
             <div class="commentButtons">
-              <i id="commentReply" class="bi bi-reply"></i>
-              <i id="commentFlag" class="bi bi-flag" data-toggle="modal" data-target="#reportModalComment"></i>
+              <!-- <i id="commentReply" class="bi bi-reply"></i> -->
+              <i
+                id="commentFlag"
+                class="bi bi-flag"
+                data-toggle="modal"
+                data-target="#reportModalComment"
+              ></i>
             </div>
           </div>
         </div>
@@ -119,13 +144,27 @@
       </div>
     </div>
   </div>
+</div>
+
 <!-- Report modal for comment -->
-<div class="modal fade" id="reportModalComment" tabindex="-1" role="dialog" aria-labelledby="modelTitleId" aria-hidden="true">
+<div
+  class="modal fade"
+  id="reportModalComment"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="modelTitleId"
+  aria-hidden="true"
+>
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Report Document</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
           <div aria-hidden="true">&times;</div>
         </button>
       </div>
@@ -136,8 +175,12 @@
             <label for="reportReason">Choose an reason</label>
             <select class="form-control" id="reportReason">
               <option value="advertising">Advertising</option>
-              <option value="inappropriateMaterial">Inappropriate or Offensive</option>
-              <option value="plagiarism">Plagiarism or Copyright Infringement</option>
+              <option value="inappropriateMaterial">
+                Inappropriate or Offensive
+              </option>
+              <option value="plagiarism">
+                Plagiarism or Copyright Infringement
+              </option>
               <option value="irrelevantContent">Irrelevant or Off-topic</option>
               <option value="otherreason">Other Reason</option>
             </select>
@@ -145,35 +188,80 @@
 
           <div class="form-group">
             <label for="reportText">Comment</label>
-            <textarea class="form-control" id="reportText" rows="3" placeholder="Your Comment"></textarea>
+            <textarea
+              class="form-control"
+              id="reportText"
+              rows="3"
+              placeholder="Your Comment"
+            ></textarea>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
         <!-- TODO Kommer behöva implementeras så att det händer något -->
-        <button type="button" class="btn btn-primary" id="submitReportComment">Submit Report</button>
+        <button type="button" class="btn btn-primary" id="submitReportComment">
+          Submit Report
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Modal for all comment reports -->
-<div class="modal fade" id="reportModalCommentInformation" tabindex="-1" role="dialog" aria-hidden="true">
+<div
+  class="modal fade"
+  id="reportModalCommentInformation"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Reported comments</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <h5 class="modal-title">Manage comments</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
           <div aria-hidden="true">&times;</div>
         </button>
       </div>
       <div class="modal-body">
-        FIXAAAAA TODO
+        <div class="comments-display-modal">
+          <!-- Comments will be dynamically added here from our firebase database -->
+          <!-- Som moderator ska man kunna gå in på en användares profil -->
+          <!-- Display of comments -->
+          {% for comment_id, comment in comments.items() %}
+          <div class="commentModal">
+            <div>
+              <!-- If we want it later -->
+              <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
+            </div>
+            <div>
+              <div><strong>User:</strong> {{ comment.username }}</div>
+              <div><strong>Comment:</strong> {{ comment.text }}</div>
+              <div>
+                {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
+              </div>
+              <div class="commentButtonsModal">
+                <!-- TODO Göra så removeBtn tar bort kommentaren -->
+                <i id="removeBtn" class="bi bi-trash"></i>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
         <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
       </div>
     </div>
   </div>
@@ -194,7 +282,7 @@
     grid-row: 1;
     grid-column: 1 / span 2;
     /* background-color: #efefef; */
-    
+
     display: flex;
     justify-content: center;
     align-items: center;
@@ -584,6 +672,21 @@
     background-color: #e9ecef; /* Slightly darker background on hover */
     cursor: pointer; /* Change cursor to pointer to indicate clickable */
   }
+
+  .commentButtonsModal {
+    display: flex;
+    justify-content: end;
+    margin-right: 10%;
+    font-size: 18px;
+  }
+
+  .commentButtonsModal i:hover {
+    transform: scale(1.2);
+  }
+
+  .commentButtonsModal i {
+    cursor: pointer;
+  }
 </style>
 
 <script type="module">
@@ -693,10 +796,15 @@
 
     filterDropdown.addEventListener("change", function () {
       const selectedType = filterDropdown.value;
-      const documentSections = document.querySelectorAll(".document-type-section");
+      const documentSections = document.querySelectorAll(
+        ".document-type-section"
+      );
 
       documentSections.forEach((section) => {
-        if (selectedType === "all" || section.dataset.docType === selectedType) {
+        if (
+          selectedType === "all" ||
+          section.dataset.docType === selectedType
+        ) {
           section.style.display = "block";
         } else {
           section.style.display = "none";

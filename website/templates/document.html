@@ -244,7 +244,7 @@
   </div>
 </div>
 
-<!-- Modal for all comment reports -->
+<!-- Modal for managing comments -->
 <div
   class="modal fade"
   id="reportModalCommentInformation"
@@ -284,7 +284,11 @@
               </div>
               <div class="commentButtonsModal">
                 <!-- TODO Göra så removeBtn tar bort kommentaren -->
-                <i id="removeBtn" class="bi bi-trash"></i>
+                <i
+                  class="bi bi-trash removeBtn"
+                  data-document-id="{{ document_id }}"
+                  data-comment-id="{{ comment_id }}"
+                ></i>
               </div>
               {% endfor %}
             </div>
@@ -1206,13 +1210,6 @@
       });
   }
 
-  document.addEventListener("DOMContentLoaded", (event) => {
-    document.getElementById("removeBtn").addEventListener("click", function () {
-      deleteDocumentComment("{{ document_id }}", "{{ comment_id }}");
-      // window.location.reload();
-    });
-  });
-
   function downloadPDF(documentUrl) {
     window.open(documentUrl, "_blank");
   }
@@ -1389,6 +1386,40 @@
       .catch((error) =>
         console.error("Error fetching document reports:", error)
       );
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add event listener to all remove buttons
+    document.querySelectorAll(".removeBtn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const documentId = button.getAttribute("data-document-id");
+        const commentId = button.getAttribute("data-comment-id");
+
+        if (confirm("Are you sure you want to delete this comment?")) {
+          fetch("/delete_document_comment", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              document_id: documentId,
+              comment_id: commentId,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "success") {
+                // Remove the comment from the DOM
+                button.closest(".comment").remove();
+              } else {
+                window.location.reload();
+                alert("Comment deleted");
+              }
+            })
+            .catch((error) => console.error("Error:", error));
+        }
+      });
+    });
   });
 </script>
 {% endblock %}
