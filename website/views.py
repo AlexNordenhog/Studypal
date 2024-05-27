@@ -263,11 +263,9 @@ def vote_document():
 @views.route("/delete_document", methods=["POST"])
 def delete_document():
     data = request.json
-    uid = data.get("uid")
     document_id = data.get("document_id")
 
-    status = main.delete_document(document_id=document_id, 
-                                  user_id = uid)
+    status = main.delete_document(document_id=document_id)
     
     return jsonify({"message": status})
 
@@ -452,7 +450,6 @@ def validate_document(document_id):
     else:
         try:
             main.validate_document(document_id, approve)
-            
             # Increment the users score upon validation
             document = main.get_document(document_id)
             uid = document.get_author()
