@@ -455,9 +455,13 @@ class Report:
 
         report = {}
         report["reason"] = self._reason
-        report["text"] = f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote '{self._text}'"
+        
+        if len(self._text.replace(" ", "")) < 1:
+            report["text"] = f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote 'No Additional Comment'"
+        else:
+            report["text"] = f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote '{self._text}'"
 
-        return f"{self._reason}: User {Main()._user_dir.get_username(self._user_id)} wrote '{self._text}'"
+        return report
 
     def get_id(self):
         return self._report_id
@@ -1034,10 +1038,10 @@ class Document:
         """
         Returns a string with all reports.
         """
-        reports = ""
+        reports = {}
         if self._reported:
             for report in self._reports:
-                reports += self._reports[report].get_report() + "."
+                reports[report] = self._reports[report].get_report()
         
         return reports
 
