@@ -972,6 +972,12 @@ class Document:
 
     def get_comments(self, sorting='popular', order="desc"):
         return self._comment_section.get_comments(sorting=sorting, order=order)
+    
+    def is_anonymous(self):
+        '''
+        Returns if the document is anonymous.
+        '''
+        return self._submitted_anonymously
 
 
 class Course:
@@ -1163,19 +1169,16 @@ class Course:
         contributors = {}
         for document_id in self._get_doc_ids():
             document = Main().get_document(document_id)
-            if document._submitted_anonymously == False:
+            if document.is_anonymous() == False:
                 author_id = document.get_author()
-                if author_id not in contributors.keys():
-                    contributors.update({author_id : 1})
+                user = Main().get_user(author_id)
+                username = user.get_username()
+                if username not in contributors.keys():
+                    contributors.update({username : 10})
                 else:
-                    contributors[author_id] += 1
-        sorted_contributors = sorted(contributors, key=contributors.get, reverse=True)
-        contributors_username = []
-        for i in range(len(sorted_contributors)):
-            user = Main().get_user(sorted_contributors[i])
-            username = user.get_username()
-            contributors_username.append(username)
-        return contributors_username
+                    contributors[username] += 10
+        sorted_contributors = dict(sorted(contributors.items(), key=lambda item: item[1], reverse=True))
+        return sorted_contributors
     
     def _get_doc_ids(self):
         '''
