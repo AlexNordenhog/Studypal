@@ -260,25 +260,21 @@
           <div aria-hidden="true">&times;</div>
         </button>
       </div>
-      <div class="modal-body">
-        <div class="comments-display">
+      <div class="modal-body modalComment">
+        <div class="comments-display-modal">
           <!-- Comments will be dynamically added here from our firebase database -->
           <!-- Som moderator ska man kunna gå in på en användares profil -->
           <!-- Display of comments -->
           {% for comment_id, comment in comments.items() %}
-          <div class="comment">
-            <div class="comment-avatar">
+          <div class="commentModal">
+            <div>
               <!-- If we want it later -->
               <!-- <img src="{{ comment.avatar_url or 'path/to/default/avatar.png' }}" alt="User Avatar"> Adjust as needed -->
             </div>
-            <div class="comment-content">
-              <div class="comment-author">
-                <strong>User:</strong> {{ comment.username }}
-              </div>
-              <div class="comment-text">
-                <strong>Comment:</strong> {{ comment.text }}
-              </div>
-              <div class="comment-timestamp">
+            <div>
+              <div><strong>User:</strong> {{ comment.username }}</div>
+              <div><strong>Comment:</strong> {{ comment.text }}</div>
+              <div>
                 {{ comment.timestamp.date }} at {{ comment.timestamp.time }}
               </div>
               <div class="commentButtonsModal">
