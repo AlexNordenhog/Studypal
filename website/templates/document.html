@@ -951,13 +951,39 @@
       .then((response) => response.json())
       .then((data) => {
         console.log("Successfully added vote");
+        // Update counters and icons based on server response
+        updateVoteStatus(data);
       })
       .catch((error) => {
         console.error("Error:", error);
-        // If there's an error, revert the like count on the client side
-        const likesElement = document.getElementById("likes");
-        likesElement.textContent = parseInt(likesElement.textContent) - 1;
       });
+  }
+
+  function updateVoteStatus(data) {
+    const likeBtn = document.getElementById("likeBtn");
+    const dislikeBtn = document.getElementById("dislikeBtn");
+    const likesElement = document.getElementById("likes");
+    const dislikesElement = document.getElementById("dislikes");
+
+    likesElement.textContent = data.upvotes;
+    dislikesElement.textContent = data.downvotes;
+
+    if (data.user_vote === "upvote") {
+      likeBtn.classList.remove("bi-hand-thumbs-up");
+      likeBtn.classList.add("bi-hand-thumbs-up-fill");
+      dislikeBtn.classList.remove("bi-hand-thumbs-down-fill");
+      dislikeBtn.classList.add("bi-hand-thumbs-down");
+    } else if (data.user_vote === "downvote") {
+      dislikeBtn.classList.remove("bi-hand-thumbs-down");
+      dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
+      likeBtn.classList.remove("bi-hand-thumbs-up-fill");
+      likeBtn.classList.add("bi-hand-thumbs-up");
+    } else {
+      likeBtn.classList.remove("bi-hand-thumbs-up-fill");
+      likeBtn.classList.add("bi-hand-thumbs-up");
+      dislikeBtn.classList.remove("bi-hand-thumbs-down-fill");
+      dislikeBtn.classList.add("bi-hand-thumbs-down");
+    }
   }
 
   // <!-- Dynamic commentsection -->
@@ -1084,13 +1110,13 @@
         });
     });
 
-  function deleteDocument(document_id, uid) {
-    fetch(`/delete_document/`, {
+  function deleteDocument(document_id) {
+    fetch(`/delete_document`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ document_id: document_id, uid: uid }),
+      body: JSON.stringify({ document_id: document_id }),
     })
       .then((response) => {
         if (response.ok) {
@@ -1136,83 +1162,22 @@
     });
   });
   // TODO Dessa funktioner är inte implementerade correct saknas backend
-  function fetchUserLikeStatus(uid, documentId) {
-    fetch(`/check_user_like_status`, {
-      method: "POST",
-      body: JSON.stringify({ uid: uid, document_id: documentId }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.hasLiked) {
-          // If the user has liked the document, change the button class and disable it
-          const likeBtn = document.getElementById("likeBtn");
-          likeBtn.classList.remove("bi-hand-thumbs-up");
-          likeBtn.classList.add("bi-hand-thumbs-up-fill");
-          likeBtn.disabled = true;
-        }
-      })
-      .catch((error) => console.error("Error:", error));
-  }
-
-  function fetchUserDislikeStatus(uid, documentId) {
-    fetch(`/check_user_dislike_status`, {
-      method: "POST",
-      body: JSON.stringify({ uid: uid, document_id: documentId }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.hasDisliked) {
-          // If the user has disliked the document, change the button class and disable it
-          const dislikeBtn = document.getElementById("dislikeBtn");
-          dislikeBtn.classList.remove("bi-hand-thumbs-down");
-          dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
-          dislikeBtn.disabled = true;
-        }
-      })
-      .catch((error) => console.error("Error:", error));
-  }
-
-  document.getElementById("dislikeBtn").addEventListener("click", function () {
-    const dislikeBtn = document.getElementById("dislikeBtn");
-    if (dislikeBtn.disabled) return;
-
-    const dislikesElement = document.getElementById("dislikes");
-    let currentDislikes = parseInt(dislikesElement.textContent);
-
-    // Update the dislikes counter on the client side
-    dislikesElement.textContent = currentDislikes + 1;
-
-    // Get the user's UID
-    const uid = auth.currentUser ? auth.currentUser.uid : null;
-    if (!uid) {
-      alert("You must be signed in to dislike a document.");
-      return;
-    }
-
-    // Change the button class and disable it
-    dislikeBtn.classList.remove("bi-hand-thumbs-down");
-    dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
-    dislikeBtn.disabled = true;
-
-    // Send the dislike information to the server
-    castVote(false, uid);
-  });
-
   document.getElementById("likeBtn").addEventListener("click", function () {
     const likeBtn = document.getElementById("likeBtn");
-    if (likeBtn.disabled) return;
+    const dislikeBtn = document.getElementById("dislikeBtn");
+    if (likeBtn.classList.contains("bi-hand-thumbs-up-fill")) return;
 
     const likesElement = document.getElementById("likes");
+    const dislikesElement = document.getElementById("dislikes");
+
     let currentLikes = parseInt(likesElement.textContent);
+    let currentDislikes = parseInt(dislikesElement.textContent);
 
     // Update the likes counter on the client side
     likesElement.textContent = currentLikes + 1;
+    if (dislikeBtn.classList.contains("bi-hand-thumbs-down-fill")) {
+      dislikesElement.textContent = currentDislikes - 1;
+    }
 
     // Get the user's UID
     const uid = auth.currentUser ? auth.currentUser.uid : null;
@@ -1224,10 +1189,50 @@
     // Change the button class and disable it
     likeBtn.classList.remove("bi-hand-thumbs-up");
     likeBtn.classList.add("bi-hand-thumbs-up-fill");
-    likeBtn.disabled = true;
+    likeBtn.setAttribute("disabled", true);
+    dislikeBtn.classList.remove("bi-hand-thumbs-down-fill");
+    dislikeBtn.classList.add("bi-hand-thumbs-down");
 
     // Send the like information to the server
     castVote(true, uid);
+    window.location.reload();
+  });
+
+  document.getElementById("dislikeBtn").addEventListener("click", function () {
+    const dislikeBtn = document.getElementById("dislikeBtn");
+    const likeBtn = document.getElementById("likeBtn");
+    if (dislikeBtn.classList.contains("bi-hand-thumbs-down-fill")) return;
+
+    const likesElement = document.getElementById("likes");
+    const dislikesElement = document.getElementById("dislikes");
+
+    let currentLikes = parseInt(likesElement.textContent);
+    let currentDislikes = parseInt(dislikesElement.textContent);
+
+    // Update the dislikes counter on the client side
+    dislikesElement.textContent = currentDislikes + 1;
+    if (likeBtn.classList.contains("bi-hand-thumbs-up-fill")) {
+      likesElement.textContent = currentLikes - 1;
+    }
+
+    // Get the user's UID
+    const uid = auth.currentUser ? auth.currentUser.uid : null;
+    if (!uid) {
+      alert("You must be signed in to dislike a document.");
+      return;
+    }
+
+    // Change the button class and disable it
+    dislikeBtn.classList.remove("bi-hand-thumbs-down");
+    dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
+    dislikeBtn.setAttribute("disabled", true);
+    likeBtn.classList.remove("bi-hand-thumbs-up-fill");
+    likeBtn.classList.add("bi-hand-thumbs-up");
+
+    // Send the dislike information to the server
+    castVote(false, uid);
+
+    window.location.reload();
   });
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -1245,5 +1250,39 @@
         alert("Report submitted successfully."); // Display system message
       });
   });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Check if the user is logged in and then fetch their like status
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        fetchUserLikeStatus(uid, "{{ document_id }}");
+      }
+    });
+  });
+
+  function fetchUserLikeStatus(uid, documentId) {
+    fetch(`/check_user_like_status`, {
+      method: "POST",
+      body: JSON.stringify({ uid: uid, document_id: documentId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const likeBtn = document.getElementById("likeBtn");
+        const dislikeBtn = document.getElementById("dislikeBtn");
+        if (data.likeStatus === "upvote") {
+          likeBtn.classList.remove("bi-hand-thumbs-up");
+          likeBtn.classList.add("bi-hand-thumbs-up-fill");
+        } else if (data.likeStatus === "downvote") {
+          dislikeBtn.classList.remove("bi-hand-thumbs-down");
+          dislikeBtn.classList.add("bi-hand-thumbs-down-fill");
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
 </script>
 {% endblock %}
