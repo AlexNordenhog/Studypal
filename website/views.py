@@ -459,7 +459,7 @@ def validate_course(course_name):
 
     if approve not in [True, False]:
         return "Error: Approve/Disapprove not provided."
-    else:
+    if approve == True:
         try:
             main.validate_course(course_name=course_name)
 
@@ -479,7 +479,7 @@ def validate_document(document_id):
 
     if approve not in [True, False]:
         return jsonify({"error": "Approve/Disapprove not provided."}), 400
-    else:
+    if approve == True:
         try:
             main.validate_document(document_id, approve)
             # Increment the users score upon validation
