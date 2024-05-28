@@ -236,6 +236,9 @@
         <!-- Här måste vi lägga in all rapporter för detta dokumentet -->
       </div>
       <div class="modal-footer">
+        <button type="button" id="clearReports" class="btn btn-primary">
+          Clear Reports
+        </button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">
           Close
         </button>
@@ -1421,5 +1424,35 @@
       });
     });
   });
+
+  document
+    .getElementById("clearReports")
+    .addEventListener("click", function () {
+      const documentId = "{{ document_id }}"; // Make sure you have the document_id available in your template context
+
+      // Display a confirmation dialog
+      const userConfirmed = confirm(
+        "Are you sure you want to remove all reports?"
+      );
+
+      if (userConfirmed) {
+        // If the user confirms, proceed with the fetch request
+        fetch("/remove_document_reports", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ document_id: documentId }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert("All reports are now removed");
+            window.location.reload();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    });
 </script>
 {% endblock %}
