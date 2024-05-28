@@ -1239,7 +1239,7 @@ class Course:
             self._documents[document_type][document_id] = document_name
 
         if add_to_firebase:
-            path = f"Courses/{self._course_name}/Documents/{document_type}s"
+            path = f"Courses/{self._course_name}/Documents/{document_type}"
             data = {document_id:document_name}
             FirebaseDatabase().push_to_path(path=path, data=data)
 
