@@ -157,7 +157,7 @@ class FirebaseDatabase(Firebase):
             for user_id in users_dict:
                 try:
                     documents = users_dict[user_id]["Documents"]
-                    documents.remove(None)
+                    #documents.remove(None)
                 except:
                     documents = []
 
@@ -1486,7 +1486,6 @@ class CourseDirectory(Directory):
     def validate_course(self, course_name, approve):
         """Change the validation status of a course. If 'validate' is set to False, the course is deleted."""
 
-        print("going to awoidnaoiw")
         if approve:
             course = self.get_course(course_name=course_name)
             course.validate()
@@ -2104,9 +2103,9 @@ class Main:
         '''
         Creates a user directory and course directory based on Firebase Storage.
         '''
-        self._set_documents_from_firebase(self)
         try:
             print("FirebaseRealtimeDatabase sync initiated")
+            self._set_documents_from_firebase(self)
             self._set_user_directory_from_firebase(self)
             self._set_course_directory_from_firebase(self)
             
@@ -2235,13 +2234,17 @@ class Main:
             print("Document has been validated")
         else:
             # remove the document
-            document = self._document_dir.get(document_id)
-            course_name = document.get_course_name()
-            document_type = document.get_type()
-            document.validate_document()
-            course = self._course_dir.get_course(course_name=course_name)
-            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
-            self.delete_document(document_id=document_id)
+            user_id = self._document_dir.get(document_id).get_author()
+            self._document_dir.remove(document_id)
+            self._user_dir.get(user_id).remove_document(document_id)
+
+            # firebase
+            data = {document_id:{}}
+            path = f"/Documents"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+            path = f"/Users/{user_id}/Documents"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+
             print("Document has been deleted")
 
     def delete_document(self, document_id):
@@ -2250,7 +2253,7 @@ class Main:
         """
         document = self._document_dir.get(document_id)
         course_name = document.get_course_name()
-        document_type = document.get_type()
+        document_type = document.get_type() + 's'
         user_id = document.get_author()
         
         course = self._course_dir.get_course(course_name=course_name)
