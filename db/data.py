@@ -2234,8 +2234,9 @@ class Main:
             print("Document has been validated")
         else:
             # remove the document
-            document = self._document_dir.get(document_id)
-            self.delete_document(document_id=document_id)
+            user_id = self._document_dir.get(document_id).get_author()
+            self._document_dir.remove(document_id)
+            self._user_dir.get(user_id).remove_document(document_id)
             print("Document has been deleted")
 
     def delete_document(self, document_id):
