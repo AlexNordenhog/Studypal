@@ -2235,11 +2235,6 @@ class Main:
         else:
             # remove the document
             document = self._document_dir.get(document_id)
-            course_name = document.get_course_name()
-            document_type = document.get_type()
-            document.validate_document()
-            course = self._course_dir.get_course(course_name=course_name)
-            course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
             self.delete_document(document_id=document_id)
             print("Document has been deleted")
 
