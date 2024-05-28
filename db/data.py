@@ -2411,4 +2411,3 @@ class Main:
 
 
 main = Main()
-main.add_course_comment("IY1422 IY2579 Finansiell ekonomi", "qut0yeEXynXaN4TlzIQzwnLqwil1", "neej")

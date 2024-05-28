@@ -188,8 +188,10 @@ def add_document_comment():
     text = data.get("text")
 
     # Add the comment to the document in the database
-    document = main.get_document(document_id) # The document object
-    document.add_comment(user_id=uid, text=text)
+    #document = main.get_document(document_id) # The document object
+    #document.add_comment(user_id=uid, text=text)
+
+    main.add_document_comment(user_id=uid, document_id=document_id, text=text)
 
     return jsonify({"message": "Comment added to document successfully"})
 
@@ -214,7 +216,7 @@ def add_course_comment():
     text = data.get("text")
     
     # Add the comment to the document in the database
-    main.get_course(course_name=course_name).add_comment(user_id=uid, text=text)
+    main.add_course_comment(course_name=course_name, user_id=uid, text=text)
     
     return jsonify({"message": "Comment added to document successfully"})
 
