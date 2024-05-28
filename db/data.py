@@ -157,7 +157,7 @@ class FirebaseDatabase(Firebase):
             for user_id in users_dict:
                 try:
                     documents = users_dict[user_id]["Documents"]
-                    documents.remove(None)
+                    #documents.remove(None)
                 except:
                     documents = []
 
@@ -2103,9 +2103,9 @@ class Main:
         '''
         Creates a user directory and course directory based on Firebase Storage.
         '''
-        self._set_documents_from_firebase(self)
         try:
             print("FirebaseRealtimeDatabase sync initiated")
+            self._set_documents_from_firebase(self)
             self._set_user_directory_from_firebase(self)
             self._set_course_directory_from_firebase(self)
             
