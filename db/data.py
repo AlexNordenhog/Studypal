@@ -529,12 +529,16 @@ class Directory:
 
 class VoteDirectory(Directory):
 
-    def __init__(self, vote_directory_id = None, votes = {}):
+    def __init__(self, vote_directory_id = None, votes = None):
         if vote_directory_id == None:
             self._vote_directory_id = uuid.uuid4().hex
         else:
             self._vote_directory_id = vote_directory_id
-        self._votes = votes
+        
+        if votes == None:
+            self._votes = {}
+        else:
+            self._votes = votes
 
     def get(self) -> dict:
         upvotes = sum(vote for vote in self._votes.values())
@@ -594,14 +598,28 @@ class VoteDirectory(Directory):
 
 class CommentSection():
     def __init__(self, parent_path, 
-                       comment_section_id = uuid.uuid4().hex, 
-                       comments = {}, 
-                       replies = {}
+                       comment_section_id = None, 
+                       comments = None, 
+                       replies = None
                        ) -> None:
         
-        self._comment_section_id = comment_section_id
-        self._comments = comments # { comment_id : Comment }
-        self._replies = replies # { reply_to_comment_id : { reply_id : Comment } }
+        if comment_section_id == None or comment_section_id == "None":
+            self._comment_section_id = uuid.uuid4().hex
+        else:
+            self._comment_section_id = comment_section_id
+        
+        if comments == None:
+            self._comments = {}
+        else:
+            self._comments = comments # { comment_id : Comment }
+        
+        if replies == None:
+            self._replies = {}
+        else:
+            self._replies = replies # { reply_to_comment_id : { reply_id : Comment } }
+        
+        if parent_path == "":
+            print("\n\n\n!!!WARNING: Parent Path is EMPTY!!!\n\n\n")
         self._db_path = f"{parent_path}"
 
     def add_comment(self, user_id: str, text: str):
@@ -870,10 +888,10 @@ class Document:
                  validated: bool = False,
                  vote_directory: VoteDirectory = None, 
                  comment_section: CommentSection = None, 
-                 document_id: str = uuid.uuid4().hex,
+                 document_id: str = None,
                  timestamp = datetime.now(),
                  reported = False,
-                 reports = {},
+                 reports = None,
                  submitted_anonymously = False
                  ) -> None:
                 
@@ -898,7 +916,12 @@ class Document:
         self._course_name = course_name
         self._subject = subject
         self._validated = validated
-        self._document_id = document_id
+
+        if document_id == None:
+            self._document_id = uuid.uuid4().hex
+        else:
+            self._document_id = document_id
+
         self._db_path = f"Documents/{self._document_id}"
 
         self._timestamp = timestamp
@@ -915,7 +938,11 @@ class Document:
             self._comment_section = CommentSection(parent_path="")
 
         self._reported = reported
-        self._reports = reports
+
+        if reports == None:
+            self._reports = {}
+        else:
+            self._reports = reports
     
     def get_user_vote_status(self, user_id):
         """
@@ -1154,13 +1181,17 @@ class Course:
     '''
     A course.
     '''
-    def __init__(self, course_name, university, subject, validated = False, comment_section = None) -> None:
+    def __init__(self, course_name, university, subject, validated = None, comment_section = None) -> None:
         self._course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : {}, 'Exams' : {}, 'Lecture Materials' : {}, 'Assignments' : {}, 'Other Documents' : {}}
-        self._validated = validated
         self._db_path = f"/Courses/{self._course_name}/"
+
+        if validated in [True, False]:
+            self.validated = validated
+        else:
+            self._validated = False
 
         if comment_section:
             self._comment_section = comment_section
@@ -1375,11 +1406,16 @@ class User:
     '''
     A user of the system, abstract class for both students and moderators.
     '''
-    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = [], score = 0) -> None:
+    def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = None, score = 0) -> None:
         self._id = user_id
         self._username = username
         self._sign_up_timestamp = sign_up_timestamp
-        self._documents = documents
+        
+        if documents == None:
+            self._documents = []
+        else:
+            self._documents = documents
+        
         self._role = role
         self._score = score
 
@@ -1465,20 +1501,6 @@ class User:
                                             data={"score":current_score})
         else:
             return 'Change must be an integer.'
-
-class Moderator(User):
-    '''
-    A moderator user.
-    '''
-    def __init__(self, user_id, username) -> None:
-        super().__init__(user_id, username)
-
-class Student(User):
-    '''
-    A student user.
-    '''
-    def __init__(self, user_id, username) -> None:
-        super().__init__(user_id, username)
 
 class CourseDirectory(Directory):
     '''
@@ -2081,6 +2103,8 @@ class Main:
             document.add_comment(user_id=user_id, text=text)
             document_comment_section_json = document.get_comment_section_json()
             self._firebase_manager.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
+
+            print(f"Added comment to document {document_id}.")
         except:
             print(f"Failed to add comment to document {document_id}")
         
