@@ -2267,7 +2267,9 @@ class Main:
         FirebaseDatabase().push_to_path(path=path, data=data)
         path = f"/Users/{user_id}/Documents"
         FirebaseDatabase().push_to_path(path=path, data=data)
-
+        path = f"/Courses/{course_name}/Documents/{document_type}"
+        FirebaseDatabase().push_to_path(path=path, data=data)
+        
         print(f"Removed document: {document_id}")
         return f"Successfully removed document: {document_id}"
         
