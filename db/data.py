@@ -2237,6 +2237,14 @@ class Main:
             user_id = self._document_dir.get(document_id).get_author()
             self._document_dir.remove(document_id)
             self._user_dir.get(user_id).remove_document(document_id)
+
+            # firebase
+            data = {document_id:{}}
+            path = f"/Documents"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+            path = f"/Users/{user_id}/Documents"
+            FirebaseDatabase().push_to_path(path=path, data=data)
+
             print("Document has been deleted")
 
     def delete_document(self, document_id):
