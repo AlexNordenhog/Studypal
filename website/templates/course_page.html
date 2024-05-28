@@ -29,11 +29,19 @@
   <div class="infoBar">
     <div class="infoBarBox">
       <div class="content1">
-        <strong> Qty of Docs &nbsp;</strong>
+        <!-- Calculate total document count -->
+        {% set ns = namespace(total_documents=0) %} {% for doc_ids in
+        documents.values() %} {% set ns.total_documents = ns.total_documents +
+        doc_ids|length %} {% endfor %}
+
+        <strong> Qty of Docs: {{ ns.total_documents}}</strong>
       </div>
       <div class="verticalDivider1"></div>
       <div class="content2">
-        <strong> Qty of Comments &nbsp;</strong>
+        <!-- Calculate total comment count -->
+        {% set ns_comments = namespace(total_comments=0) %} {% set
+        ns_comments.total_comments = comments|length %}
+        <strong> Qty of Comments: {{ ns_comments.total_comments }} </strong>
       </div>
       <div class="verticalDivider2"></div>
       <div class="content3">
