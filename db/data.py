@@ -30,7 +30,10 @@ class FirebaseStorage(Firebase):
     def __new__(cls):
         return super().__new__(cls)
     
-    def _initialize_firebase_storage(self):
+    def _initialize_firebase(self):
+        """
+        Sets up connection to firebase storage.
+        """
         self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
         self._storage_url = {"storageBucket": "studypal-8a379.appspot.com"}
         self._app = firebase_admin.initialize_app(self._firebase_cert, self._storage_url, name = "storage")
@@ -46,14 +49,6 @@ class FirebaseStorage(Firebase):
         
         return storage_path
     
-    def download_pdf(self, document_id: int):
-        
-        download_path = (f"{Path.home()}/Downloads")
-
-        with open(f"{download_path}/{document_id}.pdf", "wb") as f:    
-            storage.bucket(app=self.app).get_blob(f"PDF/{document_id}.pdf").download_to_file(f)
-
-    # Generates url to filestorage document
     def generate_download_url(self, document_id: int):
         """Generate a download URL for a document."""
         storage_path = f"PDF/{document_id}.pdf"
