@@ -1704,9 +1704,9 @@ class DocumentDirectory(Directory):
     '''
     A document directory.
     '''
-    
-    _documents = {}
 
+    _documents = {}
+    
     def add(self, document:Document, add_to_firebase = True):
         '''
         Adds a document to the document directory and firebase.
@@ -1903,6 +1903,7 @@ class Main:
         '''
         Returns whether or not the user has already voted on a document.
         '''
+          
         document = self._document_dir.get(document_id=document_id)
         vote_status = document.get_user_vote_status(user_id=user_id)
 
@@ -1913,6 +1914,7 @@ class Main:
         Changes a course's status to validated by calling on the course directory.
         '''
         self._course_dir.validate_course(course_name=course_name, approve=approve)
+          
 
     def add_user(self, user_id, username):
         '''
@@ -1924,6 +1926,7 @@ class Main:
         data = {user_id: user.to_json()}
         path = "Users"
         FirebaseDatabase().push_to_path(path=path, data=data)
+          
 
     def add_course_comment(self, course_name, user_id, text):
         '''
@@ -1934,6 +1937,8 @@ class Main:
             course.add_comment(user_id=user_id, text=text)
         except:
             print(f"Failed to add comment to course")
+        
+          
 
     def add_document_vote(self, document_id: str, user_id: str, upvote: bool):
         '''
@@ -1949,6 +1954,8 @@ class Main:
                                                          vote_directory_json=vote_directory_json)
         except:
             print(f"Failed to add vote to document: {document_id}")
+        
+          
 
     def add_document_comment_vote(self, document_id: str, user_id: str, comment_id: str, upvote: bool):
         '''
@@ -1965,40 +1972,48 @@ class Main:
         except:
             print(f"Failed to add vote to comment: {comment_id}")
 
+          
+
     def search(self, query, university=None, subject=None, course=None):
         '''
         Calls on the search controller to search using specific parameters.
         '''
+          
         return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
     def get_universities(self):
         '''
         Returns all universities.
         '''
+          
         return self._firebase_manager.get_from_database_path("/categorization/universities")
 
     def get_document_types(self):
         '''
         Returns all document types.
         '''
+          
         return self._firebase_manager.get_from_database_path("/categorization/document_types")
     
     def get_subjects(self):
         '''
         Returns all subjects.
         '''
+          
         return self._firebase_manager.get_from_database_path("/categorization/subjects")
 
     def get_document(self, document_id: str) -> Document:
         '''
         Returns the document object for a document with a certain document id.
         '''
+          
         return self._document_dir.get(document_id=document_id)
     
     def get_course(self, course_name: str) -> Course:
         '''
         Returns the course object with a certain course name.
         '''
+          
         return self._course_dir.get_course(course_name=course_name)
 
     def add_document(self, 
@@ -2040,6 +2055,8 @@ class Main:
             # add reference in user
             user = self._user_dir.get(user_id=user_id)
             user.add_document_link(document_id=document_id)
+        
+          
 
     def add_course(self, course_name: str, university: str, subject: str) -> bool:
         """
@@ -2052,6 +2069,8 @@ class Main:
         )
 
         self._course_dir.add_course(course=course)
+          
+
 
     def add_document_comment(self, user_id, document_id, text):
         try:
@@ -2061,6 +2080,8 @@ class Main:
             self._firebase_manager.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
         except:
             print(f"Failed to add comment to document {document_id}")
+        
+          
 
     def add_document_comment_reply(self, user_id, document_id, reply_to_comment_id, text):
         '''
@@ -2073,6 +2094,8 @@ class Main:
             self._firebase_manager.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
         except:
             print(f"Failed to add comment reply to document {document_id}")
+        
+          
 
     def _set_user_directory_from_firebase(self):
         '''
@@ -2110,17 +2133,16 @@ class Main:
             self._set_documents_from_firebase(self)
             self._set_user_directory_from_firebase(self)
             self._set_course_directory_from_firebase(self)
-            
             print("FirebaseRealtimeDatabase sync completed")
         except:
             print("Error: FirebaseRealtimeDatabase sync failed")
-        
-        
         
     def to_json(self, type: str, id: str, main=None):
         '''
         Takes a type of page and converts it to json.
         '''
+          
+
         if type == 'document':
             print(id)
             document = self.get_document(id)
@@ -2170,12 +2192,14 @@ class Main:
     
     def get_username(self, user_id):
         """Returns the username of a specific user."""
+          
         return self._user_dir.get_username(user_id)
 
     def get_user(self, user_id):
         '''
         Calls on the user directory to return a certain user object.
         '''
+          
         return self._user_dir.get(user_id)
     
     def get_user_documents(self, user_id, validated=False):
@@ -2183,6 +2207,7 @@ class Main:
         Calls on the relevant user object to return a list of the documents
         uploaded by the user.
         '''
+          
         user = self._user_dir.get(user_id)
         document_ids = user.get_documents()
 
@@ -2205,6 +2230,7 @@ class Main:
         '''
         Returns the score of a specific user.
         '''
+          
         user = self._user_dir.get(user_id)
         return user.get_score()
     
@@ -2213,6 +2239,7 @@ class Main:
         Calls on the doc directory to return a list of documents
         that are awaiting validation.
         '''
+          
         return self._document_dir.get_waiting_documents()
     
     def get_reported_documents(self):
@@ -2220,6 +2247,7 @@ class Main:
         Calls on the doc direcotory to return a list of documents
         that are reported.
         '''
+          
         return self._document_dir.get_reported_documents()
     
     def validate_document(self, document_id, approve):
@@ -2248,6 +2276,8 @@ class Main:
             FirebaseDatabase().push_to_path(path=path, data=data)
 
             print("Document has been deleted")
+        
+          
 
     def delete_document(self, document_id):
         """
@@ -2271,14 +2301,16 @@ class Main:
         FirebaseDatabase().push_to_path(path=path, data=data)
         path = f"/Courses/{course_name}/Documents/{document_type}"
         FirebaseDatabase().push_to_path(path=path, data=data)
-        
+
         print(f"Removed document: {document_id}")
+          
         return f"Successfully removed document: {document_id}"
         
     def add_document_report(self, document_id, user_id, reason, text):
         """Add a report to a document"""
         document = self._document_dir.get(document_id=document_id)
         document.add_report(user_id, reason, text)
+          
     
     def add_user_upload(self, pdf_id, pdf_url):
         '''
@@ -2290,11 +2322,13 @@ class Main:
         }
 
         self._firebase_manager.push_to_path(path=path, data=data)
+          
 
     def get_user_upload_pdf(self, pdf_id):
         '''
         Get user upload pdf.
         '''
+          
         path = f"Files/Uploads/PDF/{pdf_id}"
         try:
             url = self._firebase_manager.get_from_database_path(path=path)
@@ -2312,14 +2346,19 @@ class Main:
             user.change_user_score(change)
         except:
             return 'Failed to change user score.'
+
+          
         
     def get_waiting_courses(self):
         '''
         Calls on the course directory to return a list of waiting course names.
         '''
+          
         return self._course_dir.get_waiting_courses()
+        
     
     def get_document_reports(self, document_id):
+          
         document = self._document_dir.get(document_id)
         return document.get_descriptive_reports()
     
@@ -2327,6 +2366,7 @@ class Main:
         """
         Delete a comment on a document page.
         """
+        
         document = self._document_dir.get(document_id)
         course_name = document.get_course_name()
         
@@ -2334,7 +2374,7 @@ class Main:
         # firebase
         path = f"Documents/{document_id}/comment_section/comments"
         self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
-
+          
 
     def delete_course_comment(self, course_name, comment_id):
         """
@@ -2347,6 +2387,7 @@ class Main:
         # firebase
         path = f"Courses/{course_name}/Course Content/comment_section/comments"
         self._firebase_manager.push_to_path(path=path, data={comment_id:{}})
+          
 
     def remove_document_reports(self, document_id):
         """
@@ -2363,6 +2404,7 @@ class Main:
             "reports":None
         }
         self._firebase_manager.push_to_path(path=path, data=data)
+          
 
 
 main = Main()
