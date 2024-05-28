@@ -193,15 +193,7 @@
       opacity: 1;
     }
   </style>
-   <!-- top contributer -->
   <div class="profile-card" id="profileContainer"></div>
-  <div class="box" id="leaderboardBox">
-    <h3>Courses Where I'm a Top Contributor</h3>
-    <div id="leaderboardList">
-      <p class="loading-leaderboards">Loading leaderboards...</p>
-    </div>
-  </div>
-
   <div class="box" id="documentBox">
     <h3>My Uploads</h3>
     <div id="documentList">
@@ -244,27 +236,6 @@
         .catch((error) => {
           console.error(error);
           return null;
-        });
-    }
-  //top contributer
-    function fetchLeaderboards(uid) {
-      const url = "/get_user_leaderboards";
-
-      const data = {
-        uid: uid,
-      };
-
-      return fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-        .then((response) => response.json())
-        .catch((error) => {
-          console.error(error);
-          return [];
         });
     }
 
@@ -334,39 +305,7 @@
           console.error(error);
         });
     }
-    //top contributer
-    function displayLeaderboardList(uid) {
-      fetchLeaderboards(uid)
-        .then((leaderboardList) => {
-          let leaderboardListView = "";
-
-          if (leaderboardList.length > 0) {
-            leaderboardList.forEach((course) => {
-              leaderboardListView += `
-                <div class="leaderboard-item">
-                  <a href="/course/${course.course_name}" class="leaderboard-link">${course.course_name}</a>
-                  <span class="leaderboard-rank">Rank: ${course.rank}</span>
-                </div>
-              `;
-            });
-
-            document.getElementById("leaderboardList").innerHTML = leaderboardListView;
-            const loadingElement = document.querySelector(".loading-leaderboards");
-            if (loadingElement) {
-              loadingElement.style.display = "none";
-            }
-          } else {
-            leaderboardListView +=
-              '<p class="no-leaderboards-message">You are not a top contributor in any courses yet.</p>';
-            document.getElementById("leaderboardList").innerHTML = leaderboardListView;
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching leaderboards:", error);
-          document.getElementById("leaderboardList").innerHTML =
-            '<p class="no-leaderboards-message">Failed to load leaderboards. Please try again.</p>';
-        });
-    }
+    
     function displayDocumentList(uid) {
       fetch("/get_user_documents", {
         method: "POST",
