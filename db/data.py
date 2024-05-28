@@ -39,7 +39,6 @@ class FirebaseStorage(Firebase):
         """
         Save PDF file to firebase storage.
         """
-        
         storage_path = f"PDF/{document_id}.pdf"
         bucket = storage.bucket(app=self.app)
         blob = bucket.blob(storage_path)
@@ -1281,6 +1280,9 @@ class Course:
 
 
 class User:
+    '''
+    A user of the system, abstract class for both students and moderators.
+    '''
     def __init__(self, user_id, username, role = "student", sign_up_timestamp=datetime.now(), documents: list = [], score = 0) -> None:
         self._id = user_id
         self._username = username
@@ -1290,18 +1292,33 @@ class User:
         self._score = score
 
     def get_score(self):
+        '''
+        Returns the score for the user.
+        '''
         return self._score
 
     def get_username(self):
+        '''
+        Returns the username for the user.
+        '''
         return self._username
     
     def get_id(self):
+        '''
+        Returns the user's uid.
+        '''
         return self._id
     
     def get_role(self) -> str:
+        '''
+        Returns the role of the user.
+        '''
         return self._role
 
     def to_json(self) -> str:
+        '''
+        Returns a json string with information about the user.
+        '''
         json = {
                 "username":self._username,
                 "creation_date":self._sign_up_timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
@@ -1313,6 +1330,9 @@ class User:
         return json
 
     def to_display_json(self) -> str:
+        '''
+        Returns a json string with the information that is to be displayed about the user.
+        '''
         json = {
                 "username":self._username,
                 "creation_date":self._sign_up_timestamp.strftime("%Y-%m-%d"),
@@ -1324,9 +1344,15 @@ class User:
         return json
     
     def remove_document(self, document_id):
+        '''
+        Removes a document from the user.
+        '''
         self._documents.remove(document_id)
 
     def add_document_link(self, document_id):
+        '''
+        Adds a document to the user.
+        '''
         if document_id not in self._documents:
             self._documents.append(document_id)
 
@@ -1349,10 +1375,16 @@ class User:
             return 'Change must be an integer.'
 
 class Moderator(User):
+    '''
+    A moderator user.
+    '''
     def __init__(self, user_id, username) -> None:
         super().__init__(user_id, username)
 
 class Student(User):
+    '''
+    A student user.
+    '''
     def __init__(self, user_id, username) -> None:
         super().__init__(user_id, username)
 
@@ -1409,6 +1441,9 @@ class CourseDirectory(Directory):
             print(f"Failed to add course. The course, {course.get_course_name()}, already exists.")
 
     def add_comment(self, course_name, user_id, text):
+        '''
+        Adds a comment to a course.
+        '''
         if course_name in list(self._courses.keys()):
             #try:
                 course = self.get_course(course_name=course_name)
@@ -1421,6 +1456,9 @@ class CourseDirectory(Directory):
             print(f"'{course_name}' does not exist.")
     
     def add_reply(self, course_name, user_id, reply_to_comment_id, text):
+        '''
+        Adds a reply to a comment.
+        '''
         if course_name in list(self._courses.keys()):
             try:
                 course = self.get_course(course_name=course_name)
@@ -1433,6 +1471,9 @@ class CourseDirectory(Directory):
             print(f"'{course_name}' does not exist.")
 
     def add_comment_vote(self, course_name, comment_id, user_id, upvote):
+        '''
+        Adds a vote to a comment.
+        '''
         try:
             course = self._courses[course_name]
             course.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
@@ -1440,6 +1481,9 @@ class CourseDirectory(Directory):
             print(f"CourseDirectory: Failed to add vote to comment: {comment_id}")
 
     def add_reply_vote(self, course_name, comment_id, reply_id, user_id, upvote):
+        '''
+        Adds a vote to a reply comment.
+        '''
         try:
             course = self._courses[course_name]
             course.add_reply_vote(comment_id=comment_id, reply_id=reply_id, user_id=user_id, upvote=upvote)
@@ -1515,6 +1559,9 @@ class CourseDirectory(Directory):
         return waiting_courses
 
 class UserDirectory(Directory):
+    '''
+    A user directory.
+    '''
     _users = {}
     
     def add(self, user: User) -> bool:
@@ -1542,6 +1589,9 @@ class UserDirectory(Directory):
         return user
 
     def get_username(self, user_id):
+        '''
+        Returns the username for a user id.
+        '''
         try:
             return self._users[user_id].get_username()
         except:
@@ -1563,10 +1613,16 @@ class UserDirectory(Directory):
         return True
 
 class DocumentDirectory(Directory):
+    '''
+    A document directory.
+    '''
     
     _documents = {}
 
     def add(self, document:Document, add_to_firebase = True):
+        '''
+        Adds a document to the document directory and firebase.
+        '''
         if not self.document_exists(document.get_id()):
             self._documents[document.get_id()] = document
 
@@ -1579,12 +1635,21 @@ class DocumentDirectory(Directory):
             print("Document already exists.")
 
     def get(self, document_id) -> Document:
+        '''
+        Returns the document object for a document id.
+        '''
         return self._documents[document_id] if self.document_exists(document_id) else None
 
     def remove(self, document_id):
+        '''
+        Removes a document from the document directory.
+        '''
         self._documents.pop(document_id)
 
     def document_exists(self, document_id: str) -> bool:
+        '''
+        Checks if a document exists in the document directory.
+        '''
         return True if document_id in self._documents.keys() else False
     
     def get_waiting_documents(self):
@@ -1613,18 +1678,18 @@ class DocumentDirectory(Directory):
         return reported_documents
 
 class SearchController:
+    '''
+    Uses the course directory to search its courses.
+    '''
 
     def __init__(self) -> None:
         self._course_dict = {
             "Universities":FirebaseDatabase().get_from_path(path="Universities")
         }
 
-    def print_course_dict(self):
-        print('Course dict: ', self._course_dict)
-
     def search(self, query, course_directory: CourseDirectory, university=None, subject=None, course=None):
         '''
-        Search function to search for courses in the database.
+        Search function to search for courses.
         
         Parameters:
         - query: Search keyword provided by the user. Can be empty, meaning no keyword search.
@@ -1730,6 +1795,9 @@ class SearchController:
         return subject_universities
 
 class Main:
+    '''
+    The Main class is a controller for all parts of the system.
+    '''
     _main = None
     _firebase_manager = FirebaseManager()
     _course_dir = CourseDirectory()
@@ -1744,15 +1812,24 @@ class Main:
         return cls._main
 
     def get_user_like_status_on_document(self, user_id, document_id):
+        '''
+        Returns whether or not the user has already voted on a document.
+        '''
         document = self._document_dir.get(document_id=document_id)
         vote_status = document.get_user_vote_status(user_id=user_id)
 
         return vote_status
 
     def validate_course(self, course_name, approve):
+        '''
+        Changes a course's status to validated by calling on the course directory.
+        '''
         self._course_dir.validate_course(course_name=course_name, approve=approve)
 
     def add_user(self, user_id, username):
+        '''
+        Adds a user to the user directory and Firebase storage.
+        '''
         user = User(user_id=user_id, username=username)
         self._user_dir.add(user=user)
         user_id = user.get_id()
@@ -1761,6 +1838,9 @@ class Main:
         FirebaseDatabase().push_to_path(path=path, data=data)
 
     def add_course_comment(self, course_name, user_id, text):
+        '''
+        Adds a course comment.
+        '''
         try:
             course = self._course_dir.get_course(course_name=course_name)
             course.add_comment(user_id=user_id, text=text)
@@ -1768,6 +1848,9 @@ class Main:
             print(f"Failed to add comment to course")
 
     def add_document_vote(self, document_id: str, user_id: str, upvote: bool):
+        '''
+        Adds a vote to a document.
+        '''
         try:
             document = self._document_dir.get(document_id=document_id)
             document.add_vote(user_id=user_id, upvote=upvote)
@@ -1780,6 +1863,9 @@ class Main:
             print(f"Failed to add vote to document: {document_id}")
 
     def add_document_comment_vote(self, document_id: str, user_id: str, comment_id: str, upvote: bool):
+        '''
+        Adds a vote to a document comment.
+        '''
         try:
             document = self._document_dir.get(document_id=document_id)
             comment = document.get_comment(comment_id=comment_id)
@@ -1792,21 +1878,39 @@ class Main:
             print(f"Failed to add vote to comment: {comment_id}")
 
     def search(self, query, university=None, subject=None, course=None):
+        '''
+        Calls on the search controller to search using specific parameters.
+        '''
         return self._search_controller.search(query=query, course_directory=self._course_dir, university=university, subject=subject, course=course)
     
     def get_universities(self):
+        '''
+        Returns all universities.
+        '''
         return self._firebase_manager.get_from_database_path("/categorization/universities")
 
     def get_document_types(self):
+        '''
+        Returns all document types.
+        '''
         return self._firebase_manager.get_from_database_path("/categorization/document_types")
     
     def get_subjects(self):
+        '''
+        Returns all subjects.
+        '''
         return self._firebase_manager.get_from_database_path("/categorization/subjects")
 
     def get_document(self, document_id: str) -> Document:
+        '''
+        Returns the document object for a document with a certain document id.
+        '''
         return self._document_dir.get(document_id=document_id)
     
     def get_course(self, course_name: str) -> Course:
+        '''
+        Returns the course object with a certain course name.
+        '''
         return self._course_dir.get_course(course_name=course_name)
 
     def add_document(self, 
@@ -1824,7 +1928,9 @@ class Main:
                      comment_section = None,
                      timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), 
                      submitted_anonymously = False):
-        
+        '''
+        Creates a document object and adds it to document directory and user.
+        '''
         document_id = uuid.uuid4().hex
 
         document = Document(pdf_url=pdf_url, document_type=document_type, 
@@ -1833,7 +1939,7 @@ class Main:
                  upload_comment=upload_comment, document_id=document_id, submitted_anonymously=submitted_anonymously)
         
         if not self._course_dir.course_exists(course_name=course_name):
-            print("Course does not exist, please create the course before (for now?)")
+            return 'Course does not exist.'
         
         else:
             # add to document dir and firebase
@@ -1869,6 +1975,9 @@ class Main:
             print(f"Failed to add comment to document {document_id}")
 
     def add_document_comment_reply(self, user_id, document_id, reply_to_comment_id, text):
+        '''
+        Adds a reply to a document comment.
+        '''
         try:
             document = self._document_dir.get(document_id=document_id)
             document.add_comment_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
@@ -1878,24 +1987,36 @@ class Main:
             print(f"Failed to add comment reply to document {document_id}")
 
     def _set_user_directory_from_firebase(self):
+        '''
+        Creates users based on Firebase Storage.
+        '''
         users = self._firebase_manager.get_all_users()
         
         for user in users:
             self._user_dir.add(user)
 
     def _set_course_directory_from_firebase(self):
+        '''
+        Creates courses based on Firebase Storage.
+        '''
         courses = self._firebase_manager.get_all_courses()
         
         for course in courses:
             self._course_dir.add_course(course, add_to_firebase=False)
 
     def _set_documents_from_firebase(self):
+        '''
+        Creates documents based on Firebase Storage.
+        '''
         documents = self._firebase_manager.get_all_documents()
 
         for document in documents:
             self._document_dir.add(document=document, add_to_firebase=False)
 
     def _set_from_firebase(self):
+        '''
+        Creates a user directory and course directory based on Firebase Storage.
+        '''
         self._set_documents_from_firebase(self)
         try:
             print("FirebaseRealtimeDatabase sync initiated")
@@ -1993,6 +2114,9 @@ class Main:
         return documents
     
     def get_user_score(self, user_id):
+        '''
+        Returns the score of a specific user.
+        '''
         user = self._user_dir.get(user_id)
         return user.get_score()
     
@@ -2042,23 +2166,15 @@ class Main:
         document_type = document.get_type()
         user_id = document.get_author()
         
-        # remove from db
         course = self._course_dir.get_course(course_name=course_name)
         course.remove_document(document_id=document_id, document_type=document_type)
         user = self._user_dir.get(user_id=user_id)
         user.remove_document(document_id)
         self._document_dir.remove(document_id=document_id)
 
-
-        # remove from firebase backup
         data = {document_id:{}}
-        # remove from course
-        #path = f"Courses/{course_name}/Documents/{document_type}s/"
-        #FirebaseDatabase().push_to_path(path=path, data=data)
-        # remove from documents
         path = f"/Documents"
         FirebaseDatabase().push_to_path(path=path, data=data)
-        # remove from user
         path = f"/Users/{user_id}/Documents"
         FirebaseDatabase().push_to_path(path=path, data=data)
 
@@ -2071,7 +2187,9 @@ class Main:
         document.add_report(user_id, reason, text)
     
     def add_user_upload(self, pdf_id, pdf_url):
-        
+        '''
+        Add user upload.
+        '''
         path = f"/Files/Uploads/PDF"
         data = {
             pdf_id: pdf_url
@@ -2080,9 +2198,9 @@ class Main:
         self._firebase_manager.push_to_path(path=path, data=data)
 
     def get_user_upload_pdf(self, pdf_id):
-        """
-        
-        """
+        '''
+        Get user upload pdf.
+        '''
         path = f"Files/Uploads/PDF/{pdf_id}"
         try:
             url = self._firebase_manager.get_from_database_path(path=path)
@@ -2152,44 +2270,5 @@ class Main:
         }
         self._firebase_manager.push_to_path(path=path, data=data)
 
-def test_document():
-    main = Main()
-
-    # create and add a course
-    course = Course("IY1422", "BTH", "Economics")
-    main._course_dir.add_course(course=course)
-
-    # add document
-    doc = Document(pdf_url="https://", header="is generated", document_type="Exams", user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
-
-    print(doc.to_json())
-
-    main.add_document(document=doc, course_name=course.get_course_name(), user_id="GrG6hgFUKHbQtNxKpSpGM6Sw84n2")
-    t = main.get_document(doc.get_id())
-    if t:
-        print(t.get_id())
-
-#test_document()
-
-
-def test_course_search(search_controller):
-
-    # Testing testing
-    #course_directory = CourseDirectory()
-    #search_controller = SearchController()
-    m = Main()
-    analys1 = Course('Analys 1', 'Blekinge Institute of Technology', 'Mathematics')
-    industriell_marknadsföring = Course('Industriell Marknadsföring', 'Blekinge Institute of Technology', 'Marketing')
-    inledande_matematisk_analys = Course('Inledande Matematisk Analys', 'Chalmers Institute of Technology', 'Mathematics')
-    m.add_course(analys1, analys1.get_university(), analys1.get_subject())
-    m.add_course(industriell_marknadsföring, industriell_marknadsföring.get_university(), industriell_marknadsföring.get_subject())
-    m.add_course(inledande_matematisk_analys, inledande_matematisk_analys.get_university(), inledande_matematisk_analys.get_subject())
-    search_results = search_controller.search('', 'Blekinge Institute of Technology', 'Mathematics')
-
-    if search_results:
-        for result in search_results:
-            print(result.get_course_name())
-    else:
-        print('No search results.')
 
 main = Main()
