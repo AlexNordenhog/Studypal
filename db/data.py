@@ -20,9 +20,15 @@ class Firebase:
         return cls._firebase
     
     def _initialize_firebase(self):
+        """
+        Sets up connection to firebase storage.
+        """
         pass
 
 class FirebaseStorage(Firebase):
+    """
+    Connection to Firebase Realtime Database.
+    """
     _firebase_cert = None
     _app = None
     _storage_url = None
@@ -31,9 +37,6 @@ class FirebaseStorage(Firebase):
         return super().__new__(cls)
     
     def _initialize_firebase(self):
-        """
-        Sets up connection to firebase storage.
-        """
         self._firebase_cert = credentials.Certificate(os.path.dirname(os.path.abspath(__file__)) + "/cert.json")
         self._storage_url = {"storageBucket": "studypal-8a379.appspot.com"}
         self._app = firebase_admin.initialize_app(self._firebase_cert, self._storage_url, name = "storage")
@@ -59,6 +62,9 @@ class FirebaseStorage(Firebase):
         return download_url
 
 class FirebaseDatabase(Firebase):
+    """
+    Connection to Firebase Realtime Database.
+    """
     _app = None
     _firebase_cert = None
     _firebase_url = None
@@ -67,6 +73,9 @@ class FirebaseDatabase(Firebase):
         return super().__new__(cls)
 
     def push_to_path(self, path, data):
+        """
+        Push json data to a path in Firebase Realtime Database.
+        """
         ref = db.reference(path, self._app)
         ref.update(data)
 
@@ -89,20 +98,6 @@ class FirebaseDatabase(Firebase):
         ref.update(document.to_json())
 
         document_id = document.get_id()
-        #document_type = document.get_type()
-
-        #ref = db.reference(f"/Courses/{course_name}/Documents/{document_type}", self._app)
-
-        # get and update course document reference list
-        #course_documents = ref.get()
-
-        #try:
-        #    course_documents.append(document_id)
-        
-        #except:
-        #    course_documents = [document_id]
-
-        #ref.parent.update({document_type:course_documents})
 
         # add document reference to user
         ref = db.reference(f"/Users/{user_id}/Documents", self._app)
@@ -127,6 +122,9 @@ class FirebaseDatabase(Firebase):
             ref.update({"vote_directory":vote_directory_json})
 
     def update_document_comment_section(self, document_id, document_comment_section_json):
+        """
+        Updates the comment section of a document in Firebase.
+        """
         try:
             ref = db.reference(f"/Documents/{document_id}/comment_section", self._app)
             ref.update(document_comment_section_json)
@@ -136,6 +134,9 @@ class FirebaseDatabase(Firebase):
             ref.update({"comment_section":document_comment_section_json})
 
     def update_course_comment_section(self, course_name: str, comment_section: str):
+        """
+        Updates the comment section of a course in Firebase.
+        """
         try:
             ref = db.reference(f"/Courses/{course_name}/comment_section", self._app)
             ref.update(comment_section)
@@ -368,6 +369,9 @@ class FirebaseDatabase(Firebase):
         return documents
 
 class FirebaseManager:
+    """
+    Manages connections to Firebase Storage and Realtime Database. 
+    """
     _firebase_manager = None
     _storage = FirebaseStorage()
     _database = FirebaseDatabase()
@@ -381,15 +385,25 @@ class FirebaseManager:
         return cls._firebase_manager
 
     def push_to_path(self, path, data):
+        """
+        Push json data to a path in Firebase Realtime Database.
+        """
         self._database.push_to_path(path=path, data=data)
 
     def get_from_database_path(self, path):
+        """
+        Get json data from a path in Firebase Realtime Database.
+
+        Returns None if no data exists in the path.
+        """
         data = self._database.get_from_path(path)
 
         return data if data else None
 
     def _set_from_firebase(self):
-        
+        """
+        Sync current instance of data with Firebase Realtime Database.
+        """
         users = {}
         db_users = self._database.get_users()
 
@@ -397,27 +411,47 @@ class FirebaseManager:
             self._user_dir.add(users[user])
         
     def get_all_courses(self) -> list:
+        """
+        Returns a list of all courses from the Firebase database.
+        """
         return self._database.get_courses()
 
     def get_all_documents(self) -> list:
+        """
+        Returns a list of all documents from the Firebase Database.
+        """
         return self._database.get_documents()
 
     def get_all_users(self) -> list:
+        """
+        Returns a list of all users from the Firebase Database.
+        """
         return self._database.get_users()
 
     def add_document(self, document, user_id: str, course_name:str):
+        """
+        Adds a document to the Firebase database.
+        """
         self._database.add_document(document=document, user_id=user_id, course_name=course_name)
     
     def update_document_votes(self, document_id, vote_directory_json):
+        """
+        Updates a document's vote directory in the database.
+        """
         self._database.update_document_votes(document_id=document_id, vote_directory_json=vote_directory_json)
 
     def update_document_comment_sectino_votes(self, document_id, document_comment_section_json):
+        """
+        Updates the comment section of a document in Firebase.
+        """
         self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
 
     def update_document_comment_section(self, document_id, document_comment_section_json):
+        """
+        Updates the comment section of a document in Firebase.
+        """
         self._database.update_document_comment_section(document_id=document_id, document_comment_section_json=document_comment_section_json)
 
-    #methods below needs to move/change
     def add_user(self, user_id, username, add_to_db=True):
         """Create user and add to database."""
 
@@ -432,10 +466,16 @@ class FirebaseManager:
             self._add_to_db(ref="/Users/", json=user.to_json())
 
     def add_course(self, course):
+        """
+        Adds a course to the database.
+        """
         self._database.add_course(course=course)
 
 
 class Report:
+    """
+    A Report contains the information about a document report.
+    """
     def __init__(self, document_id, user_id, reason, text, report_id = None) -> None:
         self._document_id = document_id
         self._user_id = user_id
@@ -474,20 +514,18 @@ class Report:
 
         return json
 
-class Timestamp:
-    def __init__(self) -> None:
-        datetime_now = datetime.datetime.utcnow()
-        self.timestamp = {
-            "date":datetime_now.strftime("%Y-%m-%d"),
-            "time":datetime_now.strftime("%H:%M:%S")
-        }
-
 class Directory:
 
     def add(self):
+        """
+        Add an object to the Directory.
+        """
         pass
 
     def get(self):
+        """
+        Return object from the directory.
+        """
         pass
 
 class VoteDirectory(Directory):
@@ -553,7 +591,6 @@ class VoteDirectory(Directory):
         }
 
 class CommentSection():
-
     def __init__(self, parent_path, 
                        comment_section_id = uuid.uuid4().hex, 
                        comments = {}, 
@@ -566,17 +603,25 @@ class CommentSection():
         self._db_path = f"{parent_path}"
 
     def add_comment(self, user_id: str, text: str):
+        """
+        Adds a comment to the CommentSection, and syncs it with the Firebase database.
+        """
         comment = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/comments")
         FirebaseDatabase().push_to_path(comment._db_path, data=comment.to_json())
         self._comments[comment.get_id()] = comment
 
     def add_reply(self, user_id: str, text: str, reply_to_comment_id: str):
+        """
+        Adds a reply to the CommentSection, and syncs it with the Firebase database.
+        """
         reply = Comment(user_id=user_id, text=text, parent_path=f"{self._db_path}/replies/{reply_to_comment_id}")
         FirebaseDatabase().push_to_path(reply._db_path, data=reply.to_json())
         self._replies[reply.get_id()] = reply
 
     def get_comment(self, page, comment_id):
-
+        """
+        Returns a comment from the CommentSection.
+        """
         if comment_id in list(self._comments[page].keys()):
             return self._comments[page][comment_id]
         else:
@@ -589,6 +634,9 @@ class CommentSection():
         print("404: Comment not found error")
     
     def delete_comment(self, comment_id):
+        """
+        Removes a comment from the CommentSection.
+        """
         if comment_id in list(self._comments.keys()):
             self._comments.pop(comment_id)
         else:
@@ -606,11 +654,6 @@ class CommentSection():
 
         _comments = self._comments # {}
         _sorted_comments = {}
-        #comment_ids = list(self._comments.keys()) #list(self.get_comments_on_page(page))
-
-        #for comment_id in comment_ids:
-        #    comment = self._comments[comment_id] #self.get_comment(page, comment_id)
-        #    _comments.update({comment_id : comment})
 
         if sorting == 'popular':
 
@@ -638,6 +681,9 @@ class CommentSection():
         return _sorted_comments
 
     def add_comment_report(self, comment_id, user_id, reason, text):
+        """
+        Adds a comment report to the comment in the CommentSection.
+        """
         try:
             comment = self._comments[comment_id]
             comment.add_report(user_id, reason, text)
@@ -661,6 +707,9 @@ class CommentSection():
         return replies
 
     def _has_replies(self, comment_id):
+        """
+        Returns if a comment has replies.
+        """
         try:
             self._replies[comment_id]
             return True
@@ -671,6 +720,9 @@ class CommentSection():
         return self._comment_section_id
     
     def add_comment_vote(self, comment_id, user_id, upvote):
+        """
+        Adds a vote to a comment.
+        """
         try:
             comment = self._comments[comment_id]
             return comment.add_vote(user_id=user_id, upvote=upvote)
@@ -678,6 +730,9 @@ class CommentSection():
             print(f"CommentSection: Failed to add vote to comment: {comment_id}")
 
     def add_reply_vote(self, comment_id, reply_id, user_id, upvote):
+        """
+        Adds a vote to a reply.
+        """
         try:
             reply = self._replies[comment_id][reply_id]
             return reply.add_vote(user_id=user_id, upvote=upvote)
@@ -708,33 +763,8 @@ class CommentSection():
             "replies":replies_json,
             "comment_section_id":self._comment_section_id
         }
-    
-    def get_comments_on_page(self, page):
-        '''
-        Get the comment dictionary for a certain page.
-        Based on _comments having the following structure:
-        _comments={
-            1:{
-                id:comment,
-                id:comment,
-                id:comment,
-                id:comment,
-                id:comment,
-            },
-            
-            2:{
-                id:comment,
-                id:comment,
-                id:comment,
-                id:comment,
-                id:comment,
-            }
-        }
-        '''
-        return self._comments[page]
 
 class Comment:
-
     def __init__(self, user_id, text, parent_path, comment_id = None, timestamp = datetime.now(), vote_dir = None):
         self._user_id = user_id
         
@@ -778,6 +808,9 @@ class Comment:
         return json
 
     def get_timestamp(self):
+        """
+        Returns the timestamp of the Comment.
+        """
         return self._timestamp
 
     def to_json(self):
@@ -797,18 +830,30 @@ class Comment:
         return json
 
     def add_vote(self, user_id, upvote):
+        """
+        Adds a vote to the comment.
+        """
         return self._vote_dir.add(user_id=user_id, upvote=upvote)
 
     def get_votes(self) -> dict:
+        """
+        Returns a dict with the current votes of the comment.
+        """
         return self._vote_dir.get()
 
     def get_vote_directory_json(self):
+        """
+        Returns the VoteDirectory as a json.
+        """
         return self._vote_dir.to_json()
     
     def get_id(self):
         return self._comment_id
 
 class Document:
+    """
+    A document contains the data of a document upload.
+    """
 
     def __init__(self, pdf_url: str, 
                  document_type: str, 
@@ -918,15 +963,24 @@ class Document:
         }
 
     def get_type(self):
+        """
+        Returns the document type.
+        """
         return self._document_type
 
     def get_id(self):
         return self._document_id
 
     def get_header(self):
+        """
+        Returns the header of the document.
+        """
         return self._header
 
     def get_validation(self):
+        """
+        Returns if the document is validated.
+        """
         return self._validated
 
     def to_json(self):
@@ -972,9 +1026,15 @@ class Document:
         return self._course_name
 
     def get_comment_section_json(self):
+        """
+        Returns the CommentSection as a json.
+        """
         return self._comment_section.to_json()
 
     def add_report(self, user_id, reason, text):
+        """
+        Adds a report to the document and syncs it with firebase.
+        """
         report = Report(document_id=self._document_id, user_id=user_id, reason=reason, text=text)
         
         if not self._reported:
@@ -1004,6 +1064,9 @@ class Document:
     # document votes
 
     def add_document_vote(self, user_id, upvote):
+        """
+        Adds a vote to the document.
+        """
         try:
             data = self._vote_directory.add(user_id=user_id, upvote=upvote)
             path = f"{self._db_path}/vote_directory/votes"
@@ -1012,15 +1075,24 @@ class Document:
             print(f"Document: Failed to add vote to document: {self._document_id}")
 
     def get_vote_directory_json(self):
+        """
+        Returns the VoteDirectory as a json.
+        """
+
         return self._vote_directory.to_json()
-        return self._document_type
        
     # comment section
 
     def add_comment(self, user_id, text):
+        """
+        Adds a comment to the document's CommentSection.
+        """
         self._comment_section.add_comment(user_id=user_id, text=text)
 
     def add_comment_vote(self, user_id, comment_id, upvote):
+        """
+        Adds a vote to a comment in the document's CommentSection.
+        """
         try:
             data = self._comment_section.add_comment_vote(user_id=user_id, comment_id=comment_id, upvote=upvote)
             path = f"{self._db_path}/comment_section/comments/{comment_id}/vote_directory/votes"
@@ -1029,12 +1101,21 @@ class Document:
             print(f"Document: Failed to add vote to comment: {self._document_id}")
 
     def get_comment(self, comment_id):
+        """
+        Returns a comment from the document's CommentSection.
+        """
         return self._comment_section.get_comment(comment_id=comment_id)
     
     def add_comment_reply(self, user_id, text, reply_to_comment_id):
+        """
+        Adds a reply to a document comment.
+        """
         self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
 
     def get_comments(self, sorting='popular', order="desc"):
+        """
+        Returns the comments of the document.
+        """
         return self._comment_section.get_comments(sorting=sorting, order=order)    
     
     def is_anonymous(self):
@@ -1055,10 +1136,16 @@ class Document:
         return reports
     
     def remove_all_reports(self):
+        """
+        Removes all reports from the document.
+        """
         self._reported = False
         self._reports = {}
 
     def delete_comment(self, comment_id):
+        """
+        Deletes a comment from the document's CommentSection.
+        """
         self._comment_section.delete_comment(comment_id)
 
 class Course:
@@ -1080,9 +1167,15 @@ class Course:
             self._comment_section = CommentSection(parent_path=f"{self._db_path}/Course Content/comment_section")
 
     def delete_comment(self, comment_id):
+        """
+        Detletes a comment from a course page.
+        """
         self._comment_section.delete_comment(comment_id)
 
     def get_documents(self):
+        """
+        Returns the course's documents.
+        """
         return self._documents
 
     def validate(self):
@@ -1111,6 +1204,9 @@ class Course:
         return self._comment_section.get_comments(sorting=sorting, order=order)
 
     def get_replies(self, comment_id, sorting="popular", order="desc", amount: int = 10, page: int = 1):
+        """
+        Returns the replies of a comment.
+        """
         return self._comment_section.get_replies(comment_id=comment_id)
 
     def approve_course(self):
@@ -1126,6 +1222,9 @@ class Course:
         return self._course_name
     
     def remove_document(self, document_id, document_type):
+        """
+        Removes a document from the course.
+        """
         del self._documents[document_type][document_id]
 
     def add_document(self, document_type, document_id, document_name, add_to_firebase=True):
@@ -1151,13 +1250,8 @@ class Course:
         Updates the course object as well as firebase database.
         '''
         
-        #try:
-        #self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
-            #FirebaseDatabase().push_to_path(path=path, data=data)
         self._comment_section.add_comment(user_id=user_id, text=text)
-        #except:
-        #    print(f"Course: Failed to add comment to {self._course_name}")
-
+        
     def add_reply(self, user_id, reply_to_comment_id, text):
         '''
         Adds a comment to the course.
@@ -1167,7 +1261,6 @@ class Course:
         
         try:
             self._db_path = f"/Courses/{self._course_name}/comment_section/comments"
-            #FirebaseDatabase().push_to_path(path=path, data=data)
             self._comment_section.add_reply(user_id=user_id, text=text, reply_to_comment_id=reply_to_comment_id)
         except:
             print(f"Failed to add reply to {self._course_name}")
@@ -1184,13 +1277,10 @@ class Course:
         '''
         return self._subject
 
-    def get_course_data(self):
-        # Kommer vi behöva denna?
-        '''
-        Returns a dictionary containing all the information needed to display the course in UI.
-        '''
-
     def add_comment_vote(self, comment_id, user_id, upvote):
+        """
+        Adds a vote to a comment in the course, and syncs it with firebase.
+        """
         try:
             data = self._comment_section.add_comment_vote(comment_id=comment_id, user_id=user_id, upvote=upvote)
             path = f"{self._db_path}/Course Content/comment_section/comments/{comment_id}/vote_directory/votes"
@@ -1199,13 +1289,15 @@ class Course:
             print(f"Course: Failed to add vote to comment: {comment_id}")
 
     def add_reply_vote(self, comment_id, reply_id, user_id, upvote):
+        """
+        Adds a vote to a reply in the course, and syncs it with firebase.
+        """
         try:
             data = self._comment_section.add_reply_vote(comment_id=comment_id, reply_id=reply_id, user_id=user_id, upvote=upvote)
             path = f"{self._db_path}/Course Content/comment_section/replies/{comment_id}/{reply_id}/vote_directory/votes"
             FirebaseDatabase().push_to_path(path=path, data=data)
         except:
             print(f"Course: Failed to add vote to reply: {reply_id}, on comment: {comment_id}")
-
 
     def to_json(self):
         json = {
