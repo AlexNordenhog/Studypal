@@ -2250,7 +2250,7 @@ class Main:
         """
         document = self._document_dir.get(document_id)
         course_name = document.get_course_name()
-        document_type = document.get_type()
+        document_type = document.get_type() + 's'
         user_id = document.get_author()
         
         course = self._course_dir.get_course(course_name=course_name)
