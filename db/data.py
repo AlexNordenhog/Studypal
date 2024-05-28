@@ -529,8 +529,11 @@ class Directory:
 
 class VoteDirectory(Directory):
 
-    def __init__(self, vote_directory_id = uuid.uuid4().hex, votes = {}):
-        self._vote_directory_id = vote_directory_id
+    def __init__(self, vote_directory_id = None, votes = {}):
+        if vote_directory_id == None:
+            self._vote_directory_id = uuid.uuid4().hex
+        else:
+            self._vote_directory_id = vote_directory_id
         self._votes = votes
 
     def get(self) -> dict:
@@ -767,14 +770,14 @@ class Comment:
     def __init__(self, user_id, text, parent_path, comment_id = None, timestamp = datetime.now(), vote_dir = None):
         self._user_id = user_id
         
-        if comment_id == None:
+        if comment_id == None or comment_id == "None":
             self._comment_id = uuid.uuid4().hex
         else:
             self._comment_id = comment_id
         
         self._text = text
         self._timestamp = timestamp
-        self._db_path = f"{parent_path}/{comment_id}"
+        self._db_path = f"{parent_path}/{self._comment_id}"
 
         if vote_dir:
             self._vote_dir = vote_dir
@@ -2408,3 +2411,4 @@ class Main:
 
 
 main = Main()
+main.add_course_comment("IY1422 IY2579 Finansiell ekonomi", "qut0yeEXynXaN4TlzIQzwnLqwil1", "neej")
