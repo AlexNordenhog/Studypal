@@ -1091,6 +1091,7 @@ class Course:
         return self._documents
 
     def validate(self):
+        """Validates the course, and syncs the validation status with firebase"""
         path = f"Courses/{self._course_name}/Course Content"
         data = {
             "validated":True
@@ -1130,7 +1131,7 @@ class Course:
         return self._course_name
     
     def remove_document(self, document_id, document_type):
-        self._documents[f"{document_type}s"].pop(document_id)
+        del self._documents[document_type][document_id]
 
     def add_document(self, document_type, document_id, document_name, add_to_firebase=True):
         '''
@@ -1257,7 +1258,7 @@ class Course:
         contributors = {}
         for document_id in self._get_doc_ids():
             document = Main().get_document(document_id)
-            if document.is_anonymous() == False:
+            if isinstance(document, Document) and document.is_anonymous() == False:
                 author_id = document.get_author()
                 user = Main().get_user(author_id)
                 username = user.get_username()
@@ -1363,9 +1364,28 @@ class CourseDirectory(Directory):
     _pending_courses = {}
     _courses = {}
 
-    def validate_course(self, course_name):
-        course = self.get_course(course_name=course_name)
-        course.validate()
+    def validate_course(self, course_name, approve):
+        """Change the validation status of a course. If 'validate' is set to False, the course is deleted."""
+
+        print("going to awoidnaoiw")
+        if approve:
+            course = self.get_course(course_name=course_name)
+            course.validate()
+        else:
+            self.delete_course(course_name)
+
+    def delete_course(self, course_name):
+        """
+        Deletes a course from the CourseDirectory and removes it from firebase.
+        """
+
+        if course_name in self._courses:
+            self._courses.pop(course_name)
+            # firebase
+            path = f"/Courses"
+            FirebaseManager().push_to_path(path=path, data={course_name:None})
+        else:
+            return "Failed to delete course: 404 Course not found."
 
     def add_course(self, course: Course, add_to_firebase = True):
         '''
@@ -1729,8 +1749,8 @@ class Main:
 
         return vote_status
 
-    def validate_course(self, course_name):
-        self._course_dir.validate_course(course_name=course_name)
+    def validate_course(self, course_name, approve):
+        self._course_dir.validate_course(course_name=course_name, approve=approve)
 
     def add_user(self, user_id, username):
         user = User(user_id=user_id, username=username)
@@ -1994,7 +2014,7 @@ class Main:
         '''
         Validate a document with a certain document id.
         '''
-        if approve:
+        if approve == True:
             document = self._document_dir.get(document_id)
             course_name = document.get_course_name()
             document_type = document.get_type()
@@ -2011,6 +2031,7 @@ class Main:
             course = self._course_dir.get_course(course_name=course_name)
             course.add_document(document_id=document_id, document_type=document_type, document_name=document.get_header())
             self.delete_document(document_id=document_id)
+            print("Document has been deleted")
 
     def delete_document(self, document_id):
         """
