@@ -1486,7 +1486,6 @@ class CourseDirectory(Directory):
     def validate_course(self, course_name, approve):
         """Change the validation status of a course. If 'validate' is set to False, the course is deleted."""
 
-        print("going to awoidnaoiw")
         if approve:
             course = self.get_course(course_name=course_name)
             course.validate()
