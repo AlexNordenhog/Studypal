@@ -1230,6 +1230,8 @@ class Course:
         '''
         Adds a document id to the _documents dict.
         '''
+        if document_type[-1] != 's':
+            document_type = document_type + 's'
         try:
             self._documents[document_type][document_id] = document_name
         except:
