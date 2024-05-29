@@ -1181,17 +1181,13 @@ class Course:
     '''
     A course.
     '''
-    def __init__(self, course_name, university, subject, validated = None, comment_section = None) -> None:
+    def __init__(self, course_name, university, subject, validated = False, comment_section = None) -> None:
         self._course_name = course_name # id
         self._university = university
         self._subject = subject
         self._documents = {'Graded Exams' : {}, 'Exams' : {}, 'Lecture Materials' : {}, 'Assignments' : {}, 'Other Documents' : {}}
         self._db_path = f"/Courses/{self._course_name}/"
-
-        if validated in [True, False]:
-            self.validated = validated
-        else:
-            self._validated = False
+        self._validated = validated
 
         if comment_section:
             self._comment_section = comment_section
